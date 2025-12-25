@@ -14,7 +14,9 @@ RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o /tmp/go
  && rm /tmp/go.tgz
 
 ENV PATH="/usr/local/go/bin:${PATH}"
-ENV NODE_OPTIONS="--max-old-space-size=3072"
+# Keep headroom on a 4GB VPS; feel free to adjust
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+# Reduce parallelism (helps avoid OOM in webpack + go build)
 ENV MAKEFLAGS="-j1"
 
 # pnpm for frontend build
@@ -23,21 +25,28 @@ RUN npm install -g pnpm
 WORKDIR /src
 COPY . .
 
-# POC unblocker: webpack expects this file
+# POC unblocker: webpack expects this file (some forks omit it)
 RUN mkdir -p assets && echo "[]" > assets/go-licenses.json
 
 # Build backend + frontend
 RUN make build
 
+# Find the produced binary (path/name can differ across versions) and stage it
+RUN set -eux; \
+    echo "Searching for built binary..."; \
+    BIN="$(find /src -maxdepth 5 -type f \( -name gitea -o -name processgit \) -perm -111 | head -n 1)"; \
+    echo "Using binary: ${BIN}"; \
+    test -n "${BIN}"; \
+    mkdir -p /out; \
+    cp "${BIN}" /out/gitea
+
 # Runtime image
 FROM gitea/gitea:latest
 
-COPY --from=build /src/gitea /usr/local/bin/gitea
+# Replace upstream binary + assets with our fork build
+COPY --from=build /out/gitea /usr/local/bin/gitea
 COPY --from=build /src/templates /usr/share/gitea/templates
 COPY --from=build /src/public /usr/share/gitea/public
 
 LABEL org.opencontainers.image.title="ProcessGit"
 LABEL org.opencontainers.image.source="https://github.com/Algomation-AI/ProcessGit"
-
-
-
