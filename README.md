@@ -1,6 +1,6 @@
 # ProcessGit
 
-**ProcessGit** is a process-native Git forge for **BPMN / DMN / CMMN** and **UAPF** packages — designed to bring “GitHub-like” collaboration to operational process assets:
+**ProcessGit** is a Git for Digital Process storage for **BPMN / DMN / CMMN** and **UAPF** packages — designed to bring “GitHub-like” collaboration to operational process assets:
 - diagram-friendly previews
 - process-aware diffs in pull requests
 - validation gates for UAPF + models
