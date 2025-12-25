@@ -12,6 +12,7 @@ RUN npm install -g pnpm
 WORKDIR /src
 COPY . .
 
+RUN mkdir -p assets && echo "[]" > assets/go-licenses.json
 # Build backend + frontend
 RUN make build
 
