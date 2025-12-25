@@ -45,10 +45,3 @@ http://localhost:3000
 
 This repository contains work derived from Gitea and is distributed under the MIT License.
 See LICENSE and NOTICE.
-
----
-
-## One important note (so Codex doesn’t waste time)
-For the **first POC**, **do not** rename `go.mod module code.gitea.io/gitea` or rewrite all import paths. That’s a full fork-migration project by itself. You’ll get 95% of what you want (branding + UX) without that step.
-
-If you want, I can also give you a **second-phase Codex plan** to cleanly migrate the module path + binary packaging into a `processgit/processgit` image without fighting upstream merge pain.
