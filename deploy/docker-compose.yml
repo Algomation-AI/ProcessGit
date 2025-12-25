@@ -1,0 +1,17 @@
+services:
+  processgit:
+    image: gitea/gitea:latest
+    container_name: processgit
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "2222:22"
+    volumes:
+      - processgit-data:/data
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - APP_NAME=ProcessGit: Git for Processes
+
+volumes:
+  processgit-data:

@@ -1,5 +1,5 @@
 # The full repository name
-repo: go-gitea/gitea
+repo: Algomation-AI/ProcessGit
 
 # Service type (gitea or github)
 service: github

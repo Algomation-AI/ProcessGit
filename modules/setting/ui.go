@@ -142,8 +142,8 @@ var UI = struct {
 		Description string
 		Keywords    string
 	}{
-		Author:      "Gitea - Git with a cup of tea",
-		Description: "Gitea (Git with a cup of tea) is a painless self-hosted Git service written in Go",
+		Author:      "ProcessGit - Git for Processes",
+		Description: "ProcessGit is a process-native Git forge for BPMN/DMN/CMMN and UAPF packages (based on Gitea).",
 		Keywords:    "go,git,self-hosted,gitea",
 	},
 }

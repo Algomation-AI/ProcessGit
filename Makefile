@@ -41,7 +41,7 @@ GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1
 GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1
 ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.7.9
 
-DOCKER_IMAGE ?= gitea/gitea
+DOCKER_IMAGE ?= algomation-ai/processgit
 DOCKER_TAG ?= latest
 DOCKER_REF := $(DOCKER_IMAGE):$(DOCKER_TAG)
 
@@ -70,10 +70,10 @@ else ifeq ($(patsubst Windows%,Windows,$(OS)),Windows)
 endif
 ifeq ($(IS_WINDOWS),yes)
 	GOFLAGS := -v -buildmode=exe
-	EXECUTABLE ?= gitea.exe
+	EXECUTABLE ?= processgit.exe
 else
 	GOFLAGS := -v
-	EXECUTABLE ?= gitea
+	EXECUTABLE ?= processgit
 endif
 
 ifeq ($(shell sed --version 2>/dev/null | grep -q GNU && echo gnu),gnu)
