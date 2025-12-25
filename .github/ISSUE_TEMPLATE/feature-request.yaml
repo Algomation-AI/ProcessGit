@@ -1,24 +1,43 @@
 name: Feature Request
-description: Got an idea for a feature that Gitea doesn't have currently?  Submit your idea here!
+description: Suggest a new ProcessGit capability.
 labels: ["type/proposal"]
 body:
   - type: markdown
     attributes:
       value: |
-        1. Please speak English, this is the language all maintainers can speak and write.
-        2. Please ask questions or configuration/deploy problems on our Discord
-           server (https://discord.gg/gitea) or forum (https://forum.gitea.com).
-        3. Please take a moment to check that your feature hasn't already been suggested.
+        Tell us what process-first capability you want in ProcessGit.
   - type: textarea
-    id: description
+    id: summary
     attributes:
-      label: Feature Description
+      label: Feature summary
       placeholder: |
-        I think it would be great if Gitea had...
+        I would like ProcessGit to...
     validations:
       required: true
   - type: textarea
-    id: screenshots
+    id: artifacts
     attributes:
-      label: Screenshots
-      description: If you can, provide screenshots of an implementation on another site e.g. GitHub
+      label: Process artifacts (BPMN/DMN/CMMN/UAPF)
+      description: Which artifact types or formats should this feature focus on?
+  - type: textarea
+    id: expected-ux
+    attributes:
+      label: Expected UX (repo file view / PR diff / release)
+      description: Describe where this should appear in the UI (file viewer, PR diff, release page, etc.) and what the user should see.
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation / problem statement
+      description: What user problem does this solve?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: List any workarounds or other tools you’ve tried.
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Related links, diagrams, or references.
