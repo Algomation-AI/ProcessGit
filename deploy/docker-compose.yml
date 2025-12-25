@@ -3,7 +3,7 @@ services:
     container_name: processgit
     restart: unless-stopped
     build:
-      context: ..                      # ✅ repo root, not deploy/
+      context: ..  
       dockerfile: deploy/Dockerfile.processgit
     image: processgit:0.1
     ports:
