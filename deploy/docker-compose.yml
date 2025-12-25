@@ -1,11 +1,14 @@
 services:
   processgit:
-    image: gitea/gitea:latest
     container_name: processgit
     restart: unless-stopped
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.processgit
+    image: processgit:0.1
     ports:
-      - "18080:3000"   # web UI (host:container)
-      - "12222:22"     # SSH git (host:container)
+      - "18080:3000"
+      - "12222:22"
     volumes:
       - processgit-data:/data
     environment:
@@ -15,3 +18,4 @@ services:
 
 volumes:
   processgit-data:
+
