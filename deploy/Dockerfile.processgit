@@ -1,0 +1,31 @@
+# Build ProcessGit (Gitea fork) from source
+FROM golang:1.22-bookworm AS build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git make bash ca-certificates curl gcc g++ \
+    nodejs npm \
+ && rm -rf /var/lib/apt/lists/*
+
+# Enable pnpm via corepack (recommended)
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /src
+COPY . .
+
+# Build (Gitea uses Make targets; build should compile backend + frontend assets)
+RUN make build
+
+# Runtime: reuse official gitea image for entrypoint + deps,
+# but replace the binary and web assets with our built ones.
+FROM gitea/gitea:latest
+
+# Replace upstream binary with our fork build
+COPY --from=build /src/gitea /usr/local/bin/gitea
+
+# Replace assets/templates so logo/UI updates take effect
+COPY --from=build /src/templates /usr/share/gitea/templates
+COPY --from=build /src/public /usr/share/gitea/public
+
+# (Optional) add a build marker
+LABEL org.opencontainers.image.title="ProcessGit"
+LABEL org.opencontainers.image.source="https://github.com/Algomation-AI/ProcessGit"
