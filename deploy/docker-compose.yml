@@ -4,14 +4,14 @@ services:
     container_name: processgit
     restart: unless-stopped
     ports:
-      - "3000:3000"
-      - "2222:22"
+      - "18080:3000"   # web UI (host:container)
+      - "12222:22"     # SSH git (host:container)
     volumes:
       - processgit-data:/data
     environment:
-      - USER_UID=1000
-      - USER_GID=1000
-      - APP_NAME=ProcessGit: Git for Processes
+      USER_UID: "1000"
+      USER_GID: "1000"
+      APP_NAME: "ProcessGit: Git for Processes"
 
 volumes:
   processgit-data:
