@@ -1,0 +1,27 @@
+<div class="ui small modal" id="uapf-import-modal">
+	<div class="header">Import UAPF package</div>
+	<div class="content">
+		<form class="ui form" id="uapf-import-form" method="post" enctype="multipart/form-data"
+			action="{{.RepoLink}}/uapf/import">
+			{{.CsrfTokenHtml}}
+
+			<div class="field">
+				<label>.uapf file</label>
+				<input type="file" name="uapf" accept=".uapf,application/zip" required>
+			</div>
+
+			<div class="field">
+				<label>Store in repository path</label>
+				<input type="text" name="dest" value="uapf/" placeholder="uapf/" required>
+			</div>
+
+			<div class="ui info message">
+				The uploaded package will be validated against UAPF v1 schemas before it is committed.
+			</div>
+
+			<button class="ui blue button" type="submit">
+				{{svg "octicon-upload"}} Import
+			</button>
+		</form>
+	</div>
+</div>

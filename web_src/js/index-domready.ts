@@ -26,6 +26,7 @@ import {initRepoTopicBar} from './features/repo-home.ts';
 import {initAdminCommon} from './features/admin/common.ts';
 import {initRepoCodeView} from './features/repo-code.ts';
 import {initSshKeyFormParser} from './features/sshkey-helper.ts';
+import {initRepoUAPFImport} from './features/repo-uapf-import.ts';
 import {initUserSettings} from './features/user-settings.ts';
 import {initRepoActivityTopAuthorsChart, initRepoArchiveLinks} from './features/repo-common.ts';
 import {initRepoMigrationStatusChecker} from './features/repo-migrate.ts';
@@ -135,6 +136,7 @@ const initPerformanceTracer = callInitFunctions([
   initRepoPullRequestReview,
   initRepoReleaseNew,
   initRepoTopicBar,
+  initRepoUAPFImport,
   initRepoViewFileTree,
   initRepoWikiForm,
   initRepository,
