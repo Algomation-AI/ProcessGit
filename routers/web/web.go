@@ -1185,6 +1185,10 @@ func registerWebRoutes(m *web.Router) {
 
 	m.Post("/{username}/{reponame}/markup", optSignIn, context.RepoAssignment, reqUnitsWithMarkdown, web.Bind(structs.MarkupOption{}), misc.Markup)
 
+	m.Group("/{username}/{reponame}/uapf", func() {
+		m.Post("/import", repo.UAPFImportPost)
+	}, reqSignIn, context.RepoAssignment, context.RepoMustNotBeArchived(), reqRepoCodeWriter)
+
 	m.Group("/{username}/{reponame}", func() {
 		m.Group("/tree-list", func() {
 			m.Get("/branch/*", context.RepoRefByType(git.RefTypeBranch), repo.TreeList)
