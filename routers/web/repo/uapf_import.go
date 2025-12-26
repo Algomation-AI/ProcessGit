@@ -10,8 +10,8 @@ import (
 	"path"
 	"strings"
 
+	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/uapf"
-	"code.gitea.io/gitea/services/context"
 	files_service "code.gitea.io/gitea/services/repository/files"
 )
 
