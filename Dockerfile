@@ -67,6 +67,8 @@ RUN addgroup -S -g 1000 git && \
 
 COPY --from=build-env /tmp/local /
 COPY --from=build-env /src/gitea /app/gitea/gitea
+COPY --from=build-env /src/templates /app/gitea/templates
+COPY --from=build-env /src/public    /app/gitea/public
 
 ENV USER=git
 ENV GITEA_CUSTOM=/data/gitea
