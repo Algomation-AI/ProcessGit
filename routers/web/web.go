@@ -1188,6 +1188,9 @@ func registerWebRoutes(m *web.Router) {
 	m.Group("/{username}/{reponame}/uapf", func() {
 		m.Post("/import", repo.UAPFImportPost)
 	}, reqSignIn, context.RepoAssignment, context.RepoMustNotBeArchived(), reqRepoCodeWriter)
+	m.Group("/{username}/{reponame}/uapf", func() {
+		m.Get("/export", repo.UAPFExportGet)
+	}, optSignIn, context.RepoAssignment, context.RepoMustNotBeArchived(), reqUnitCodeReader)
 
 	m.Group("/{username}/{reponame}", func() {
 		m.Group("/tree-list", func() {
