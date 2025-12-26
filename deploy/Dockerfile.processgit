@@ -30,14 +30,13 @@ COPY . .
 # POC unblocker: webpack expects this file in some forks
 RUN mkdir -p assets && echo "[]" > assets/go-licenses.json
 
-# === CRITICAL FIX: Force bindata to embed templates and public assets ===
-# This ensures templates/public are compiled into the binary (no filesystem dependency)
+# === EMBED ASSETS WITH bindata (fixes template/public issues) ===
 ENV TAGS="bindata timetzdata sqlite sqlite_unlock_notify"
 
-# Build backend + frontend with bindata enabled
+# Build backend + frontend
 RUN make build
 
-# Locate the built binary (name may be gitea or processgit depending on fork)
+# Locate and stage the built binary
 RUN set -eux; \
     echo "Searching for built binary..."; \
     BIN="$(find /src -maxdepth 5 -type f \( -name gitea -o -name processgit \) -perm -111 | head -n 1)"; \
@@ -46,14 +45,13 @@ RUN set -eux; \
     mkdir -p /out; \
     cp "${BIN}" /out/gitea
 
-# Runtime image — use official Gitea as base (includes entrypoint, user, s6, etc.)
+# Runtime image — official Gitea base
 FROM gitea/gitea:latest
 
-# Replace only the binary with our custom fork build (assets now embedded)
+# Override with custom binary and make it executable
 COPY --from=build /out/gitea /usr/local/bin/gitea
+RUN chmod +x /usr/local/bin/gitea
 
-# Optional: Keep your custom labels
+# Optional labels
 LABEL org.opencontainers.image.title="ProcessGit"
 LABEL org.opencontainers.image.source="https://github.com/Algomation-AI/ProcessGit"
-
-# No need to copy /templates or /public anymore — they are embedded!
