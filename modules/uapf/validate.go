@@ -92,3 +92,24 @@ func extractManifest(zipReader *zip.Reader) ([]byte, error) {
 
 	return nil, errors.New("manifest.json is required in the UAPF package")
 }
+
+// ValidateManifest validates manifest.json contents against the embedded schema.
+func ValidateManifest(data []byte) error {
+	var manifest any
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		return fmt.Errorf("manifest.json is not valid JSON: %w", err)
+	}
+
+	schema, err := loadManifestSchema()
+	if err != nil {
+		return fmt.Errorf("load manifest schema: %w", err)
+	}
+
+	if err := schema.Validate(manifest); err != nil {
+		if validationErr, ok := err.(*jsonschema.ValidationError); ok {
+			return fmt.Errorf("manifest validation failed: %s", validationErr)
+		}
+		return fmt.Errorf("manifest validation failed: %w", err)
+	}
+	return nil
+}
