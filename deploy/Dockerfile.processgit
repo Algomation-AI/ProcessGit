@@ -2,11 +2,11 @@
 
 FROM golang:1.25-alpine3.22 AS build
 
-# Use a faster/reliable mirror (AzireVPN)
+# Use official Alpine repositories (Fastly-backed) — resolves in your container
 RUN set -eux; \
   printf '%s\n' \
-    'https://mirror.azirevpn.com/alpine/v3.22/main' \
-    'https://mirror.azirevpn.com/alpine/v3.22/community' \
+    'https://dl-cdn.alpinelinux.org/alpine/v3.22/main' \
+    'https://dl-cdn.alpinelinux.org/alpine/v3.22/community' \
     > /etc/apk/repositories; \
   apk update; \
   apk --no-cache add \
