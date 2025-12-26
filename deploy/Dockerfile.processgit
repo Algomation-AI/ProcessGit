@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 # Build ProcessGit (Gitea fork) from source with required Node + Go versions
 FROM node:22.6.0-bookworm AS build
 
@@ -5,33 +7,37 @@ ARG GO_VERSION=1.25.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git make bash ca-certificates curl gcc g++ xz-utils \
- && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Go >= 1.25 from official tarball
+# Install Go from official tarball
 RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o /tmp/go.tgz \
- && rm -rf /usr/local/go \
- && tar -C /usr/local -xzf /tmp/go.tgz \
- && rm /tmp/go.tgz
+    && rm -rf /usr/local/go \
+    && tar -C /usr/local -xzf /tmp/go.tgz \
+    && rm /tmp/go.tgz
 
 ENV PATH="/usr/local/go/bin:${PATH}"
-# Keep headroom on a 4GB VPS; feel free to adjust
+
+# Limit memory usage on modest VPS
 ENV NODE_OPTIONS="--max-old-space-size=2048"
-# Reduce parallelism (helps avoid OOM in webpack + go build)
 ENV MAKEFLAGS="-j1"
 
-# pnpm for frontend build
+# Install pnpm for frontend build
 RUN npm install -g pnpm
 
 WORKDIR /src
 COPY . .
 
-# POC unblocker: webpack expects this file (some forks omit it)
+# POC unblocker: webpack expects this file in some forks
 RUN mkdir -p assets && echo "[]" > assets/go-licenses.json
 
-# Build backend + frontend
+# === CRITICAL FIX: Force bindata to embed templates and public assets ===
+# This ensures templates/public are compiled into the binary (no filesystem dependency)
+ENV TAGS="bindata timetzdata sqlite sqlite_unlock_notify"
+
+# Build backend + frontend with bindata enabled
 RUN make build
 
-# Find the produced binary (path/name can differ across versions) and stage it
+# Locate the built binary (name may be gitea or processgit depending on fork)
 RUN set -eux; \
     echo "Searching for built binary..."; \
     BIN="$(find /src -maxdepth 5 -type f \( -name gitea -o -name processgit \) -perm -111 | head -n 1)"; \
@@ -40,13 +46,14 @@ RUN set -eux; \
     mkdir -p /out; \
     cp "${BIN}" /out/gitea
 
-# Runtime image
+# Runtime image — use official Gitea as base (includes entrypoint, user, s6, etc.)
 FROM gitea/gitea:latest
 
-# Replace upstream binary + assets with our fork build
+# Replace only the binary with our custom fork build (assets now embedded)
 COPY --from=build /out/gitea /usr/local/bin/gitea
-COPY --from=build /src/templates /usr/share/gitea/templates
-COPY --from=build /src/public /usr/share/gitea/public
 
+# Optional: Keep your custom labels
 LABEL org.opencontainers.image.title="ProcessGit"
 LABEL org.opencontainers.image.source="https://github.com/Algomation-AI/ProcessGit"
+
+# No need to copy /templates or /public anymore — they are embedded!
