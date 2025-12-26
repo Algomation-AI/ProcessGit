@@ -1,41 +1,32 @@
 # syntax=docker/dockerfile:1
 
-# Build ProcessGit (your fork) on Alpine so the produced binary runs on Alpine-based gitea/gitea
 FROM golang:1.25-alpine3.22 AS build
 
-# --- FIX: make apk installs reliable on flaky/DNS/IPv6-broken VPS networks ---
-# 1) Pin repositories explicitly (main+community)
-# 2) Run apk update (gives clearer failures, avoids stale index issues)
+# Use a faster/reliable mirror (AzireVPN)
 RUN set -eux; \
   printf '%s\n' \
-    'https://dl-cdn.alpinelinux.org/alpine/v3.22/main' \
-    'https://dl-cdn.alpinelinux.org/alpine/v3.22/community' \
+    'https://mirror.azirevpn.com/alpine/v3.22/main' \
+    'https://mirror.azirevpn.com/alpine/v3.22/community' \
     > /etc/apk/repositories; \
   apk update; \
   apk --no-cache add \
     build-base git bash ca-certificates curl \
     nodejs npm
 
-# Install pnpm (keep same approach as before)
 RUN npm install -g pnpm
 
-# Limit memory usage on modest VPS
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 ENV MAKEFLAGS="-j1"
 
 WORKDIR /src
 COPY . .
 
-# POC unblocker: webpack expects this file in some forks
 RUN mkdir -p assets && echo "[]" > assets/go-licenses.json
 
-# Keep your build tags (same intention as current Dockerfile)
 ENV TAGS="bindata timetzdata sqlite sqlite_unlock_notify"
 
-# Build backend + frontend (your fork)
 RUN make build
 
-# Locate and stage the built binary
 RUN set -eux; \
   echo "Searching for built binary..."; \
   BIN="$(find /src -maxdepth 5 -type f \( -name gitea -o -name processgit \) -perm -111 | head -n 1)"; \
@@ -45,13 +36,10 @@ RUN set -eux; \
   cp "${BIN}" /out/gitea; \
   chmod +x /out/gitea
 
-# Runtime image — official Gitea base (Alpine)
 FROM gitea/gitea:latest
 
-# Replace the *real* server binary; keep upstream wrapper scripts intact
 COPY --from=build /out/gitea /app/gitea/gitea
 RUN chmod +x /app/gitea/gitea
 
 LABEL org.opencontainers.image.title="ProcessGit"
 LABEL org.opencontainers.image.source="https://github.com/Algomation-AI/ProcessGit"
-
