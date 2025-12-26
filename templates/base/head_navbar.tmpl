@@ -3,6 +3,7 @@
 		<!-- the logo -->
 		<a class="item" id="navbar-logo" href="{{AppSubUrl}}/" aria-label="{{if .IsSigned}}{{ctx.Locale.Tr "dashboard"}}{{else}}{{ctx.Locale.Tr "home_title"}}{{end}}">
 			<img width="30" height="30" src="{{AssetUrlPrefix}}/img/logo.svg" alt="{{ctx.Locale.Tr "logo"}}" aria-hidden="true">
+			<span class="tw-ml-2 tw-font-semibold tw-text-base">ProcessGit</span>
 		</a>
 
 		<!-- mobile right menu, it must be here because in mobile view, each item is a flex column, the first item is a full row column -->
@@ -34,10 +35,6 @@
 		{{end}}
 
 		{{template "custom/extra_links" .}}
-
-		{{if not .IsSigned}}
-			<a class="item" target="_blank" rel="noopener noreferrer" href="https://docs.gitea.com">{{ctx.Locale.Tr "help"}}</a>
-		{{end}}
 	</div>
 
 	<!-- the full dropdown menus -->

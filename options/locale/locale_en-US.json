@@ -222,15 +222,19 @@
     "network_error": "Network error"
   },
   "startpage": {
-    "app_desc": "A painless, self-hosted Git service",
-    "install": "Easy to install",
-    "install_desc": "Simply <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">run the binary</a> for your platform, ship it with <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[2]s\">Docker</a>, or get it <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[3]s\">packaged</a>.",
-    "platform": "Cross-platform",
-    "platform_desc": "Gitea runs anywhere <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%s\">Go</a> can compile for: Windows, macOS, Linux, ARM, etc. Choose the one you love!",
-    "lightweight": "Lightweight",
-    "lightweight_desc": "Gitea has low minimal requirements and can run on an inexpensive Raspberry Pi. Save your machine energy!",
-    "license": "Open Source",
-    "license_desc": "Go get <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">%[2]s</a>! Join us by <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[3]s\">contributing</a> to make this project even better. Don't be shy to be a contributor!"
+    "app_desc": "Git for Processes. Version control for workflows, decisions, and executable business logic.",
+
+    "install": "Designed for real-world use",
+    "install_desc": "ProcessGit is a self-hosted platform for managing business processes as first-class Git assets. It enables teams to version, review, and evolve workflows, decision models, and automation logic with the same discipline as source code.",
+
+    "platform": "Built for process-driven organizations",
+    "platform_desc": "ProcessGit is purpose-built for organizations that treat processes as strategic assets — public sector, enterprises, regulated industries, and AI-enabled operations.",
+
+    "lightweight": "Simple, transparent, predictable",
+    "lightweight_desc": "No hidden automation, no opaque engines. Just Git-native versioning, clear change history, and full traceability of how processes evolve over time.",
+
+    "license": "Open by design",
+    "license_desc": "ProcessGit is open source and extensible. It integrates naturally with BPMN, DMN, CMMN, and modern automation or AI execution layers without locking you in."
   },
   "install": {
     "install": "Installation",
