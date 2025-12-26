@@ -3,9 +3,18 @@
 # Build ProcessGit (your fork) on Alpine so the produced binary runs on Alpine-based gitea/gitea
 FROM golang:1.25-alpine3.22 AS build
 
-RUN apk --no-cache add \
-  build-base git bash ca-certificates curl \
-  nodejs npm
+# --- FIX: make apk installs reliable on flaky/DNS/IPv6-broken VPS networks ---
+# 1) Pin repositories explicitly (main+community)
+# 2) Run apk update (gives clearer failures, avoids stale index issues)
+RUN set -eux; \
+  printf '%s\n' \
+    'https://dl-cdn.alpinelinux.org/alpine/v3.22/main' \
+    'https://dl-cdn.alpinelinux.org/alpine/v3.22/community' \
+    > /etc/apk/repositories; \
+  apk update; \
+  apk --no-cache add \
+    build-base git bash ca-certificates curl \
+    nodejs npm
 
 # Install pnpm (keep same approach as before)
 RUN npm install -g pnpm
@@ -45,3 +54,4 @@ RUN chmod +x /app/gitea/gitea
 
 LABEL org.opencontainers.image.title="ProcessGit"
 LABEL org.opencontainers.image.source="https://github.com/Algomation-AI/ProcessGit"
+
