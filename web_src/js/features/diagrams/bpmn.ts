@@ -7,6 +7,9 @@ import BpmnModeler from 'bpmn-js/lib/Modeler';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - upstream packages do not ship full type definitions
 import {BpmnPropertiesPanelModule, BpmnPropertiesProviderModule} from 'bpmn-js-properties-panel';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - package ships without types
+import AutoLayout from 'bpmn-auto-layout';
 import type {DiagramAdapter} from './types.ts';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
@@ -18,6 +21,33 @@ function clearContainer(container: HTMLElement, properties?: HTMLElement | null)
   container.innerHTML = '';
   properties?.classList.add('tw-hidden');
   if (properties) properties.innerHTML = '';
+}
+
+async function prepareBpmnXml(xml: string): Promise<string> {
+  let xmlTrim = (xml || '').trim();
+
+  if (!xmlTrim) {
+    throw new Error('no diagram to display: empty xml');
+  }
+
+  if (xmlTrim.startsWith('<!DOCTYPE html') || xmlTrim.startsWith('<html')) {
+    throw new Error('no diagram to display: got HTML instead of BPMN XML');
+  }
+
+  if (!xmlTrim.includes('<bpmn:definitions') && !xmlTrim.includes('xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"')) {
+    throw new Error('no diagram to display: content is not BPMN XML');
+  }
+
+  if (!xmlTrim.includes('<bpmn:process') && !xmlTrim.includes('<bpmn:collaboration')) {
+    throw new Error('no diagram to display: BPMN definitions without process/collaboration');
+  }
+
+  if (!xmlTrim.includes('bpmndi:BPMNDiagram')) {
+    const autoLayout = new AutoLayout();
+    xmlTrim = await autoLayout.layoutProcess(xmlTrim);
+  }
+
+  return xmlTrim;
 }
 
 export function createBpmnAdapter(canvas: HTMLElement, properties?: HTMLElement | null): DiagramAdapter {
@@ -54,7 +84,8 @@ export function createBpmnAdapter(canvas: HTMLElement, properties?: HTMLElement 
       cleanupViewer();
       clearContainer(canvas, getPropertiesContainer());
       viewer = new BpmnViewer({container: canvas});
-      await viewer.importXML(xml);
+      const preparedXml = await prepareBpmnXml(xml);
+      await viewer.importXML(preparedXml);
       viewer.get('canvas')?.zoom('fit-viewport');
     },
 
@@ -68,7 +99,8 @@ export function createBpmnAdapter(canvas: HTMLElement, properties?: HTMLElement 
         propertiesPanel: propertiesPanelParent ? {parent: '#diagram-properties'} : undefined,
         additionalModules: propertiesPanelParent ? [BpmnPropertiesPanelModule, BpmnPropertiesProviderModule] : undefined,
       });
-      await modeler.importXML(xml);
+      const preparedXml = await prepareBpmnXml(xml);
+      await modeler.importXML(preparedXml);
       modeler.get('canvas')?.zoom('fit-viewport');
       propertiesPanelParent?.classList.remove('tw-hidden');
       bindChangeHandler();
