@@ -70,7 +70,7 @@
     "wrap-ansi": "9.0.2"
   },
   "devDependencies": {
-    "@bpmn-io/properties-panel": "1.23.0",
+    "@bpmn-io/properties-panel": "3.35.1",
     "@eslint-community/eslint-plugin-eslint-comments": "4.5.0",
     "@eslint/json": "0.14.0",
     "@playwright/test": "1.57.0",
