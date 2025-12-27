@@ -11,6 +11,14 @@ export interface DiagramPayload {
   sourcePath?: string;
 }
 
+export interface RawDiagramPayload extends Partial<DiagramPayload> {
+  Type?: string;
+  Format?: string;
+  Content?: string;
+  Encoding?: string;
+  contentB64?: string;
+}
+
 export interface DiagramAdapter {
   renderPreview(content: any): Promise<void>;
   enterEdit?: (content: any) => Promise<void>;
