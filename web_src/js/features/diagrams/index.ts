@@ -8,15 +8,20 @@ function toMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
+function b64ToUtf8(b64: string): string {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
 function decodePayloadContent(payload: DiagramPayload): string {
   if (payload.encoding === 'base64') {
-    const binary = atob(payload.content ?? '');
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    const decoder = new TextDecoder();
-    return decoder.decode(bytes);
+    const encoded = payload.content || payload.contentB64 || '';
+    if (!encoded) throw new Error('Diagram content is empty.');
+    return b64ToUtf8(encoded).trim();
   }
-  return payload.content ?? '';
+  return (payload.content ?? '').trim();
 }
 
 function encodePath(path: string): string {
@@ -78,6 +83,7 @@ function normalizePayload(raw: RawDiagramPayload, container: HTMLElement): Diagr
   const format = raw.format ?? raw.Format ?? container.dataset.diagramFormat ?? '';
   const content = raw.content ?? raw.contentB64 ?? raw.Content ?? '';
   const encoding = raw.encoding ?? raw.Encoding ?? (raw.contentB64 ? 'base64' : undefined);
+  const contentB64 = raw.contentB64;
 
   if (!type) return null;
 
@@ -86,6 +92,7 @@ function normalizePayload(raw: RawDiagramPayload, container: HTMLElement): Diagr
     type,
     format,
     content,
+    contentB64,
     encoding,
   } as DiagramPayload;
 }
@@ -166,7 +173,20 @@ export function initRepoDiagrams(): void {
       return;
     }
 
-    const decodedContent = decodePayloadContent(payload);
+    let decodedContent: string;
+    try {
+      decodedContent = decodePayloadContent(payload);
+    } catch (err) {
+      showErrorToast(`Unable to read diagram content: ${toMessage(err)}`);
+      fallbackToRaw();
+      return;
+    }
+    if (payload.format === 'xml' && decodedContent && !decodedContent.startsWith('<')) {
+      showErrorToast('Diagram content is not XML.');
+      fallbackToRaw();
+      return;
+    }
+
     let workingContent: any = decodedContent;
     if (payload.format === 'json') {
       try {

@@ -6,6 +6,7 @@ export interface DiagramPayload {
   lastCommit: string;
   repoLink: string;
   content: string;
+  contentB64?: string;
   encoding?: string;
   editable?: boolean;
   sourcePath?: string;
