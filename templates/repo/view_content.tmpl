@@ -110,6 +110,21 @@
 			</button>
 			{{end}}
 		{{end}}
+		{{if .Permission.CanRead ctx.Consts.RepoUnitTypeCode}}
+			<div class="ui dropdown basic compact button" id="uapf-import-dropdown">
+				{{svg "octicon-upload" 16 "tw-mr-2"}}UAPF
+				<div class="menu">
+					{{if and $.IsSigned (.Permission.CanWrite ctx.Consts.RepoUnitTypeCode) (not .Repository.IsArchived)}}
+					<a class="item" id="uapf-import-open">
+						{{svg "octicon-file-zip" 16 "tw-mr-2"}}Upload .uapf
+					</a>
+					{{end}}
+					<a class="item" href="{{.RepoLink}}/uapf/export">
+						{{svg "octicon-cloud-download" 16 "tw-mr-2"}}Export .uapf
+					</a>
+				</div>
+			</div>
+		{{end}}
 		<!-- Only show clone panel in repository home page -->
 		{{if $isTreePathRoot}}
 			{{template "repo/clone_panel" .}}
