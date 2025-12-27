@@ -5,7 +5,6 @@ package spec
 
 import (
 	"errors"
-	"fmt"
 	"path"
 )
 
