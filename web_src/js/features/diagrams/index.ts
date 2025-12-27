@@ -4,6 +4,19 @@ import type {DiagramAdapter, DiagramPayload, RawDiagramPayload} from './types.ts
 
 type DiagramMode = 'preview' | 'edit' | 'raw';
 
+function logValidationError(context: string, reason: string, payload: DiagramPayload, content: any) {
+  const details: Record<string, unknown> = {
+    context,
+    reason,
+    type: payload.type,
+    format: payload.format,
+  };
+  if (typeof content === 'string') {
+    details.contentLength = content.length;
+  }
+  console.error('Diagram validation failed', details);
+}
+
 function toMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
@@ -264,6 +277,7 @@ export function initRepoDiagrams(): void {
       }
       const validationError = validatePreviewContent(payload, workingContent);
       if (validationError) {
+        logValidationError('preview', validationError, payload, workingContent);
         showErrorToast(validationError);
         fallbackToRaw();
         return;
@@ -289,6 +303,7 @@ export function initRepoDiagrams(): void {
       }
       const validationError = validatePreviewContent(payload, workingContent);
       if (validationError) {
+        logValidationError('edit', validationError, payload, workingContent);
         showErrorToast(validationError);
         fallbackToRaw();
         return;
@@ -319,6 +334,7 @@ export function initRepoDiagrams(): void {
         const serialized = await adapter.save();
         const validationError = payload.format === 'xml' ? validateXml(payload.type, serialized) : null;
         if (validationError) {
+          logValidationError('save', validationError, payload, serialized);
           showErrorToast(validationError);
           return;
         }
