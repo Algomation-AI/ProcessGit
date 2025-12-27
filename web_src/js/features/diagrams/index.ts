@@ -78,6 +78,12 @@ async function createAdapter(type: string, canvas: HTMLElement, properties: HTML
   }
 }
 
+function validatePreviewContent(payload: DiagramPayload, content: any): string | null {
+  if (payload.format !== 'xml') return null;
+  if (typeof content !== 'string') return 'Diagram content is not XML.';
+  return validateXml(payload.type, content);
+}
+
 function normalizePayload(raw: RawDiagramPayload, container: HTMLElement): DiagramPayload | null {
   const type = raw.type ?? raw.Type ?? container.dataset.diagramType ?? '';
   const format = raw.format ?? raw.Format ?? container.dataset.diagramFormat ?? '';
@@ -256,9 +262,16 @@ export function initRepoDiagrams(): void {
         saveButton.classList.add('tw-hidden');
         saveButton.disabled = true;
       }
+      const validationError = validatePreviewContent(payload, workingContent);
+      if (validationError) {
+        showErrorToast(validationError);
+        fallbackToRaw();
+        return;
+      }
       try {
         await adapter.renderPreview(workingContent);
       } catch (err) {
+        console.error('Failed to render diagram preview', err);
         showErrorToast(`Unable to render diagram: ${toMessage(err)}`);
         fallbackToRaw();
       }
@@ -274,10 +287,17 @@ export function initRepoDiagrams(): void {
         saveButton.classList.remove('tw-hidden');
         saveButton.disabled = true;
       }
+      const validationError = validatePreviewContent(payload, workingContent);
+      if (validationError) {
+        showErrorToast(validationError);
+        fallbackToRaw();
+        return;
+      }
       try {
         await adapter.enterEdit(workingContent);
         adapter.setChangeHandler?.(markDirty);
       } catch (err) {
+        console.error('Failed to enter diagram edit mode', err);
         showErrorToast(`Unable to start edit mode: ${toMessage(err)}`);
         fallbackToRaw();
       }
