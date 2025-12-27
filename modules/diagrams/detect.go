@@ -85,11 +85,11 @@ func detectByContent(pathLower string, headBytes []byte) (DiagramType, string) {
 	}
 
 	switch {
-	case strings.Contains(sample, "<bpmn:definitions"):
+	case strings.Contains(sample, "<bpmn:definitions") || strings.Contains(sample, "xmlns:bpmn="):
 		return DiagramBPMN, "xml"
-	case strings.Contains(sample, "<cmmn:definitions"):
+	case strings.Contains(sample, "<cmmn:definitions") || strings.Contains(sample, "xmlns:cmmn="):
 		return DiagramCMMN, "xml"
-	case strings.Contains(sample, "<dmn:definitions"):
+	case strings.Contains(sample, "<dmn:definitions") || strings.Contains(sample, "xmlns:dmn="):
 		return DiagramDMN, "xml"
 	}
 

@@ -45,6 +45,34 @@ function buildSaveUrl(payload: DiagramPayload): string {
   return `${payload.repoLink}/_edit/${encodePath(payload.branch)}/${encodePath(payload.path)}`;
 }
 
+function buildRawUrl(payload: DiagramPayload): string {
+  const base = payload.repoLink;
+  return `${base}/raw/${encodeURIComponent(payload.branch)}/${payload.path.split('/').map(encodeURIComponent).join('/')}`;
+}
+
+function looksLikeHtml(content: string): boolean {
+  const trimmed = content.trimStart().toLowerCase();
+  return trimmed.startsWith('<!doctype html') || trimmed.startsWith('<html');
+}
+
+async function fetchRawDiagramContent(payload: DiagramPayload): Promise<string> {
+  if (!payload.repoLink || !payload.branch || !payload.path) {
+    throw new Error('Missing repository information for raw fetch.');
+  }
+  const rawUrl = buildRawUrl(payload);
+  const response = await fetch(rawUrl, {
+    headers: {'X-Requested-With': 'XMLHttpRequest', Accept: 'text/plain'},
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch raw diagram content (${response.status})`);
+  }
+  const text = await response.text();
+  if (!text.trim()) {
+    throw new Error('Raw diagram content is empty.');
+  }
+  return text.trim();
+}
+
 function validateXml(type: string, xml: string): string | null {
   if (!xml.trim()) return 'Diagram output is empty.';
   const parser = new DOMParser();
@@ -203,10 +231,20 @@ export function initRepoDiagrams(): void {
       fallbackToRaw();
       return;
     }
-    if (payload.format === 'xml' && decodedContent && !decodedContent.startsWith('<')) {
-      showErrorToast('Diagram content is not XML.');
-      fallbackToRaw();
-      return;
+    if (payload.format === 'xml' && decodedContent) {
+      if (looksLikeHtml(decodedContent)) {
+        try {
+          decodedContent = await fetchRawDiagramContent(payload);
+        } catch (err) {
+          showErrorToast(`Unable to fetch diagram content: ${toMessage(err)}`);
+          fallbackToRaw();
+          return;
+        }
+      } else if (!decodedContent.trimStart().startsWith('<')) {
+        showErrorToast('Diagram content is not XML.');
+        fallbackToRaw();
+        return;
+      }
     }
 
     let workingContent: any = decodedContent;
