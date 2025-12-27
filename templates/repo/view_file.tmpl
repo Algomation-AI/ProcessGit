@@ -36,7 +36,7 @@
 		</div>
 		<div class="file-header-right file-actions flex-text-block tw-flex-wrap">
 			{{/* this componment is also controlled by frontend plugin renders */}}
-			<div class="ui compact icon buttons file-view-toggle-buttons {{Iif .HasSourceRenderedToggle "" "tw-hidden"}}">
+			<div class="ui compact icon buttons file-view-toggle-buttons {{if or (not .HasSourceRenderedToggle) (ne .DiagramType "none")}}tw-hidden{{end}}">
 				{{if .IsRepresentableAsText}}
 				<a href="?display=source" class="ui mini basic button file-view-toggle-source {{if .IsDisplayingSource}}active{{end}}" data-tooltip-content="{{ctx.Locale.Tr "repo.file_view_source"}}">{{svg "octicon-code" 15}}</a>
 				{{end}}
@@ -89,63 +89,96 @@
 		</div>
 	</h4>
 
-	<div class="ui bottom attached table unstackable segment">
-		{{if not .IsMarkup}}
-			{{template "repo/unicode_escape_prompt" dict "EscapeStatus" .EscapeStatus}}
-		{{end}}
-		<div class="file-view {{if .IsMarkup}}markup {{.MarkupType}}{{else if .IsPlainText}}plain-text{{else if .IsDisplayingSource}}code-view{{end}}">
-			{{if .IsFileTooLarge}}
-				{{template "shared/filetoolarge" dict "RawFileLink" .RawFileLink}}
-			{{else if not .FileSize}}
-				{{template "shared/fileisempty"}}
-			{{else if .IsMarkup}}
-				{{.FileContent}}
-			{{else if .IsPlainText}}
-				<pre>{{if .FileContent}}{{.FileContent}}{{end}}</pre>
-			{{else if .FileContent}}
-				<table>
-					<tbody>
-					{{range $idx, $code := .FileContent}}
-						{{$line := Eval $idx "+" 1}}
-						<tr>
-							<td class="lines-num"><span id="L{{$line}}" data-line-number="{{$line}}"></span></td>
-							{{if $.EscapeStatus.Escaped}}
-								<td class="lines-escape">{{if (index $.LineEscapeStatus $idx).Escaped}}<button class="toggle-escape-button btn interact-bg" title="{{if (index $.LineEscapeStatus $idx).HasInvisible}}{{ctx.Locale.Tr "repo.invisible_runes_line"}} {{end}}{{if (index $.LineEscapeStatus $idx).HasAmbiguous}}{{ctx.Locale.Tr "repo.ambiguous_runes_line"}}{{end}}"></button>{{end}}</td>
-							{{end}}
-							<td rel="L{{$line}}" class="lines-code chroma"><code class="code-inner">{{$code}}</code></td>
-						</tr>
-					{{end}}
-					</tbody>
-				</table>
-			{{else}}
-				<div class="view-raw">
-					{{if .IsImageFile}}
-						<img alt="{{$.RawFileLink}}" src="{{$.RawFileLink}}">
-					{{else if .IsVideoFile}}
-						<video controls src="{{$.RawFileLink}}">
-							<strong>{{ctx.Locale.Tr "repo.video_not_supported_in_browser"}}</strong>
-						</video>
-					{{else if .IsAudioFile}}
-						<audio controls src="{{$.RawFileLink}}">
-							<strong>{{ctx.Locale.Tr "repo.audio_not_supported_in_browser"}}</strong>
-						</audio>
-					{{else}}
-						<div class="file-view-render-container">
-							<div class="file-view-raw-prompt tw-p-4">
-								<a href="{{$.RawFileLink}}" rel="nofollow">{{ctx.Locale.Tr "repo.file_view_raw"}}</a>
-							</div>
-						</div>
+	<div class="ui bottom attached table unstackable segment {{if ne .DiagramType "none"}}diagram-view-shell{{end}}">
+		{{if and (ne .DiagramType "none") .DiagramPayload}}
+			<div class="diagram-viewer" data-global-init="initRepoDiagrams" data-diagram-type="{{.DiagramType}}" data-diagram-format="{{.DiagramFormat}}" data-diagram-raw-panel="diagram-raw-view">
+				<div class="diagram-toolbar tw-flex tw-items-center tw-justify-between tw-gap-2 tw-mb-3">
+					<div class="ui buttons diagram-mode-buttons">
+						<button class="ui button active" data-diagram-action="preview">{{ctx.Locale.Tr "preview"}}</button>
+						{{if .DiagramEditable}}
+							<button class="ui button" data-diagram-action="edit">{{ctx.Locale.Tr "repo.editor.edit_file"}}</button>
+						{{end}}
+						<button class="ui button" data-diagram-action="raw">{{ctx.Locale.Tr "repo.file_view_source"}}</button>
+					</div>
+					<div class="tw-flex tw-gap-2 tw-items-center">
+						{{if .DiagramEditable}}
+							<button class="ui primary button diagram-save-button tw-hidden" data-diagram-action="save" disabled>{{ctx.Locale.Tr "save"}}</button>
+						{{end}}
+						{{if and (not .DiagramEditable) .DiagramSourcePath}}
+							<a class="ui button diagram-edit-source" href="{{.RepoLink}}/src/{{.RefTypeNameSubURL}}/{{PathEscapeSegments .DiagramSourcePath}}">{{ctx.Locale.Tr "repo.editor.edit_this_file"}}</a>
+						{{end}}
+					</div>
+				</div>
+				<div class="diagram-stage tw-flex tw-gap-3">
+					<div id="diagram-canvas" class="diagram-canvas"></div>
+					{{if .DiagramEditable}}
+						<div id="diagram-properties" class="diagram-properties tw-hidden"></div>
 					{{end}}
 				</div>
-			{{end}}
-		</div>
+				{{if .DiagramPayload}}
+					<script type="application/json" id="diagram-payload">{{JsonUtils.EncodeToString .DiagramPayload}}</script>
+				{{end}}
+			</div>
+		{{end}}
 
-		<div class="code-line-menu tippy-target">
-			{{if $.Permission.CanRead ctx.Consts.RepoUnitTypeIssues}}
-			<a class="item ref-in-new-issue" role="menuitem" data-url-issue-new="{{.RepoLink}}/issues/new" data-url-param-body-link="{{.Repository.Link}}/src/commit/{{PathEscape .CommitID}}/{{PathEscapeSegments .TreePath}}{{if $.HasSourceRenderedToggle}}?display=source{{end}}" rel="nofollow noindex">{{ctx.Locale.Tr "repo.issues.context.reference_issue"}}</a>
+		<div id="diagram-raw-view" class="diagram-raw-view {{if ne .DiagramType "none"}}tw-hidden{{end}}">
+			{{if not .IsMarkup}}
+				{{template "repo/unicode_escape_prompt" dict "EscapeStatus" .EscapeStatus}}
 			{{end}}
-			<a class="item view_git_blame" role="menuitem" href="{{.Repository.Link}}/blame/commit/{{PathEscape .CommitID}}/{{PathEscapeSegments .TreePath}}">{{ctx.Locale.Tr "repo.view_git_blame"}}</a>
-			<a class="item copy-line-permalink" role="menuitem" data-url="{{.Repository.Link}}/src/commit/{{PathEscape .CommitID}}/{{PathEscapeSegments .TreePath}}{{if $.HasSourceRenderedToggle}}?display=source{{end}}">{{ctx.Locale.Tr "repo.file_copy_permalink"}}</a>
+			<div class="file-view {{if .IsMarkup}}markup {{.MarkupType}}{{else if .IsPlainText}}plain-text{{else if .IsDisplayingSource}}code-view{{end}}">
+				{{if .IsFileTooLarge}}
+					{{template "shared/filetoolarge" dict "RawFileLink" .RawFileLink}}
+				{{else if not .FileSize}}
+					{{template "shared/fileisempty"}}
+				{{else if .IsMarkup}}
+					{{.FileContent}}
+				{{else if .IsPlainText}}
+					<pre>{{if .FileContent}}{{.FileContent}}{{end}}</pre>
+				{{else if .FileContent}}
+					<table>
+						<tbody>
+						{{range $idx, $code := .FileContent}}
+							{{$line := Eval $idx "+" 1}}
+							<tr>
+								<td class="lines-num"><span id="L{{$line}}" data-line-number="{{$line}}"></span></td>
+								{{if $.EscapeStatus.Escaped}}
+									<td class="lines-escape">{{if (index $.LineEscapeStatus $idx).Escaped}}<button class="toggle-escape-button btn interact-bg" title="{{if (index $.LineEscapeStatus $idx).HasInvisible}}{{ctx.Locale.Tr "repo.invisible_runes_line"}} {{end}}{{if (index $.LineEscapeStatus $idx).HasAmbiguous}}{{ctx.Locale.Tr "repo.ambiguous_runes_line"}}{{end}}"></button>{{end}}</td>
+								{{end}}
+								<td rel="L{{$line}}" class="lines-code chroma"><code class="code-inner">{{$code}}</code></td>
+							</tr>
+						{{end}}
+						</tbody>
+					</table>
+				{{else}}
+					<div class="view-raw">
+						{{if .IsImageFile}}
+							<img alt="{{$.RawFileLink}}" src="{{$.RawFileLink}}">
+						{{else if .IsVideoFile}}
+							<video controls src="{{$.RawFileLink}}">
+								<strong>{{ctx.Locale.Tr "repo.video_not_supported_in_browser"}}</strong>
+							</video>
+						{{else if .IsAudioFile}}
+							<audio controls src="{{$.RawFileLink}}">
+								<strong>{{ctx.Locale.Tr "repo.audio_not_supported_in_browser"}}</strong>
+							</audio>
+						{{else}}
+							<div class="file-view-render-container">
+								<div class="file-view-raw-prompt tw-p-4">
+									<a href="{{$.RawFileLink}}" rel="nofollow">{{ctx.Locale.Tr "repo.file_view_raw"}}</a>
+								</div>
+							</div>
+						{{end}}
+					</div>
+				{{end}}
+			</div>
+
+			<div class="code-line-menu tippy-target">
+				{{if $.Permission.CanRead ctx.Consts.RepoUnitTypeIssues}}
+				<a class="item ref-in-new-issue" role="menuitem" data-url-issue-new="{{.RepoLink}}/issues/new" data-url-param-body-link="{{.Repository.Link}}/src/commit/{{PathEscape .CommitID}}/{{PathEscapeSegments .TreePath}}{{if $.HasSourceRenderedToggle}}?display=source{{end}}" rel="nofollow noindex">{{ctx.Locale.Tr "repo.issues.context.reference_issue"}}</a>
+				{{end}}
+				<a class="item view_git_blame" role="menuitem" href="{{.Repository.Link}}/blame/commit/{{PathEscape .CommitID}}/{{PathEscapeSegments .TreePath}}">{{ctx.Locale.Tr "repo.view_git_blame"}}</a>
+				<a class="item copy-line-permalink" role="menuitem" data-url="{{.Repository.Link}}/src/commit/{{PathEscape .CommitID}}/{{PathEscapeSegments .TreePath}}{{if $.HasSourceRenderedToggle}}?display=source{{end}}">{{ctx.Locale.Tr "repo.file_copy_permalink"}}</a>
+			</div>
 		</div>
 	</div>
 </div>

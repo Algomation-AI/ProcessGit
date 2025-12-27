@@ -1,0 +1,43 @@
+.diagram-view-shell {
+  background: var(--color-body);
+}
+
+.diagram-viewer {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  background: var(--color-secondary-bg);
+}
+
+.diagram-stage {
+  min-height: 420px;
+}
+
+.diagram-canvas {
+  flex: 1;
+  min-height: 420px;
+  background: var(--color-body);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.diagram-properties {
+  width: 320px;
+  min-width: 260px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-body);
+}
+
+.diagram-raw-view {
+  margin-top: 1rem;
+}
+
+.diagram-viewer .diagram-save-button.tw-hidden {
+  display: none;
+}
+
+.diagram-viewer .diagram-properties.tw-hidden {
+  display: none;
+}
