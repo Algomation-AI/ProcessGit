@@ -5,6 +5,7 @@ package templates
 
 import (
 	"bytes"
+	"html/template"
 
 	"code.gitea.io/gitea/modules/json"
 )
@@ -23,6 +24,14 @@ func (su *JsonUtils) EncodeToString(v any) string {
 		return ""
 	}
 	return string(out)
+}
+
+func (su *JsonUtils) Encode(v any) template.JS {
+	out, err := json.Marshal(v)
+	if err != nil {
+		return ""
+	}
+	return template.JS(out)
 }
 
 func (su *JsonUtils) PrettyIndent(s string) string {
