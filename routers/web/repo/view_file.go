@@ -5,6 +5,7 @@ package repo
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"image"
 	"io"
@@ -17,6 +18,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/actions"
 	"code.gitea.io/gitea/modules/charset"
+	"code.gitea.io/gitea/modules/diagrams"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/git/attribute"
 	"code.gitea.io/gitea/modules/highlight"
@@ -30,6 +32,19 @@ import (
 
 	"github.com/nektos/act/pkg/model"
 )
+
+type diagramPayload struct {
+	Type       diagrams.DiagramType `json:"type"`
+	Format     string               `json:"format"`
+	Path       string               `json:"path"`
+	Branch     string               `json:"branch"`
+	LastCommit string               `json:"lastCommit"`
+	RepoLink   string               `json:"repoLink"`
+	Content    string               `json:"content"`
+	Encoding   string               `json:"encoding"`
+	Editable   bool                 `json:"editable"`
+	SourcePath string               `json:"sourcePath,omitempty"`
+}
 
 func prepareLatestCommitInfo(ctx *context.Context) bool {
 	commit, err := ctx.Repo.Commit.GetCommitByPath(ctx.Repo.TreePath)
@@ -163,6 +178,13 @@ func handleFileViewRenderImage(ctx *context.Context, fInfo *fileInfo, prefetchBu
 func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 	ctx.Data["IsViewFile"] = true
 	ctx.Data["HideRepoInfo"] = true
+	ctx.Data["DiagramType"] = diagrams.DiagramNone
+	ctx.Data["DiagramEditable"] = false
+	ctx.Data["DiagramFormat"] = ""
+	ctx.Data["DiagramPath"] = ctx.Repo.TreePath
+	ctx.Data["DiagramBranch"] = ctx.Repo.BranchName
+	ctx.Data["DiagramLastCommit"] = ctx.Repo.CommitID
+	ctx.Data["DiagramSourcePath"] = ""
 
 	if !prepareLatestCommitInfo(ctx) {
 		return
@@ -208,12 +230,14 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 
 	// Don't call any other repository functions depends on git.Repository until the dataRc closed to
 	// avoid creating an unnecessary temporary cat file.
-	buf, dataRc, fInfo, err := getFileReader(ctx, ctx.Repo.Repository.ID, blob)
+	prefetchBuf, dataRc, fInfo, err := getFileReader(ctx, ctx.Repo.Repository.ID, blob)
 	if err != nil {
 		ctx.ServerError("getFileReader", err)
 		return
 	}
-	defer dataRc.Close()
+	defer func() {
+		_ = dataRc.Close()
+	}()
 
 	if fInfo.isLFSFile() {
 		ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/media/" + ctx.Repo.RefTypeNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
@@ -234,25 +258,80 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 		return
 	}
 
+	diagramDetection := diagrams.Detect(ctx.Repo.TreePath, prefetchBuf)
+	diagramSourcePath := ""
+	if diagramDetection.Type == diagrams.DiagramNGraph || diagramDetection.Type == diagrams.DiagramRuleset {
+		diagramSourcePath = loadDiagramSourcePath(ctx, ctx.Repo.TreePath)
+	}
+	diagramFormat := diagramDetection.Format
+
+	var fullContent []byte
+	contentReader := io.MultiReader(bytes.NewReader(prefetchBuf), dataRc)
+	if fInfo.st.IsRepresentableAsText() && fInfo.blobOrLfsSize < setting.UI.MaxDisplayFileSize {
+		fullContent, err = io.ReadAll(contentReader)
+		if err != nil {
+			ctx.ServerError("ReadAll", err)
+			return
+		}
+		_ = dataRc.Close()
+		dataRc = io.NopCloser(bytes.NewReader(fullContent))
+		contentReader = bytes.NewReader(fullContent)
+	} else {
+		contentReader = io.MultiReader(bytes.NewReader(prefetchBuf), dataRc)
+	}
+	if fInfo.st.IsRepresentableAsText() {
+		contentReader = charset.ToUTF8WithFallbackReader(contentReader, charset.ConvertOpts{})
+	}
+
+	if diagramDetection.Type != diagrams.DiagramNone && (len(fullContent) == 0 || fInfo.blobOrLfsSize >= setting.UI.MaxDisplayFileSize || !fInfo.st.IsRepresentableAsText()) {
+		diagramDetection.Type = diagrams.DiagramNone
+		diagramFormat = ""
+	}
+
+	canEditDiagram := diagramDetection.Type.Editable() &&
+		ctx.Repo.Repository.CanEnableEditor() &&
+		ctx.Repo.RefFullName.IsBranch() &&
+		ctx.Repo.CanWriteToBranch(ctx, ctx.Doer, ctx.Repo.BranchName) &&
+		!fInfo.isLFSFile() &&
+		fInfo.blobOrLfsSize < setting.UI.MaxDisplayFileSize
+
+	ctx.Data["DiagramType"] = diagramDetection.Type
+	ctx.Data["DiagramEditable"] = canEditDiagram
+	ctx.Data["DiagramFormat"] = diagramFormat
+	if diagramSourcePath != "" {
+		ctx.Data["DiagramSourcePath"] = diagramSourcePath
+	}
+	if diagramDetection.Type != diagrams.DiagramNone && len(fullContent) > 0 {
+		payload := diagramPayload{
+			Type:       diagramDetection.Type,
+			Format:     diagramFormat,
+			Path:       ctx.Repo.TreePath,
+			Branch:     ctx.Repo.BranchName,
+			LastCommit: ctx.Repo.CommitID,
+			RepoLink:   ctx.Repo.RepoLink,
+			Content:    base64.StdEncoding.EncodeToString(fullContent),
+			Encoding:   "base64",
+			Editable:   canEditDiagram,
+			SourcePath: diagramSourcePath,
+		}
+		ctx.Data["DiagramPayload"] = payload
+	}
+
 	// TODO: in the future maybe we need more accurate flags, for example:
 	// * IsRepresentableAsText: some files are text, some are not
 	// * IsRenderableXxx: some files are rendered by backend "markup" engine, some are rendered by frontend (pdf, 3d)
 	// * DefaultViewMode: when there is no "display" query parameter, which view mode should be used by default, source or rendered
 
-	contentReader := io.MultiReader(bytes.NewReader(buf), dataRc)
-	if fInfo.st.IsRepresentableAsText() {
-		contentReader = charset.ToUTF8WithFallbackReader(contentReader, charset.ConvertOpts{})
-	}
 	switch {
 	case fInfo.blobOrLfsSize >= setting.UI.MaxDisplayFileSize:
 		ctx.Data["IsFileTooLarge"] = true
-	case handleFileViewRenderMarkup(ctx, entry.Name(), fInfo.st, buf, contentReader):
+	case handleFileViewRenderMarkup(ctx, entry.Name(), fInfo.st, prefetchBuf, contentReader):
 		// it also sets ctx.Data["FileContent"] and more
 		ctx.Data["IsMarkup"] = true
 	case handleFileViewRenderSource(ctx, entry.Name(), attrs, fInfo, contentReader):
 		// it also sets ctx.Data["FileContent"] and more
 		ctx.Data["IsDisplayingSource"] = true
-	case handleFileViewRenderImage(ctx, fInfo, buf):
+	case handleFileViewRenderImage(ctx, fInfo, prefetchBuf):
 		ctx.Data["IsImageFile"] = true
 	case fInfo.st.IsVideo():
 		ctx.Data["IsVideoFile"] = true
@@ -261,6 +340,29 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 	default:
 		// unable to render anything, show the "view raw" or let frontend handle it
 	}
+}
+
+func loadDiagramSourcePath(ctx *context.Context, treePath string) string {
+	metaPath := treePath + ".meta.json"
+	entry, err := ctx.Repo.Commit.GetTreeEntryByPath(metaPath)
+	if err != nil {
+		return ""
+	}
+	if entry.IsDir() {
+		return ""
+	}
+
+	reader, err := entry.Blob().DataAsync()
+	if err != nil {
+		return ""
+	}
+	defer reader.Close()
+
+	data, err := io.ReadAll(io.LimitReader(reader, 4096))
+	if err != nil {
+		return ""
+	}
+	return diagrams.ParseRulesetMetadata(data)
 }
 
 func prepareFileViewEditorButtons(ctx *context.Context) bool {
