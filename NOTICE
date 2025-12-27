@@ -4,3 +4,7 @@ Copyright (c) 2016 The Gitea Authors, licensed under the MIT License.
 This repository includes modified and extended work derived from Gitea.
 Gitea: https://github.com/go-gitea/gitea
 License: see LICENSE in this repository.
+
+This repository also distributes client-side components from the bpmn.io project
+(including toolkits such as bpmn-js, dmn-js, and cmmn-js). Their license terms
+are available at: https://bpmn.io/license
