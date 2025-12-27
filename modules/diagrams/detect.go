@@ -125,13 +125,27 @@ func detectDiagramJSON(headBytes []byte) DiagramType {
 
 	graphVal, hasGraph := meta["graph"].(map[string]any)
 	nodesVal, hasNodes := meta["nodes"]
-	edgesVal, hasEdges := meta["edges"]
-	if hasGraph {
-		if _, ok := graphVal["nodes"]; ok {
-			hasNodes = true
+	if hasNodes {
+		if _, ok := nodesVal.([]any); !ok {
+			hasNodes = false
 		}
-		if _, ok := graphVal["edges"]; ok {
-			hasEdges = true
+	}
+	edgesVal, hasEdges := meta["edges"]
+	if hasEdges {
+		if _, ok := edgesVal.([]any); !ok {
+			hasEdges = false
+		}
+	}
+	if hasGraph {
+		if nodesVal, ok := graphVal["nodes"]; ok {
+			if _, ok := nodesVal.([]any); ok {
+				hasNodes = true
+			}
+		}
+		if edgesVal, ok := graphVal["edges"]; ok {
+			if _, ok := edgesVal.([]any); ok {
+				hasEdges = true
+			}
 		}
 	}
 	if hasNodes && hasEdges {
