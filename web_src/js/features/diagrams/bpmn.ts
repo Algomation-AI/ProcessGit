@@ -6,16 +6,13 @@ import BpmnViewer from 'bpmn-js/dist/bpmn-viewer.production.min.js';
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - upstream packages do not ship full type definitions
-import BpmnPropertiesPanelModule from 'bpmn-js-properties-panel';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore - upstream packages do not ship full type definitions
-import BpmnPropertiesProviderModule from 'bpmn-js-properties-panel/lib/provider/bpmn';
+import {BpmnPropertiesPanelModule, BpmnPropertiesProviderModule} from 'bpmn-js-properties-panel';
 import type {DiagramAdapter} from './types.ts';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-js.css';
-import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
-import 'bpmn-js-properties-panel/dist/assets/properties-panel.css';
+import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
+import '@bpmn-io/properties-panel/dist/assets/properties-panel.css';
 
 function clearContainer(container: HTMLElement, properties?: HTMLElement | null) {
   container.innerHTML = '';
@@ -28,6 +25,7 @@ export function createBpmnAdapter(canvas: HTMLElement, properties?: HTMLElement 
   let modeler: any = null;
   let changeHandler: (() => void) | null = null;
   let removeChangeHandler: (() => void) | null = null;
+  const getPropertiesContainer = () => properties ?? document.querySelector<HTMLElement>('#diagram-properties');
 
   const cleanupViewer = () => {
     if (viewer?.destroy) viewer.destroy();
@@ -54,7 +52,7 @@ export function createBpmnAdapter(canvas: HTMLElement, properties?: HTMLElement 
     async renderPreview(xml: string) {
       cleanupModeler();
       cleanupViewer();
-      clearContainer(canvas, properties);
+      clearContainer(canvas, getPropertiesContainer());
       viewer = new BpmnViewer({container: canvas});
       await viewer.importXML(xml);
       viewer.get('canvas')?.zoom('fit-viewport');
@@ -63,15 +61,16 @@ export function createBpmnAdapter(canvas: HTMLElement, properties?: HTMLElement 
     async enterEdit(xml: string) {
       cleanupViewer();
       cleanupModeler();
-      clearContainer(canvas, properties);
+      const propertiesPanelParent = getPropertiesContainer();
+      clearContainer(canvas, propertiesPanelParent);
       modeler = new BpmnModeler({
         container: canvas,
-        propertiesPanel: properties ? {parent: properties} : undefined,
-        additionalModules: properties ? [BpmnPropertiesPanelModule, BpmnPropertiesProviderModule] : undefined,
+        propertiesPanel: propertiesPanelParent ? {parent: '#diagram-properties'} : undefined,
+        additionalModules: propertiesPanelParent ? [BpmnPropertiesPanelModule, BpmnPropertiesProviderModule] : undefined,
       });
       await modeler.importXML(xml);
       modeler.get('canvas')?.zoom('fit-viewport');
-      if (properties) properties.classList.remove('tw-hidden');
+      propertiesPanelParent?.classList.remove('tw-hidden');
       bindChangeHandler();
     },
 
