@@ -8,7 +8,7 @@ import EsBuildLoader from 'esbuild-loader';
 import {parse} from 'node:path';
 import webpack, {type Configuration, type EntryObject} from 'webpack';
 import {fileURLToPath} from 'node:url';
-import {readFileSync, globSync} from 'node:fs';
+import {readFileSync, globSync, existsSync} from 'node:fs';
 import {env} from 'node:process';
 import tailwindcss from 'tailwindcss';
 import tailwindConfig from './tailwind.config.ts';
@@ -23,6 +23,51 @@ for (const path of globSync('web_src/css/themes/*.css', {cwd: import.meta.dirnam
 }
 
 const isProduction = env.NODE_ENV !== 'development';
+const allowedLicenseExpression = `(${[
+  'Apache-2.0',
+  '0BSD',
+  'BSD-2-Clause',
+  'BSD-3-Clause',
+  'MIT',
+  'ISC',
+  'CPAL-1.0',
+  'Unlicense',
+  'EPL-1.0',
+  'EPL-2.0',
+  'LicenseRef-SEE-LICENSE-IN-LICENSE',
+  'LicenseRef-bpmn.io',
+].join(' OR ')})`;
+
+const buildLicenseOverrides = (): Record<string, {licenseName: string}> => {
+  const licenseOverrides: Record<string, {licenseName: string}> = {};
+  const licenseMappings: Record<string, string> = {
+    'MIT/X11': 'MIT',
+    'SEE LICENSE IN LICENSE': 'LicenseRef-SEE-LICENSE-IN-LICENSE',
+    'bpmn.io license': 'LicenseRef-bpmn.io',
+  };
+
+  const packagesRoot = fileURLToPath(new URL('node_modules', import.meta.url));
+  if (!existsSync(packagesRoot)) return licenseOverrides;
+
+  for (const packageJsonPath of globSync('node_modules/.pnpm/*/node_modules/*/package.json', {cwd: import.meta.dirname})) {
+    try {
+      const {name, license} = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+      const mappedLicense = typeof license === 'string' ? licenseMappings[license] : undefined;
+      if (name && mappedLicense) {
+        licenseOverrides[`${name}@*`] = {licenseName: mappedLicense};
+      }
+    } catch {
+      // ignore malformed package.json files or unexpected data shapes
+    }
+  }
+
+  return licenseOverrides;
+};
+
+const licenseOverrides = {
+  ...buildLicenseOverrides(),
+  'khroma@*': {licenseName: 'MIT'}, // https://github.com/fabiospampinato/khroma/pull/33
+};
 
 // ENABLE_SOURCEMAP accepts the following values:
 // true - all enabled, the default in development
@@ -235,17 +280,9 @@ export default {
           return `${line}\n${title}\n${line}\n${body}`;
         }).join('\n');
       },
-      override: {
-        'khroma@*': {licenseName: 'MIT'}, // https://github.com/fabiospampinato/khroma/pull/33
-        'bpmn-js@*': {licenseName: 'LicenseRef-bpmn-io'},
-        'bpmn-js-properties-panel@*': {licenseName: 'LicenseRef-bpmn-io'},
-        '@bpmn-io/properties-panel@*': {licenseName: 'LicenseRef-bpmn-io'},
-        'cmmn-js@*': {licenseName: 'LicenseRef-bpmn-io'},
-        'dmn-js@*': {licenseName: 'LicenseRef-bpmn-io'},
-        'diagram-js@*': {licenseName: 'LicenseRef-bpmn-io'},
-      },
+      override: licenseOverrides,
       emitError: true,
-      allow: '(Apache-2.0 OR 0BSD OR BSD-2-Clause OR BSD-3-Clause OR MIT OR ISC OR CPAL-1.0 OR Unlicense OR EPL-1.0 OR EPL-2.0 OR LicenseRef-bpmn-io)',
+      allow: allowedLicenseExpression,
     }) : new AddAssetPlugin('licenses.txt', `Licenses are disabled during development`),
   ],
   performance: {
