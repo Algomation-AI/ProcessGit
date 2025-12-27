@@ -1,6 +1,6 @@
 import {registerGlobalInitFunc} from '../../modules/observer.ts';
 import {showErrorToast, showInfoToast} from '../../modules/toast.ts';
-import type {DiagramAdapter, DiagramPayload} from './types.ts';
+import type {DiagramAdapter, DiagramPayload, RawDiagramPayload} from './types.ts';
 
 type DiagramMode = 'preview' | 'edit' | 'raw';
 
@@ -73,6 +73,23 @@ async function createAdapter(type: string, canvas: HTMLElement, properties: HTML
   }
 }
 
+function normalizePayload(raw: RawDiagramPayload, container: HTMLElement): DiagramPayload | null {
+  const type = raw.type ?? raw.Type ?? container.dataset.diagramType ?? '';
+  const format = raw.format ?? raw.Format ?? container.dataset.diagramFormat ?? '';
+  const content = raw.content ?? raw.contentB64 ?? raw.Content ?? '';
+  const encoding = raw.encoding ?? raw.Encoding ?? (raw.contentB64 ? 'base64' : undefined);
+
+  if (!type) return null;
+
+  return {
+    ...raw,
+    type,
+    format,
+    content,
+    encoding,
+  } as DiagramPayload;
+}
+
 async function submitSave(payload: DiagramPayload, content: string) {
   const form = new FormData();
   form.set('_csrf', window.config.csrfToken);
@@ -135,7 +152,14 @@ export function initRepoDiagrams(): void {
 
     let payload: DiagramPayload;
     try {
-      payload = JSON.parse(payloadElement.textContent);
+      const parsedPayload = JSON.parse(payloadElement.textContent) as RawDiagramPayload;
+      const normalizedPayload = normalizePayload(parsedPayload, container);
+      if (!normalizedPayload) {
+        showErrorToast('Unable to read diagram type for preview.');
+        fallbackToRaw();
+        return;
+      }
+      payload = normalizedPayload;
     } catch {
       showErrorToast('Unable to read diagram data for preview.');
       fallbackToRaw();
