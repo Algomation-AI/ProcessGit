@@ -116,7 +116,7 @@
 					{{end}}
 				</div>
 				{{if .DiagramPayload}}
-					<script type="application/json" id="diagram-payload">{{JsonUtils.EncodeToString .DiagramPayload}}</script>
+					<script type="application/json" id="diagram-payload">{{JsonUtils.Encode .DiagramPayload}}</script>
 				{{end}}
 			</div>
 		{{end}}

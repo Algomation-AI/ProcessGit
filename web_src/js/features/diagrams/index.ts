@@ -178,7 +178,10 @@ export function initRepoDiagrams(): void {
 
     let payload: DiagramPayload;
     try {
-      const parsedPayload = JSON.parse(payloadElement.textContent) as RawDiagramPayload;
+      let parsedPayload = JSON.parse(payloadElement.textContent) as RawDiagramPayload | string;
+      if (typeof parsedPayload === 'string') {
+        parsedPayload = JSON.parse(parsedPayload) as RawDiagramPayload;
+      }
       const normalizedPayload = normalizePayload(parsedPayload, container);
       if (!normalizedPayload) {
         showErrorToast('Unable to read diagram type for preview.');
