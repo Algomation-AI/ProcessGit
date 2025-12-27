@@ -130,3 +130,7 @@ prime/
 
 # A Makefile for custom make targets
 Makefile.local
+
+# local build artifacts
+[build
+/build
