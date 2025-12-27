@@ -7,8 +7,7 @@ import CmmnModeler from 'cmmn-js/lib/Modeler';
 import type {DiagramAdapter} from './types.ts';
 
 import 'cmmn-js/dist/assets/diagram-js.css';
-import 'cmmn-js/dist/assets/cmmn-font/css/cmmn-embedded.css';
-import 'cmmn-js/dist/assets/cmmn-js.css';
+import 'cmmn-js/dist/assets/cmmn-font/css/cmmn.css';
 
 function clearContainer(container: HTMLElement, properties?: HTMLElement | null) {
   container.innerHTML = '';

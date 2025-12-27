@@ -237,9 +237,15 @@ export default {
       },
       override: {
         'khroma@*': {licenseName: 'MIT'}, // https://github.com/fabiospampinato/khroma/pull/33
+        'bpmn-js@*': {licenseName: 'LicenseRef-bpmn-io'},
+        'bpmn-js-properties-panel@*': {licenseName: 'LicenseRef-bpmn-io'},
+        '@bpmn-io/properties-panel@*': {licenseName: 'LicenseRef-bpmn-io'},
+        'cmmn-js@*': {licenseName: 'LicenseRef-bpmn-io'},
+        'dmn-js@*': {licenseName: 'LicenseRef-bpmn-io'},
+        'diagram-js@*': {licenseName: 'LicenseRef-bpmn-io'},
       },
       emitError: true,
-      allow: '(Apache-2.0 OR 0BSD OR BSD-2-Clause OR BSD-3-Clause OR MIT OR ISC OR CPAL-1.0 OR Unlicense OR EPL-1.0 OR EPL-2.0)',
+      allow: '(Apache-2.0 OR 0BSD OR BSD-2-Clause OR BSD-3-Clause OR MIT OR ISC OR CPAL-1.0 OR Unlicense OR EPL-1.0 OR EPL-2.0 OR LicenseRef-bpmn-io)',
     }) : new AddAssetPlugin('licenses.txt', `Licenses are disabled during development`),
   ],
   performance: {
