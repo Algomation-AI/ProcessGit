@@ -9,13 +9,26 @@ import BpmnModeler from 'bpmn-js/lib/Modeler';
 import {BpmnPropertiesPanelModule, BpmnPropertiesProviderModule} from 'bpmn-js-properties-panel';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - package ships without types
-import AutoLayout from 'bpmn-auto-layout';
+import * as AutoLayoutPkg from 'bpmn-auto-layout';
 import type {DiagramAdapter} from './types.ts';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
 import '@bpmn-io/properties-panel/dist/assets/properties-panel.css';
+
+console.debug('[bpmn] bpmn-auto-layout exports:', AutoLayoutPkg);
+
+function createAutoLayout(): any {
+  const anyPkg: any = AutoLayoutPkg;
+  const Ctor = anyPkg?.default ?? anyPkg?.AutoLayout ?? anyPkg;
+
+  if (typeof Ctor !== 'function') {
+    throw new Error('bpmn-auto-layout export is not a constructor');
+  }
+
+  return new Ctor();
+}
 
 function clearContainer(container: HTMLElement, properties?: HTMLElement | null) {
   container.innerHTML = '';
@@ -43,8 +56,12 @@ async function prepareBpmnXml(xml: string): Promise<string> {
   }
 
   if (!xmlTrim.includes('bpmndi:BPMNDiagram')) {
-    const autoLayout = new AutoLayout();
-    xmlTrim = await autoLayout.layoutProcess(xmlTrim);
+    try {
+      const autoLayout = createAutoLayout();
+      xmlTrim = await autoLayout.layoutProcess(xmlTrim);
+    } catch (e) {
+      console.warn('[bpmn] auto-layout failed, importing original XML', e);
+    }
   }
 
   return xmlTrim;
