@@ -36,7 +36,13 @@ export GITEA_WORK_DIR="$WORK_DIR"
 export GITEA_CUSTOM="${GITEA_CUSTOM:-/data/gitea}"
 
 gitea_cmd() {
-  "$GITEA_BIN" --config "$CONFIG_PATH" "$@"
+  # Gitea refuses to run as root for admin commands.
+  # Container may run as root (s6), but CLI must run as unprivileged user.
+  if [ "$(id -u)" -eq 0 ] && command -v su-exec >/dev/null 2>&1; then
+    su-exec processgit:processgit "$GITEA_BIN" --config "$CONFIG_PATH" "$@"
+  else
+    "$GITEA_BIN" --config "$CONFIG_PATH" "$@"
+  fi
 }
 
 wait_for_file() {

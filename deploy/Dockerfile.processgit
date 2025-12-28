@@ -89,5 +89,3 @@ RUN set -eux; \
 RUN set -eux; \
   mkdir -p /data /opt/processgit; \
   chown -R 1000:1000 /data /opt/processgit || true
-
-USER 1000:1000
