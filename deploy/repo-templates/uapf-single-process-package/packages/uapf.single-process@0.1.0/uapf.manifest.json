@@ -1,0 +1,12 @@
+{
+  "packageId": "uapf.single-process",
+  "version": "0.1.0",
+  "title": "Single Process Package",
+  "description": "A single Level-4 process package template.",
+  "levels": ["L4"],
+  "entrypoints": {
+    "processes": [
+      "processes/L4/demo.process"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+raci:
+  - activity: Publish policy update
+    responsible:
+      - role.controller
+    accountable:
+      - role.cio
+    consulted: []
+    informed: []

@@ -1,0 +1,4 @@
+# Expand placeholders across integration documentation
+README.md
+connectors/**
+config/**

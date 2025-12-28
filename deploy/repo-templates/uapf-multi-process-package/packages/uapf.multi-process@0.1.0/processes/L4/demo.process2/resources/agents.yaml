@@ -1,0 +1,3 @@
+agents:
+  - id: process2.agent.placeholder
+    name: Process2 Agent

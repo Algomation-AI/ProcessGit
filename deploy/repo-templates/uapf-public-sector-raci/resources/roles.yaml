@@ -1,0 +1,5 @@
+roles:
+  - id: role.cio
+    name: Chief Information Officer
+  - id: role.controller
+    name: Controller

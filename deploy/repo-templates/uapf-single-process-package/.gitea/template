@@ -1,0 +1,4 @@
+# Expand placeholders across documentation and manifests
+README.md
+enterprise/**
+packages/**

@@ -1,0 +1,7 @@
+# Expand placeholders across docs, manifests, and workflow templates
+README.md
+enterprise/**
+packages/**
+.github/**
+.gitea/**
+tools/**

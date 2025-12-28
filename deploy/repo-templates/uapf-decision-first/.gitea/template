@@ -1,0 +1,5 @@
+# Expand placeholders across decision-first assets
+README.md
+decisions/**
+packages/**
+enterprise/**

@@ -1,0 +1,13 @@
+name: Validate Process Assets
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run validation
+        run: tools/validate.sh

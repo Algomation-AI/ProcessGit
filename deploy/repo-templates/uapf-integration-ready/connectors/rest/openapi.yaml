@@ -1,0 +1,11 @@
+openapi: 3.0.0
+info:
+  title: {{.RepoName}} REST Connector
+  version: 0.1.0
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: ok

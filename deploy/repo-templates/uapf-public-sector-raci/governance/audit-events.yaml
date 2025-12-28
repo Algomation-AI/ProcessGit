@@ -1,0 +1,3 @@
+audit:
+  - id: audit.policy.update
+    description: Track publication of new or revised policies.
