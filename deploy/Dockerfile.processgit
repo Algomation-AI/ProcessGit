@@ -57,3 +57,19 @@ RUN if command -v apk >/dev/null 2>&1; then \
       exit 1; \
     fi && \
     chmod +x /opt/processgit/bootstrap/*.sh || true
+
+RUN if command -v apk >/dev/null 2>&1; then \
+      addgroup -g 1000 -S processgit && \
+      adduser -u 1000 -S -G processgit processgit; \
+    elif command -v groupadd >/dev/null 2>&1; then \
+      groupadd -g 1000 processgit && \
+      useradd -m -u 1000 -g 1000 -s /bin/sh processgit; \
+    else \
+      echo "No supported user management tools found" >&2; \
+      exit 1; \
+    fi
+
+RUN mkdir -p /data /opt/processgit && \
+    chown -R 1000:1000 /data /opt/processgit
+
+USER processgit
