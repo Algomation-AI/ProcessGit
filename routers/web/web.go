@@ -1608,6 +1608,8 @@ func registerWebRoutes(m *web.Router) {
 			m.Get("/blob/{sha}", repo.RenderFile)
 		}, repo.MustBeNotEmpty)
 
+		m.Get("/api/dvsxml", repo.MustBeNotEmpty, repo.DVSXMLContent)
+
 		m.Group("/commits", func() {
 			m.Get("/branch/*", context.RepoRefByType(git.RefTypeBranch), repo.RefCommits)
 			m.Get("/tag/*", context.RepoRefByType(git.RefTypeTag), repo.RefCommits)
