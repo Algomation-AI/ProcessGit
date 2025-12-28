@@ -85,6 +85,10 @@ Backward compatibility is **not guaranteed** at this stage.
 - Designed to integrate with external execution engines
 - Compatible with algorithm packaging standards (e.g. UAPF)
 
+## Repository Classification (Platform Metadata)
+
+ProcessGit tracks repository classification directly in the platform database (SQLite by default) rather than in Git content. Each repository has metadata fields for `repo_type` (process, decision, reference, connector), `uapf_level` (0–4 or n/a), optional `reference_kind` (when the type is reference), and `status` (draft/stable/deprecated/archived). A default classification entry is created when a repository is created (currently `repo_type=process`, `status=draft`). Future releases will add UI badges and editing, enabling clearer distinction between process vs. reference repos, dependency governance, and UAPF-specific flows.
+
 ---
 
 ## Installation (From Scratch)
