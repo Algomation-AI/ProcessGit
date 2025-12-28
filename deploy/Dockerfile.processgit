@@ -58,18 +58,36 @@ RUN if command -v apk >/dev/null 2>&1; then \
     fi && \
     chmod +x /opt/processgit/bootstrap/*.sh || true
 
-RUN if command -v apk >/dev/null 2>&1; then \
-      addgroup -g 1000 -S processgit && \
-      adduser -u 1000 -S -G processgit processgit; \
-    elif command -v groupadd >/dev/null 2>&1; then \
-      groupadd -g 1000 processgit && \
-      useradd -m -u 1000 -g 1000 -s /bin/sh processgit; \
-    else \
-      echo "No supported user management tools found" >&2; \
-      exit 1; \
-    fi
+# Create a non-root runtime user (idempotent; works even if UID/GID 1000 already exist)
+RUN set -eux; \
+  if command -v apk >/dev/null 2>&1; then \
+    # Alpine
+    # Ensure group with GID 1000 exists (name may vary)
+    if ! getent group 1000 >/dev/null 2>&1; then \
+      addgroup -g 1000 -S processgit; \
+    fi; \
+    # Ensure user with UID 1000 exists (name may vary)
+    if ! getent passwd 1000 >/dev/null 2>&1; then \
+      # Try to attach to group id 1000 regardless of its name
+      GNAME="$(getent group 1000 | cut -d: -f1)"; \
+      adduser -u 1000 -S -G "$GNAME" processgit; \
+    fi; \
+  elif command -v groupadd >/dev/null 2>&1; then \
+    # Debian/Ubuntu
+    if ! getent group 1000 >/dev/null 2>&1; then \
+      groupadd -g 1000 processgit; \
+    fi; \
+    if ! getent passwd 1000 >/dev/null 2>&1; then \
+      GNAME="$(getent group 1000 | cut -d: -f1)"; \
+      useradd -m -u 1000 -g "$GNAME" -s /bin/sh processgit; \
+    fi; \
+  else \
+    echo "No supported user management tools found" >&2; \
+    exit 1; \
+  fi
 
-RUN mkdir -p /data /opt/processgit && \
-    chown -R 1000:1000 /data /opt/processgit
+RUN set -eux; \
+  mkdir -p /data /opt/processgit; \
+  chown -R 1000:1000 /data /opt/processgit || true
 
-USER processgit
+USER 1000:1000
