@@ -122,6 +122,33 @@ curl -s -H "Authorization: token $TOKEN" http://localhost:3000/api/v1/users/proc
 
 The template dropdown in the UI should list the repositories owned by `processgit-templates`, and each should show `template=true` and `private=false` in the API output.
 
+### Redeploy and bootstrap reset
+
+After updating the deployment manifests, rebuild and restart the stack:
+
+```bash
+cd /home/ProcessGit
+docker compose -f deploy/docker-compose.yml down
+docker compose -f deploy/docker-compose.yml up -d --build
+
+docker compose -f deploy/docker-compose.yml logs -n 200 processgit
+docker compose -f deploy/docker-compose.yml logs -n 200 processgit-bootstrap
+```
+
+To rerun bootstrap when markers already exist:
+
+```bash
+docker compose -f deploy/docker-compose.yml exec processgit sh -lc 'rm -f /data/.processgit/templates_bootstrapped /data/.processgit/templates_token || true'
+docker compose -f deploy/docker-compose.yml restart processgit-bootstrap
+docker compose -f deploy/docker-compose.yml logs -n 200 processgit-bootstrap
+```
+
+Verify templates via the API:
+
+```bash
+docker compose -f deploy/docker-compose.yml exec processgit sh -lc 'curl -s http://localhost:3000/api/v1/repo/search?q=&template=true | head -c 1000; echo'
+```
+
 ### 1. Install Docker
 
 #### Ubuntu / WSL (recommended)
