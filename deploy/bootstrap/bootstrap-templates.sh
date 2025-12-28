@@ -36,10 +36,11 @@ export GITEA_WORK_DIR="$WORK_DIR"
 export GITEA_CUSTOM="${GITEA_CUSTOM:-/data/gitea}"
 
 gitea_cmd() {
-  # Gitea refuses to run as root for admin commands.
-  # Container may run as root (s6), but CLI must run as unprivileged user.
-  if [ "$(id -u)" -eq 0 ] && command -v su-exec >/dev/null 2>&1; then
-    su-exec processgit:processgit "$GITEA_BIN" --config "$CONFIG_PATH" "$@"
+  # Force non-root execution for gitea CLI. Gitea hard-fails if run as root.
+  # su-exec is present at /sbin/su-exec in this image.
+  if [ "$(id -u)" -eq 0 ]; then
+    log "gitea_cmd: exec uid=$(id -u) -> /sbin/su-exec 1000:1000 $GITEA_BIN $*"
+    /sbin/su-exec 1000:1000 "$GITEA_BIN" --config "$CONFIG_PATH" "$@"
   else
     "$GITEA_BIN" --config "$CONFIG_PATH" "$@"
   fi
@@ -74,6 +75,9 @@ wait_for_file "$CONFIG_PATH" || fatal "Gitea config not ready"
 
 log "Waiting for ProcessGit API at $API_BASE/version"
 wait_for_http "$API_BASE/version" || fatal "ProcessGit API did not respond"
+
+log "bootstrap uid=$(id -u) gid=$(id -g); su-exec exists=$(ls -lah /sbin/su-exec 2>/dev/null || true)"
+log "running gitea as uid 1000 via su-exec for admin commands"
 
 # Ensure templates user exists
 user_exists() {
