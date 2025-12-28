@@ -31,9 +31,10 @@ services:
     volumes:
       - processgit-data:/data
     env_file:
-      - ./deploy/.env
+      - ../.env
     environment:
       - PROCESSGIT_ADMIN_TOKEN=${PROCESSGIT_ADMIN_TOKEN}
+      - PROCESSGIT_API_BASE=http://processgit:3000/api/v1
     restart: "no"
     entrypoint: ["/bin/sh", "-lc"]
     command: ["/opt/processgit/bootstrap/bootstrap-templates.sh"]
