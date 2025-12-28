@@ -30,7 +30,9 @@ services:
         condition: service_healthy
     volumes:
       - processgit-data:/data
-    restart: on-failure
+    environment:
+      - PROCESSGIT_ADMIN_TOKEN=${PROCESSGIT_ADMIN_TOKEN}
+    restart: "no"
     entrypoint: ["/bin/sh", "-lc"]
     command: ["/opt/processgit/bootstrap/bootstrap-templates.sh"]
 
