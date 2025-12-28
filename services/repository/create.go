@@ -410,6 +410,10 @@ func createRepositoryInDB(ctx context.Context, doer, u *user_model.User, repo *r
 		return err
 	}
 
+	if err = repo_model.EnsureRepoClassificationDefault(ctx, repo.ID, doer.ID); err != nil {
+		return err
+	}
+
 	// Remember visibility preference.
 	u.LastRepoVisibility = repo.IsPrivate
 	if err = user_model.UpdateUserCols(ctx, u, "last_repo_visibility"); err != nil {
