@@ -46,6 +46,18 @@ type diagramPayload struct {
 	SourcePath string               `json:"sourcePath,omitempty"`
 }
 
+type dvsXMLPayload struct {
+	Type           string            `json:"type"`
+	Path           string            `json:"path"`
+	Ref            string            `json:"ref"`
+	RepoLink       string            `json:"repoLink"`
+	RawURL         string            `json:"rawUrl"`
+	APIURL         string            `json:"apiUrl"`
+	Namespace      string            `json:"namespace,omitempty"`
+	SchemaLocation string            `json:"schemaLocation,omitempty"`
+	Meta           map[string]string `json:"meta,omitempty"`
+}
+
 func prepareLatestCommitInfo(ctx *context.Context) bool {
 	commit, err := ctx.Repo.Commit.GetCommitByPath(ctx.Repo.TreePath)
 	if err != nil {
@@ -185,6 +197,8 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 	ctx.Data["DiagramBranch"] = ctx.Repo.BranchName
 	ctx.Data["DiagramLastCommit"] = ctx.Repo.CommitID
 	ctx.Data["DiagramSourcePath"] = ""
+	ctx.Data["IsDVSXML"] = false
+	ctx.Data["DVSXMLPayload"] = nil
 
 	if !prepareLatestCommitInfo(ctx) {
 		return
@@ -256,6 +270,27 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 	attrs, ok := prepareFileViewLfsAttrs(ctx)
 	if !ok {
 		return
+	}
+
+	if strings.HasSuffix(strings.ToLower(ctx.Repo.TreePath), ".xml") {
+		sniff := prefetchBuf
+		if len(sniff) > typesniffer.DVSXMLSniffLimit {
+			sniff = sniff[:typesniffer.DVSXMLSniffLimit]
+		}
+		if typ, meta, ok := typesniffer.DetectDVSXMLType(sniff); ok {
+			ctx.Data["IsDVSXML"] = true
+			ctx.Data["DVSXMLPayload"] = dvsXMLPayload{
+				Type:           typ,
+				Path:           ctx.Repo.TreePath,
+				Ref:            ctx.Repo.CommitID,
+				RepoLink:       ctx.Repo.RepoLink,
+				RawURL:         ctx.Data["RawFileLink"].(string),
+				APIURL:         ctx.Repo.RepoLink + "/api/dvsxml",
+				Namespace:      meta["namespace"],
+				SchemaLocation: meta["schemaLocation"],
+				Meta:           meta,
+			}
+		}
 	}
 
 	diagramDetection := diagrams.Detect(ctx.Repo.TreePath, prefetchBuf)
