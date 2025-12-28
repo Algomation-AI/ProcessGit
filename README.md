@@ -98,6 +98,30 @@ Backward compatibility is **not guaranteed** at this stage.
 
 ---
 
+## Template bootstrap verification (self-hosted)
+
+After starting the stack, confirm the templates are created, public, and marked as templates:
+
+```bash
+# Build and start (from repo root)
+docker compose -f deploy/docker-compose.yml up -d --build
+
+# Check bootstrap logs
+docker compose -f deploy/docker-compose.yml logs -n 200 processgit-bootstrap
+
+# Verify template repositories via API
+curl -s "http://localhost:3000/api/v1/repo/search?q=&template=true" | head
+
+# Inspect template user repos/flags from inside the container
+docker exec -it processgit sh -lc '
+TOKEN=$(cat /data/.processgit/templates_token 2>/dev/null || true)
+[ -n "$TOKEN" ] || exit 1
+curl -s -H "Authorization: token $TOKEN" http://localhost:3000/api/v1/users/processgit-templates/repos | jq -r ".[] | [.name, .template, .private] | @tsv"
+'
+```
+
+The template dropdown in the UI should list the repositories owned by `processgit-templates`, and each should show `template=true` and `private=false` in the API output.
+
 ### 1. Install Docker
 
 #### Ubuntu / WSL (recommended)
