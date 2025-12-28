@@ -30,6 +30,8 @@ services:
         condition: service_healthy
     volumes:
       - processgit-data:/data
+    env_file:
+      - ./deploy/.env
     environment:
       - PROCESSGIT_ADMIN_TOKEN=${PROCESSGIT_ADMIN_TOKEN}
     restart: "no"
