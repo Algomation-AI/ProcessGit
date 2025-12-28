@@ -134,3 +134,8 @@ Makefile.local
 # local build artifacts
 [build
 /build
+
+# Environment files
+deploy/.env
+.env
+*.env
