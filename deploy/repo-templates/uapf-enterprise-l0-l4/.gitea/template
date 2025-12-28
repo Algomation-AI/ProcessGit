@@ -1,0 +1,5 @@
+# Expand placeholders across enterprise metadata and manifests
+README.md
+enterprise/**
+packages/**
+governance/**

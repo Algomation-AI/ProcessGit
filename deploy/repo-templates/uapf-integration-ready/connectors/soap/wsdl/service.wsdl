@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<definitions name="{{.RepoName}}Service"
+  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+  xmlns:tns="https://processgit.org/wsdl"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns="http://schemas.xmlsoap.org/wsdl/"
+  targetNamespace="https://processgit.org/wsdl">
+
+  <message name="PingRequest"/>
+  <message name="PingResponse">
+    <part name="message" type="xsd:string"/>
+  </message>
+
+  <portType name="PingPortType">
+    <operation name="Ping">
+      <input message="tns:PingRequest"/>
+      <output message="tns:PingResponse"/>
+    </operation>
+  </portType>
+
+  <binding name="PingBinding" type="tns:PingPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="Ping">
+      <soap:operation soapAction="ping"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <service name="{{.RepoName}}Service">
+    <port name="PingPort" binding="tns:PingBinding">
+      <soap:address location="https://example.com/soap"/>
+    </port>
+  </service>
+</definitions>

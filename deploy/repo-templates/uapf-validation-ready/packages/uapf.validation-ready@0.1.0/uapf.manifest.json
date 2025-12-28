@@ -1,0 +1,12 @@
+{
+  "packageId": "uapf.validation-ready",
+  "version": "0.1.0",
+  "title": "Validation Ready Package",
+  "description": "Template with validation workflows for process assets.",
+  "levels": ["L4"],
+  "entrypoints": {
+    "processes": [
+      "processes/L4/demo.process"
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+[
+  {"name": "single-bpmn-process-xml", "title": "Single BPMN process (XML)", "path": "single-bpmn-xml", "description": "Single BPMN process scratchpad with placeholder README and model."},
+  {"name": "single-dmn-decision-xml", "title": "Single DMN decision (XML)", "path": "single-dmn-xml", "description": "Single DMN decision scratchpad with placeholder README and model."},
+  {"name": "single-cmmn-case-xml", "title": "Single CMMN case (XML)", "path": "single-cmmn-xml", "description": "Single CMMN case scratchpad with placeholder README and model."},
+  {"name": "uapf-single-process-package", "title": "UAPF: Single-process package", "path": "uapf-single-process-package", "description": "UAPF single Level-4 process package with BPMN/DMN/CMMN assets."},
+  {"name": "uapf-multi-process-package", "title": "UAPF: Multi-process package", "path": "uapf-multi-process-package", "description": "UAPF multi-process package with shared resources."},
+  {"name": "uapf-enterprise-l0-l4", "title": "UAPF: Full enterprise package (L0–L4)", "path": "uapf-enterprise-l0-l4", "description": "Enterprise structure from L0 to L4 with governance placeholders."},
+  {"name": "uapf-validation-ready", "title": "UAPF: Validation-ready repo (CI + local checks)", "path": "uapf-validation-ready", "description": "Validation-ready template with workflows and XML checks."},
+  {"name": "uapf-integration-ready", "title": "UAPF: Integration-ready", "path": "uapf-integration-ready", "description": "Integration template covering REST, SOAP, and database connectors."},
+  {"name": "uapf-public-sector-raci", "title": "UAPF: Public-sector (roles, RACI, approvals, audit)", "path": "uapf-public-sector-raci", "description": "Public-sector flavored template with RACI and governance scaffolding."},
+  {"name": "uapf-decision-first", "title": "UAPF: Decision-first package (DMN primary)", "path": "uapf-decision-first", "description": "Decision-led template pairing DMN with a supporting process."},
+  {"name": "uapf-enterprise-index-empty", "title": "UAPF: Enterprise index (empty starter)", "path": "uapf-enterprise-index-empty", "description": "Empty enterprise index with org structure and glossary placeholders."},
+  {"name": "uapf-example-minimal-l4", "title": "UAPF: Example (minimal L4 sample)", "path": "uapf-example-minimal-l4", "description": "Minimal Level-4 sample with BPMN/DMN/CMMN assets."}
+]

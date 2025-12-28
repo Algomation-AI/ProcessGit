@@ -1,0 +1,8 @@
+{
+  "enterpriseId": "enterprise.placeholder",
+  "name": "Enterprise Placeholder",
+  "sourceRepo": "{{.RepoOwner}}/{{.RepoName}}",
+  "packages": [
+    "uapf.example-minimal-l4@0.1.0"
+  ]
+}

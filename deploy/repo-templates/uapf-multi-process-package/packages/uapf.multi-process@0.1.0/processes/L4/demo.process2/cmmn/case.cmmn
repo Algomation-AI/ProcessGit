@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cmmn:definitions
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:cmmn="http://www.omg.org/spec/CMMN/20151109/MODEL"
+  id="Definitions_{{.RepoName}}_P2"
+  targetNamespace="https://processgit.org/cmmn">
+
+  <cmmn:case id="Case_2" name="Demo Process 2 Case">
+    <cmmn:casePlanModel id="CasePlanModel_2" name="Plan Model">
+      <cmmn:planItem id="PlanItem_2" definitionRef="HumanTask_2"/>
+      <cmmn:humanTask id="HumanTask_2" name="Do work"/>
+    </cmmn:casePlanModel>
+  </cmmn:case>
+
+</cmmn:definitions>
