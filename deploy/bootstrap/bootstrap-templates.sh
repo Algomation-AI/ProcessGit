@@ -8,6 +8,7 @@ REPO_CONFIG="/opt/processgit/bootstrap/template-repos.json"
 OWNER="${PROCESSGIT_TEMPLATES_OWNER:-processgit-templates}"
 OWNER_EMAIL="${PROCESSGIT_TEMPLATES_EMAIL:-processgit-templates@example.invalid}"
 OWNER_PASSWORD="${PROCESSGIT_TEMPLATES_PASSWORD:-processgit-templates}"
+TEMPL_TOKEN="${PROCESSGIT_TEMPLATES_TOKEN:-}"
 
 API_BASE="${PROCESSGIT_API_BASE:-http://processgit:3000/api/v1}"
 ADMIN_TOKEN="${PROCESSGIT_ADMIN_TOKEN:-}"
@@ -45,7 +46,7 @@ wait_for_http() {
 log "Waiting for API at $API_BASE/version"
 wait_for_http "$API_BASE/version" || fatal "API did not respond"
 
-api() {
+admin_api() {
   method="$1"; url="$2"; data="${3:-}"
   if [ -n "$data" ]; then
     curl -fsS -X "$method" \
@@ -58,8 +59,21 @@ api() {
   fi
 }
 
+user_api() {
+  method="$1"; url="$2"; data="${3:-}"
+  if [ -n "$data" ]; then
+    curl -fsS -X "$method" \
+      -H "Authorization: token $USER_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$data" "$url"
+  else
+    curl -fsS -X "$method" \
+      -H "Authorization: token $USER_TOKEN" "$url"
+  fi
+}
+
 ensure_user() {
-  if api GET "$API_BASE/users/$OWNER" >/dev/null 2>&1; then
+  if admin_api GET "$API_BASE/users/$OWNER" >/dev/null 2>&1; then
     log "Templates user '$OWNER' already exists"
     return 0
   fi
@@ -69,47 +83,52 @@ ensure_user() {
     --arg u "$OWNER" --arg e "$OWNER_EMAIL" --arg p "$OWNER_PASSWORD" \
     '{username:$u,email:$e,password:$p,must_change_password:false,send_notify:false,restricted:false,visibility:"public"}')"
 
-  api POST "$API_BASE/admin/users" "$payload" >/dev/null || fatal "Failed to create templates user via API"
+  admin_api POST "$API_BASE/admin/users" "$payload" >/dev/null || fatal "Failed to create templates user via API"
 }
 
-# Create token for templates user (admin endpoint)
 ensure_user_token() {
-  # Try to list tokens: if not supported, we create new each run and store in /data
   TOK_FILE="/data/.processgit/templates_user_token"
+
+  if [ -n "$TEMPL_TOKEN" ]; then
+    echo "$TEMPL_TOKEN"
+    return 0
+  fi
+
   if [ -f "$TOK_FILE" ]; then
     cat "$TOK_FILE"
     return 0
   fi
 
-  log "Creating access token for '$OWNER' via admin API"
+  log "Creating access token for '$OWNER' via /users/{username}/tokens (basic auth)"
   payload="$(jq -nc --arg n "templates-bootstrap" '{name:$n, scopes:["all"]}')"
 
-  # Admin endpoint to create token for user:
-  # POST /admin/users/{username}/tokens
-  # Response contains "sha1" token in many Gitea versions.
-  resp="$(api POST "$API_BASE/admin/users/$OWNER/tokens" "$payload" || true)"
-  token="$(printf '%s' "$resp" | jq -r '.sha1 // .token // empty')"
+  resp="$(curl -fsS -X POST \
+    -u "$OWNER:$OWNER_PASSWORD" \
+    -H "Content-Type: application/json" \
+    -d "$payload" \
+    "$API_BASE/users/$OWNER/tokens" || true)"
+  token="$(printf '%s' "$resp" | jq -r '.sha1 // empty')"
 
-  [ -n "$token" ] || fatal "Could not create templates token; API response: $resp"
+  [ -n "$token" ] || fatal "Could not create templates token. Response: $resp"
 
   mkdir -p /data/.processgit
   printf '%s' "$token" > "$TOK_FILE"
   chmod 600 "$TOK_FILE"
-  printf '%s' "$token"
+  echo "$token"
 }
 
 ensure_repo() {
   name="$1"; description="$2"
-  if api GET "$API_BASE/repos/$OWNER/$name" >/dev/null 2>&1; then
+  if user_api GET "$API_BASE/repos/$OWNER/$name" >/dev/null 2>&1; then
     log "Repo $OWNER/$name exists; ensuring template flag"
     patch="$(jq -nc --arg d "$description" '{description:$d, template:true, private:false}')"
-    api PATCH "$API_BASE/repos/$OWNER/$name" "$patch" >/dev/null || fatal "Failed to patch repo $OWNER/$name"
+    user_api PATCH "$API_BASE/repos/$OWNER/$name" "$patch" >/dev/null || fatal "Failed to patch repo $OWNER/$name"
   else
     log "Creating repo $OWNER/$name (template=true)"
     payload="$(jq -nc --arg n "$name" --arg d "$description" \
       '{name:$n, description:$d, private:false, template:true, auto_init:false, default_branch:"main"}')"
     # Create repo as the templates user using admin token endpoint:
-    api POST "$API_BASE/admin/users/$OWNER/repos" "$payload" >/dev/null || fatal "Failed to create repo $OWNER/$name"
+    admin_api POST "$API_BASE/admin/users/$OWNER/repos" "$payload" >/dev/null || fatal "Failed to create repo $OWNER/$name"
   fi
 }
 
@@ -143,7 +162,8 @@ push_content_if_empty() {
 
 main() {
   ensure_user
-  user_token="$(ensure_user_token)"
+  USER_TOKEN="$(ensure_user_token)"
+  user_token="$USER_TOKEN"
 
   log "Bootstrapping template repos from $REPO_CONFIG"
   jq -c '.[]' "$REPO_CONFIG" | while IFS= read -r entry; do
