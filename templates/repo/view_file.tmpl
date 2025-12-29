@@ -122,7 +122,7 @@
 			</div>
 		{{end}}
 
-		<div id="diagram-raw-view" class="diagram-raw-view {{if ne .DiagramType "none"}}tw-hidden{{end}}">
+		<div id="diagram-raw-view" class="diagram-raw-view {{if or (ne .DiagramType "none") .IsDVSXML}}tw-hidden{{end}}">
 			{{if not .IsMarkup}}
 				{{template "repo/unicode_escape_prompt" dict "EscapeStatus" .EscapeStatus}}
 			{{end}}

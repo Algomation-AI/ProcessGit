@@ -50,6 +50,8 @@ type dvsXMLPayload struct {
 	Type           string            `json:"type"`
 	Path           string            `json:"path"`
 	Ref            string            `json:"ref"`
+	Branch         string            `json:"branch"`
+	LastCommit     string            `json:"lastCommit"`
 	RepoLink       string            `json:"repoLink"`
 	RawURL         string            `json:"rawUrl"`
 	APIURL         string            `json:"apiUrl"`
@@ -278,11 +280,17 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 			sniff = sniff[:typesniffer.DVSXMLSniffLimit]
 		}
 		if typ, meta, ok := typesniffer.DetectDVSXMLType(sniff); ok {
+			branchName := ctx.Repo.BranchName
+			if branchName == "" {
+				branchName = ctx.Repo.RefName
+			}
 			ctx.Data["IsDVSXML"] = true
 			ctx.Data["DVSXMLPayload"] = dvsXMLPayload{
 				Type:           typ,
 				Path:           ctx.Repo.TreePath,
 				Ref:            ctx.Repo.CommitID,
+				Branch:         branchName,
+				LastCommit:     ctx.Repo.CommitID,
 				RepoLink:       ctx.Repo.RepoLink,
 				RawURL:         ctx.Data["RawFileLink"].(string),
 				APIURL:         ctx.Repo.RepoLink + "/api/dvsxml",
