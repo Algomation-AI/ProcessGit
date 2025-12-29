@@ -2,6 +2,8 @@ export interface DVSXMLPayload {
   type: string;
   path: string;
   ref: string;
+  branch: string;
+  lastCommit: string;
   repoLink: string;
   rawUrl?: string;
   apiUrl: string;
@@ -14,9 +16,12 @@ export interface ClassificationCase {
   uid?: string;
   index?: string;
   title?: string;
+  environment?: string;
   description?: string;
   retention?: string;
+  retentionType?: string;
   responsible?: string;
+  system?: string;
   unknownAttributes: Record<string, string>;
   unknownElements: string[];
 }
@@ -43,6 +48,7 @@ export interface ClassificationSchemeModel {
   namespace?: string;
   schemaLocation?: string;
   meta?: Record<string, string>;
+  rootName?: string;
   groups: ClassificationGroup[];
   unknownAttributes: Record<string, string>;
   unknownElements: string[];
