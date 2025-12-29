@@ -400,6 +400,7 @@ func prepareMigrationTasks() []*migration {
 		newMigration(323, "Add support for actions concurrency", v1_26.AddActionsConcurrency),
 		newMigration(324, "Fix closed milestone completeness for milestones with no issues", v1_26.FixClosedMilestoneCompleteness),
 		newMigration(325, "Add repo classification metadata table", v1_26.AddRepoClassificationTable),
+		newMigration(326, "Set default repo classification type and backfill", v1_26.SetRepoClassificationDefault),
 	}
 	return preparedMigrations
 }

@@ -12,7 +12,7 @@ import (
 // RepoClassification defines the classification metadata stored for repositories.
 type RepoClassification struct {
 	RepoID        int64              `xorm:"pk"`
-	RepoType      string             `xorm:"VARCHAR(30) NOT NULL INDEX idx_repo_classification_type"`
+	RepoType      string             `xorm:"VARCHAR(30) NOT NULL DEFAULT 'process' INDEX idx_repo_classification_type"`
 	UAPFLevel     *int               `xorm:"null INDEX idx_repo_classification_level"`
 	ReferenceKind string             `xorm:"VARCHAR(50)"`
 	Status        string             `xorm:"VARCHAR(30) NOT NULL DEFAULT 'draft' INDEX idx_repo_classification_status"`

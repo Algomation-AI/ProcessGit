@@ -53,3 +53,26 @@ func TestCreateRepositoryDirectly(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, exist)
 }
+
+func TestCreateRepositoryDirectlySetsClassificationType(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+
+	createdRepo, err := CreateRepositoryDirectly(t.Context(), owner, owner, CreateRepoOptions{
+		Name:               "classified-repo",
+		ClassificationType: repo_model.RepoClassificationTypeDecision,
+	}, true)
+	assert.NoError(t, err)
+	assert.NotNil(t, createdRepo)
+
+	rc, err := repo_model.GetRepoClassification(t.Context(), createdRepo.ID)
+	assert.NoError(t, err)
+	if assert.NotNil(t, rc) {
+		assert.Equal(t, repo_model.RepoClassificationTypeDecision, rc.RepoType)
+		assert.Equal(t, repo_model.RepoClassificationStatusDraft, rc.Status)
+	}
+
+	err = DeleteRepositoryDirectly(t.Context(), createdRepo.ID)
+	assert.NoError(t, err)
+}
