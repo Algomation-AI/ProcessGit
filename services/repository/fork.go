@@ -105,7 +105,7 @@ func ForkRepository(ctx context.Context, doer, owner *user_model.User, opts Fork
 
 	// 1 - Create the repository in the database
 	err = db.WithTx(ctx, func(ctx context.Context) error {
-		if err = createRepositoryInDB(ctx, doer, owner, repo, true); err != nil {
+		if err = createRepositoryInDB(ctx, doer, owner, repo, "", true); err != nil {
 			return err
 		}
 		if err = repo_model.IncrementRepoForkNum(ctx, opts.BaseRepo.ID); err != nil {

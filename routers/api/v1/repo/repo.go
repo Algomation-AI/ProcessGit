@@ -250,19 +250,28 @@ func CreateUserRepo(ctx *context.APIContext, owner *user_model.User, opt api.Cre
 		return
 	}
 
+	classificationType := strings.TrimSpace(opt.ClassificationType)
+	if classificationType != "" {
+		if err := repo_model.ValidateRepoType(classificationType); err != nil {
+			ctx.APIError(http.StatusUnprocessableEntity, err)
+			return
+		}
+	}
+
 	repo, err := repo_service.CreateRepository(ctx, ctx.Doer, owner, repo_service.CreateRepoOptions{
-		Name:             opt.Name,
-		Description:      opt.Description,
-		IssueLabels:      opt.IssueLabels,
-		Gitignores:       opt.Gitignores,
-		License:          opt.License,
-		Readme:           opt.Readme,
-		IsPrivate:        opt.Private || setting.Repository.ForcePrivate,
-		AutoInit:         opt.AutoInit,
-		DefaultBranch:    opt.DefaultBranch,
-		TrustModel:       repo_model.ToTrustModel(opt.TrustModel),
-		IsTemplate:       opt.Template,
-		ObjectFormatName: opt.ObjectFormatName,
+		Name:               opt.Name,
+		Description:        opt.Description,
+		IssueLabels:        opt.IssueLabels,
+		Gitignores:         opt.Gitignores,
+		License:            opt.License,
+		Readme:             opt.Readme,
+		IsPrivate:          opt.Private || setting.Repository.ForcePrivate,
+		AutoInit:           opt.AutoInit,
+		DefaultBranch:      opt.DefaultBranch,
+		ClassificationType: classificationType,
+		TrustModel:         repo_model.ToTrustModel(opt.TrustModel),
+		IsTemplate:         opt.Template,
+		ObjectFormatName:   opt.ObjectFormatName,
 	})
 	if err != nil {
 		if repo_model.IsErrRepoAlreadyExist(err) {

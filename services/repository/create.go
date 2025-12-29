@@ -35,23 +35,24 @@ import (
 
 // CreateRepoOptions contains the create repository options
 type CreateRepoOptions struct {
-	Name             string
-	Description      string
-	OriginalURL      string
-	GitServiceType   api.GitServiceType
-	Gitignores       string
-	IssueLabels      string
-	License          string
-	Readme           string
-	DefaultBranch    string
-	IsPrivate        bool
-	IsMirror         bool
-	IsTemplate       bool
-	AutoInit         bool
-	Status           repo_model.RepositoryStatus
-	TrustModel       repo_model.TrustModelType
-	MirrorInterval   string
-	ObjectFormatName string
+	Name               string
+	Description        string
+	OriginalURL        string
+	GitServiceType     api.GitServiceType
+	Gitignores         string
+	IssueLabels        string
+	License            string
+	Readme             string
+	DefaultBranch      string
+	ClassificationType string
+	IsPrivate          bool
+	IsMirror           bool
+	IsTemplate         bool
+	AutoInit           bool
+	Status             repo_model.RepositoryStatus
+	TrustModel         repo_model.TrustModelType
+	MirrorInterval     string
+	ObjectFormatName   string
 }
 
 func prepareRepoCommit(ctx context.Context, repo *repo_model.Repository, tmpDir string, opts CreateRepoOptions) error {
@@ -255,7 +256,7 @@ func CreateRepositoryDirectly(ctx context.Context, doer, owner *user_model.User,
 
 	// 1 - create the repository database operations first
 	err := db.WithTx(ctx, func(ctx context.Context) error {
-		return createRepositoryInDB(ctx, doer, owner, repo, false)
+		return createRepositoryInDB(ctx, doer, owner, repo, opts.ClassificationType, false)
 	})
 	if err != nil {
 		return nil, err
@@ -337,7 +338,7 @@ func CreateRepositoryDirectly(ctx context.Context, doer, owner *user_model.User,
 }
 
 // createRepositoryInDB creates a repository for the user/organization.
-func createRepositoryInDB(ctx context.Context, doer, u *user_model.User, repo *repo_model.Repository, isFork bool) (err error) {
+func createRepositoryInDB(ctx context.Context, doer, u *user_model.User, repo *repo_model.Repository, classificationType string, isFork bool) (err error) {
 	if err = repo_model.IsUsableRepoName(repo.Name); err != nil {
 		return err
 	}
@@ -410,7 +411,16 @@ func createRepositoryInDB(ctx context.Context, doer, u *user_model.User, repo *r
 		return err
 	}
 
-	if err = repo_model.EnsureRepoClassificationDefault(ctx, repo.ID, doer.ID); err != nil {
+	classificationType = strings.TrimSpace(classificationType)
+	if classificationType == "" {
+		classificationType = repo_model.RepoClassificationDefaultType
+	}
+	if err = repo_model.UpsertRepoClassification(ctx, &repo_model.RepoClassification{
+		RepoID:    repo.ID,
+		RepoType:  classificationType,
+		Status:    repo_model.RepoClassificationStatusDraft,
+		UpdatedBy: doer.ID,
+	}); err != nil {
 		return err
 	}
 

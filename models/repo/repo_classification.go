@@ -19,6 +19,7 @@ const (
 	RepoClassificationTypeDecision  = "decision"
 	RepoClassificationTypeReference = "reference"
 	RepoClassificationTypeConnector = "connector"
+	RepoClassificationDefaultType   = RepoClassificationTypeProcess
 
 	RepoClassificationStatusDraft      = "draft"
 	RepoClassificationStatusStable     = "stable"
@@ -56,7 +57,7 @@ func init() {
 // RepoClassification stores platform-level classification for repositories.
 type RepoClassification struct {
 	RepoID        int64              `xorm:"pk"`
-	RepoType      string             `xorm:"VARCHAR(30) NOT NULL"`
+	RepoType      string             `xorm:"VARCHAR(30) NOT NULL DEFAULT 'process'"`
 	UAPFLevel     *int               `xorm:"null"`
 	ReferenceKind string             `xorm:"VARCHAR(50)"`
 	Status        string             `xorm:"VARCHAR(30) NOT NULL DEFAULT 'draft'"`
@@ -198,7 +199,7 @@ func EnsureRepoClassificationDefault(ctx context.Context, repoID, actorUserID in
 
 	return UpsertRepoClassification(ctx, &RepoClassification{
 		RepoID:    repoID,
-		RepoType:  RepoClassificationTypeProcess,
+		RepoType:  RepoClassificationDefaultType,
 		Status:    RepoClassificationStatusDraft,
 		UpdatedBy: actorUserID,
 	})
