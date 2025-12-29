@@ -266,10 +266,17 @@ export default {
       outputFilename: 'licenses.txt',
       outputWriter: ({dependencies}: {dependencies: Array<Record<string, string>>}) => {
         const line = '-'.repeat(80);
-        const goJson = readFileSync('assets/go-licenses.json', 'utf8');
-        const goModules = JSON.parse(goJson).map(({name, licenseText}: Record<string, string>) => {
-          return {name, body: formatLicenseText(licenseText)};
-        });
+        const goLicensePath = 'assets/go-licenses.json';
+        let goModules: Array<Record<string, string>>;
+        try {
+          const goJson = existsSync(goLicensePath) ? readFileSync(goLicensePath, 'utf8') : '[]';
+          goModules = JSON.parse(goJson || '[]').map(({name, licenseText}: Record<string, string>) => {
+            return {name, body: formatLicenseText(licenseText)};
+          });
+        } catch (error) {
+          console.warn(`Unable to read or parse ${goLicensePath}:`, error);
+          goModules = [];
+        }
         const jsModules = dependencies.map(({name, version, licenseName, licenseText}) => {
           return {name, version, licenseName, body: formatLicenseText(licenseText)};
         });
