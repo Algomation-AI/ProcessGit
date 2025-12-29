@@ -280,16 +280,13 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 			sniff = sniff[:typesniffer.DVSXMLSniffLimit]
 		}
 		if typ, meta, ok := typesniffer.DetectDVSXMLType(sniff); ok {
-			branchName := ctx.Repo.BranchName
-			if branchName == "" {
-				branchName = ctx.Params(":branch")
-			}
+			ref := ctx.Repo.BranchName
 			ctx.Data["IsDVSXML"] = true
 			ctx.Data["DVSXMLPayload"] = dvsXMLPayload{
 				Type:           typ,
 				Path:           ctx.Repo.TreePath,
-				Ref:            ctx.Repo.CommitID,
-				Branch:         branchName,
+				Ref:            ref,
+				Branch:         ref,
 				LastCommit:     ctx.Repo.CommitID,
 				RepoLink:       ctx.Repo.RepoLink,
 				RawURL:         ctx.Data["RawFileLink"].(string),
