@@ -282,7 +282,7 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 		if typ, meta, ok := typesniffer.DetectDVSXMLType(sniff); ok {
 			branchName := ctx.Repo.BranchName
 			if branchName == "" {
-				branchName = ctx.Repo.RefName
+				branchName = ctx.Params(":branch")
 			}
 			ctx.Data["IsDVSXML"] = true
 			ctx.Data["DVSXMLPayload"] = dvsXMLPayload{
