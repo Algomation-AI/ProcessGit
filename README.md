@@ -9,10 +9,10 @@
 
 It brings long-established software-engineering discipline — version control, review, releases, traceability — to **process logic**, workflows, and algorithmic definitions that traditionally live in documents, diagrams, or proprietary tools.
 
-🌐 **Public demo / test instance:**  
-👉 https://processgit.org
+ **Public demo / test instance:**  
+ https://processgit.org
 
-> ⚠️ **Important notice**  
+> **Important notice**  
 > The public instance is **fully functional**, but intended for **testing, evaluation, and demonstration only**.
 
 ---
