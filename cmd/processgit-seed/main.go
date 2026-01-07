@@ -30,11 +30,12 @@ import (
 )
 
 const (
-	templateMarkerPath  = "/data/.processgit/templates_bootstrapped"
-	templateRootPath    = "/opt/processgit/repo-templates"
-	templateConfigPath  = "/opt/processgit/bootstrap/template-repos.json"
-	templateCommitName  = "ProcessGit Templates"
-	templateCommitEmail = "templates@processgit.org"
+	templateMarkerPath         = "/data/.processgit/templates_bootstrapped"
+	templateRootPath           = "/opt/processgit/repo-templates"
+	templateConfigPath         = "/opt/processgit/bootstrap/template-repos.json"
+	templateCommitName         = "ProcessGit Templates"
+	templateCommitEmail        = "templates@processgit.org"
+	templateClassificationType = "template"
 )
 
 type templateRepoConfig struct {
@@ -215,12 +216,13 @@ func ensureTemplateRepo(ctx context.Context, owner *user_model.User, cfg templat
 		}
 		seedLogf("Creating template repo %s/%s", owner.Name, cfg.Name)
 		return repo_service.CreateRepositoryDirectly(ctx, owner, owner, repo_service.CreateRepoOptions{
-			Name:          cfg.Name,
-			Description:   cfg.Description,
-			IsPrivate:     false,
-			IsTemplate:    true,
-			AutoInit:      false,
-			DefaultBranch: setting.Repository.DefaultBranch,
+			Name:               cfg.Name,
+			Description:        cfg.Description,
+			IsPrivate:          false,
+			IsTemplate:         true,
+			AutoInit:           false,
+			DefaultBranch:      setting.Repository.DefaultBranch,
+			ClassificationType: templateClassificationType,
 		}, true)
 	}
 
@@ -244,12 +246,16 @@ func ensureTemplateRepo(ctx context.Context, owner *user_model.User, cfg templat
 }
 
 func ensureTemplateClassification(ctx context.Context, repo *repo_model.Repository, doer *user_model.User) error {
-	desiredType := repo_model.RepoClassificationDefaultType
+	desiredType := templateClassificationType
 	desiredStatus := repo_model.RepoClassificationStatusDraft
 
 	rc, err := repo_model.GetRepoClassification(ctx, repo.ID)
 	if err != nil {
-		return fmt.Errorf("lookup repo classification for %s/%s: %w", repo.OwnerName, repo.Name, err)
+		if repo_model.IsErrRepoClassificationNotExist(err) {
+			rc = nil
+		} else {
+			return fmt.Errorf("lookup repo classification for %s/%s: %w", repo.OwnerName, repo.Name, err)
+		}
 	}
 
 	if rc == nil {

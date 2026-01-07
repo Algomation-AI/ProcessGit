@@ -2,6 +2,17 @@
 [[ -f ./setup ]] && source ./setup
 
 pushd /app/gitea >/dev/null
-su-exec $USER /app/processgit-seed --config /data/gitea/conf/app.ini || exit 1
+seed_exit=0
+su-exec $USER /app/processgit-seed --config /data/gitea/conf/app.ini || seed_exit=$?
+seed_strict="${PROCESSGIT_SEED_STRICT:-true}"
+case "${seed_strict,,}" in
+	false|0|no)
+		;;
+	*)
+		if [ "$seed_exit" -ne 0 ]; then
+			exit "$seed_exit"
+		fi
+		;;
+esac
 exec su-exec $USER /app/gitea/gitea web --config /data/gitea/conf/app.ini
 popd
