@@ -110,6 +110,7 @@ func TestDeleteRepoClassification(t *testing.T) {
 
 	assert.NoError(t, repo_model.DeleteRepoClassification(t.Context(), repoID))
 	rc, err = repo_model.GetRepoClassification(t.Context(), repoID)
-	assert.NoError(t, err)
+	assert.Error(t, err)
+	assert.True(t, repo_model.IsErrRepoClassificationNotExist(err))
 	assert.Nil(t, rc)
 }

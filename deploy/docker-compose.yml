@@ -17,6 +17,7 @@ services:
       USER_UID: "1000"
       USER_GID: "1000"
       APP_NAME: "ProcessGit: Git for Processes"
+      PROCESSGIT_SEED_STRICT: "false"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/v1/version >/dev/null 2>&1 || exit 1"]
       interval: 5s

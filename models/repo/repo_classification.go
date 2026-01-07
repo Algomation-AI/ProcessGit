@@ -19,6 +19,7 @@ const (
 	RepoClassificationTypeDecision  = "decision"
 	RepoClassificationTypeReference = "reference"
 	RepoClassificationTypeConnector = "connector"
+	RepoClassificationTypeTemplate  = "template"
 	RepoClassificationDefaultType   = RepoClassificationTypeProcess
 
 	RepoClassificationStatusDraft      = "draft"
@@ -33,6 +34,7 @@ var (
 		RepoClassificationTypeDecision,
 		RepoClassificationTypeReference,
 		RepoClassificationTypeConnector,
+		RepoClassificationTypeTemplate,
 	}
 	allowedRepoClassificationStatuses = []string{
 		RepoClassificationStatusDraft,
@@ -68,6 +70,24 @@ type RepoClassification struct {
 
 func (RepoClassification) TableName() string {
 	return "repo_classification"
+}
+
+// ErrRepoClassificationNotExist indicates a missing classification row.
+type ErrRepoClassificationNotExist struct {
+	RepoID int64
+}
+
+func (err ErrRepoClassificationNotExist) Error() string {
+	return fmt.Sprintf("repo classification does not exist for repo id %d", err.RepoID)
+}
+
+// IsErrRepoClassificationNotExist checks if the error indicates a missing classification row.
+func IsErrRepoClassificationNotExist(err error) bool {
+	if err == nil {
+		return false
+	}
+	var notExist ErrRepoClassificationNotExist
+	return errors.As(err, &notExist)
 }
 
 // ValidateRepoType ensures the repo_type is allowed.
@@ -122,7 +142,7 @@ func ValidateReferenceKind(kind, repoType string) error {
 	return nil
 }
 
-// GetRepoClassification fetches the classification for a repository. Returns nil when not found.
+// GetRepoClassification fetches the classification for a repository.
 func GetRepoClassification(ctx context.Context, repoID int64) (*RepoClassification, error) {
 	rc := new(RepoClassification)
 	has, err := db.GetEngine(ctx).ID(repoID).Get(rc)
@@ -130,7 +150,7 @@ func GetRepoClassification(ctx context.Context, repoID int64) (*RepoClassificati
 		return nil, err
 	}
 	if !has {
-		return nil, nil
+		return nil, ErrRepoClassificationNotExist{RepoID: repoID}
 	}
 	return rc, nil
 }
@@ -169,7 +189,10 @@ func UpsertRepoClassification(ctx context.Context, rc *RepoClassification) error
 	now := timeutil.TimeStampNow()
 	existing, err := GetRepoClassification(ctx, rc.RepoID)
 	if err != nil {
-		return err
+		if !IsErrRepoClassificationNotExist(err) {
+			return err
+		}
+		existing = nil
 	}
 	if existing == nil {
 		rc.CreatedUnix = now
@@ -191,7 +214,10 @@ func UpsertRepoClassification(ctx context.Context, rc *RepoClassification) error
 func EnsureRepoClassificationDefault(ctx context.Context, repoID, actorUserID int64) error {
 	existing, err := GetRepoClassification(ctx, repoID)
 	if err != nil {
-		return err
+		if !IsErrRepoClassificationNotExist(err) {
+			return err
+		}
+		existing = nil
 	}
 	if existing != nil {
 		return nil
