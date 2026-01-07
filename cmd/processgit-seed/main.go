@@ -231,7 +231,7 @@ func ensureTemplateRepo(ctx context.Context, owner *user_model.User, cfg templat
 	}
 	if len(updatedCols) > 0 {
 		seedLogf("Updating template repo metadata for %s/%s", owner.Name, cfg.Name)
-		if err := repo_model.UpdateRepositoryColsWithAutoTime(ctx, repo, updatedCols...); err != nil {
+		if err := repo_model.UpdateRepositoryColsWithAutoTime(ctx, repo, "processgit-seed", updatedCols...); err != nil {
 			return nil, fmt.Errorf("update repo %s: %w", cfg.Name, err)
 		}
 	}
