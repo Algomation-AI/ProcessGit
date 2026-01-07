@@ -58,14 +58,17 @@ func init() {
 
 // RepoClassification stores platform-level classification for repositories.
 type RepoClassification struct {
-	RepoID        int64              `xorm:"pk"`
-	RepoType      string             `xorm:"VARCHAR(30) NOT NULL DEFAULT 'process'"`
-	UAPFLevel     *int               `xorm:"null"`
-	ReferenceKind string             `xorm:"VARCHAR(50)"`
-	Status        string             `xorm:"VARCHAR(30) NOT NULL DEFAULT 'draft'"`
-	CreatedUnix   timeutil.TimeStamp `xorm:"created"`
-	UpdatedUnix   timeutil.TimeStamp `xorm:"updated"`
-	UpdatedBy     int64
+	RepoID                      int64              `xorm:"pk"`
+	RepoType                    string             `xorm:"VARCHAR(30) NOT NULL DEFAULT 'process'"`
+	UAPFLevel                   *int               `xorm:"null"`
+	ReferenceKind               string             `xorm:"VARCHAR(50)"`
+	Status                      string             `xorm:"VARCHAR(30) NOT NULL DEFAULT 'draft'"`
+	IdxRepoClassificationType   string             `xorm:"VARCHAR(30) NOT NULL DEFAULT 'process' 'idx_repo_classification_type' INDEX"`
+	IdxRepoClassificationStatus string             `xorm:"VARCHAR(30) NOT NULL DEFAULT 'draft' 'idx_repo_classification_status' INDEX"`
+	IdxRepoClassificationLevel  *int               `xorm:"null 'idx_repo_classification_level' INDEX"`
+	CreatedUnix                 timeutil.TimeStamp `xorm:"created"`
+	UpdatedUnix                 timeutil.TimeStamp `xorm:"updated"`
+	UpdatedBy                   int64
 }
 
 func (RepoClassification) TableName() string {
@@ -182,6 +185,25 @@ func UpsertRepoClassification(ctx context.Context, rc *RepoClassification) error
 	rc.RepoType = strings.TrimSpace(rc.RepoType)
 	rc.Status = strings.TrimSpace(rc.Status)
 	rc.ReferenceKind = strings.TrimSpace(rc.ReferenceKind)
+	if rc.RepoType == "" {
+		rc.RepoType = RepoClassificationDefaultType
+	}
+	if rc.Status == "" {
+		rc.Status = RepoClassificationStatusDraft
+	}
+	rc.IdxRepoClassificationType = strings.TrimSpace(rc.IdxRepoClassificationType)
+	rc.IdxRepoClassificationStatus = strings.TrimSpace(rc.IdxRepoClassificationStatus)
+	if rc.IdxRepoClassificationType == "" || rc.IdxRepoClassificationType != rc.RepoType {
+		rc.IdxRepoClassificationType = rc.RepoType
+	}
+	if rc.IdxRepoClassificationStatus == "" || rc.IdxRepoClassificationStatus != rc.Status {
+		rc.IdxRepoClassificationStatus = rc.Status
+	}
+	if rc.UAPFLevel == nil {
+		rc.IdxRepoClassificationLevel = nil
+	} else {
+		rc.IdxRepoClassificationLevel = rc.UAPFLevel
+	}
 	if err := validateRepoClassification(rc); err != nil {
 		return err
 	}
@@ -204,6 +226,9 @@ func UpsertRepoClassification(ctx context.Context, rc *RepoClassification) error
 	existing.UAPFLevel = rc.UAPFLevel
 	existing.ReferenceKind = strings.TrimSpace(rc.ReferenceKind)
 	existing.Status = rc.Status
+	existing.IdxRepoClassificationType = rc.IdxRepoClassificationType
+	existing.IdxRepoClassificationStatus = rc.IdxRepoClassificationStatus
+	existing.IdxRepoClassificationLevel = rc.IdxRepoClassificationLevel
 	existing.UpdatedUnix = now
 	existing.UpdatedBy = rc.UpdatedBy
 	_, err = db.GetEngine(ctx).ID(existing.RepoID).AllCols().Update(existing)

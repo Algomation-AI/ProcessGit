@@ -246,6 +246,10 @@ func ensureTemplateRepo(ctx context.Context, owner *user_model.User, cfg templat
 }
 
 func ensureTemplateClassification(ctx context.Context, repo *repo_model.Repository, doer *user_model.User) error {
+	if repo.ID == 0 {
+		return fmt.Errorf("template repo %s/%s has no id", repo.OwnerName, repo.Name)
+	}
+	seedLogf("Ensuring classification for repo_id=%d %s/%s", repo.ID, repo.OwnerName, repo.Name)
 	desiredType := templateClassificationType
 	desiredStatus := repo_model.RepoClassificationStatusDraft
 
@@ -260,10 +264,12 @@ func ensureTemplateClassification(ctx context.Context, repo *repo_model.Reposito
 
 	if rc == nil {
 		rc = &repo_model.RepoClassification{
-			RepoID:    repo.ID,
-			RepoType:  desiredType,
-			Status:    desiredStatus,
-			UpdatedBy: doer.ID,
+			RepoID:                      repo.ID,
+			RepoType:                    desiredType,
+			Status:                      desiredStatus,
+			IdxRepoClassificationType:   desiredType,
+			IdxRepoClassificationStatus: desiredStatus,
+			UpdatedBy:                   doer.ID,
 		}
 		if err := repo_model.UpsertRepoClassification(ctx, rc); err != nil {
 			return fmt.Errorf("create repo classification for %s/%s: %w", repo.OwnerName, repo.Name, err)
@@ -273,6 +279,8 @@ func ensureTemplateClassification(ctx context.Context, repo *repo_model.Reposito
 
 	rc.RepoType = desiredType
 	rc.Status = desiredStatus
+	rc.IdxRepoClassificationType = desiredType
+	rc.IdxRepoClassificationStatus = desiredStatus
 	rc.UpdatedBy = doer.ID
 	if err := repo_model.UpsertRepoClassification(ctx, rc); err != nil {
 		return fmt.Errorf("upsert repo classification for %s/%s: %w", repo.OwnerName, repo.Name, err)
