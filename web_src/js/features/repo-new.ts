@@ -43,7 +43,7 @@ function initRepoNewTemplateSearch(form: HTMLFormElement) {
           results.push({name: '', value: ''}); // empty item means not using template
           for (const tmplRepo of response.data) {
             results.push({
-              name: htmlEscape(tmplRepo.repository.full_name),
+              name: htmlEscape(tmplRepo.repository.name),
               value: String(tmplRepo.repository.id),
             });
           }
