@@ -120,6 +120,10 @@ func run() error {
 			return err
 		}
 
+		if err := ensureTemplateClassification(ctx, repo, owner); err != nil {
+			return err
+		}
+
 		if err := ensureRepoContent(ctx, owner, repo, sourceDir); err != nil {
 			return err
 		}
@@ -237,6 +241,37 @@ func ensureTemplateRepo(ctx context.Context, owner *user_model.User, cfg templat
 	}
 
 	return repo, nil
+}
+
+func ensureTemplateClassification(ctx context.Context, repo *repo_model.Repository, doer *user_model.User) error {
+	desiredType := repo_model.RepoClassificationDefaultType
+	desiredStatus := repo_model.RepoClassificationStatusDraft
+
+	rc, err := repo_model.GetRepoClassification(ctx, repo.ID)
+	if err != nil {
+		return fmt.Errorf("lookup repo classification for %s/%s: %w", repo.OwnerName, repo.Name, err)
+	}
+
+	if rc == nil {
+		rc = &repo_model.RepoClassification{
+			RepoID:    repo.ID,
+			RepoType:  desiredType,
+			Status:    desiredStatus,
+			UpdatedBy: doer.ID,
+		}
+		if err := repo_model.UpsertRepoClassification(ctx, rc); err != nil {
+			return fmt.Errorf("create repo classification for %s/%s: %w", repo.OwnerName, repo.Name, err)
+		}
+		return nil
+	}
+
+	rc.RepoType = desiredType
+	rc.Status = desiredStatus
+	rc.UpdatedBy = doer.ID
+	if err := repo_model.UpsertRepoClassification(ctx, rc); err != nil {
+		return fmt.Errorf("upsert repo classification for %s/%s: %w", repo.OwnerName, repo.Name, err)
+	}
+	return nil
 }
 
 func ensureRepoContent(ctx context.Context, owner *user_model.User, repo *repo_model.Repository, sourceDir string) error {
