@@ -41,7 +41,8 @@ RUN chmod 755 /tmp/local/usr/bin/entrypoint \
               /tmp/local/etc/s6/gitea/* \
               /tmp/local/etc/s6/openssh/* \
               /tmp/local/etc/s6/.s6-svscan/* \
-              /src/gitea
+              /src/gitea \
+              /src/processgit-seed
 
 # Runtime stage
 FROM alpine:3.22 AS processgit
@@ -67,6 +68,7 @@ RUN addgroup -S -g 1000 git && \
 
 COPY --from=build-env /tmp/local /
 COPY --from=build-env /src/gitea /app/gitea/gitea
+COPY --from=build-env /src/processgit-seed /app/processgit-seed
 COPY --from=build-env /src/templates /app/gitea/templates
 COPY --from=build-env /src/public    /app/gitea/public
 

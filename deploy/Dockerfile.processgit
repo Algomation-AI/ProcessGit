@@ -32,14 +32,20 @@ RUN set -eux; \
   BIN="$(find /src -maxdepth 5 -type f \( -name gitea -o -name processgit \) -perm -111 | head -n 1)"; \
   echo "Using binary: ${BIN}"; \
   test -n "${BIN}"; \
+  SEED_BIN="$(find /src -maxdepth 5 -type f -name processgit-seed -perm -111 | head -n 1)"; \
+  echo "Using seed binary: ${SEED_BIN}"; \
+  test -n "${SEED_BIN}"; \
   mkdir -p /out; \
   cp "${BIN}" /out/gitea; \
-  chmod +x /out/gitea
+  cp "${SEED_BIN}" /out/processgit-seed; \
+  chmod +x /out/gitea /out/processgit-seed
 
 FROM gitea/gitea:latest
 
 COPY --from=build /out/gitea /app/gitea/gitea
-RUN chmod +x /app/gitea/gitea
+COPY --from=build /out/processgit-seed /app/processgit-seed
+COPY docker/root/etc/s6/gitea/run /etc/s6/gitea/run
+RUN chmod +x /app/gitea/gitea /app/processgit-seed /etc/s6/gitea/run
 
 LABEL org.opencontainers.image.title="ProcessGit"
 LABEL org.opencontainers.image.source="https://github.com/Algomation-AI/ProcessGit"

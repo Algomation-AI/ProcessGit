@@ -2,5 +2,6 @@
 [[ -f ./setup ]] && source ./setup
 
 pushd /app/gitea >/dev/null
-exec su-exec $USER /usr/local/bin/gitea web
+su-exec $USER /app/processgit-seed --config /data/gitea/conf/app.ini || exit 1
+exec su-exec $USER /app/gitea/gitea web --config /data/gitea/conf/app.ini
 popd
