@@ -3,7 +3,7 @@
 
 pushd /app/gitea >/dev/null
 seed_exit=0
-su-exec $USER /app/processgit-seed --config /data/gitea/conf/app.ini || seed_exit=$?
+su-exec git /app/processgit-seed --config /data/gitea/conf/app.ini || seed_exit=$?
 seed_strict="${PROCESSGIT_SEED_STRICT:-true}"
 case "${seed_strict,,}" in
 	false|0|no)

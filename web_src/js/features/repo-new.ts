@@ -47,12 +47,11 @@ function initRepoNewTemplateSearch(form: HTMLFormElement) {
               continue;
             }
             const fullName = repository.full_name ?? '';
-            const shortName = repository.name ?? (fullName.includes('/') ? fullName.split('/').pop() : fullName);
-            if (!shortName) {
+            if (!fullName) {
               continue;
             }
             results.push({
-              name: htmlEscape(shortName),
+              name: htmlEscape(fullName),
               value: String(repository.id),
             });
           }
