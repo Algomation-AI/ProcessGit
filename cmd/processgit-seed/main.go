@@ -156,6 +156,35 @@ func run() error {
 		}
 	}
 
+	for _, repoCfg := range repos {
+		if repoCfg.Name == "" {
+			continue
+		}
+		repo, err := repo_model.GetRepositoryByName(ctx, owner.ID, repoCfg.Name)
+		if err != nil {
+			hadFailure = true
+			log.Error("[seed] Failed to reload repo %s/%s: %v", owner.Name, repoCfg.Name, err)
+			continue
+		}
+		gitRepo, err := gitrepo.OpenRepository(ctx, repo)
+		if err != nil {
+			hadFailure = true
+			log.Error("[seed] Failed to open repo %s/%s: %v", owner.Name, repo.Name, err)
+			continue
+		}
+		isEmpty, err := gitRepo.IsEmpty()
+		gitRepo.Close()
+		if err != nil {
+			hadFailure = true
+			log.Error("[seed] Failed to check repo %s/%s empty state: %v", owner.Name, repo.Name, err)
+			continue
+		}
+		if isEmpty {
+			hadFailure = true
+			log.Error("[seed] Template repo still empty after seeding: %s/%s", owner.Name, repo.Name)
+		}
+	}
+
 	if hadFailure {
 		seedLogf("Template bootstrap completed with failures; marker not written")
 		return nil
@@ -362,22 +391,10 @@ func ensureRepoContent(ctx context.Context, owner *user_model.User, repo *repo_m
 	defer cleanup()
 
 	workDir := filepath.Join(tmpDir, "repo")
-	if err := gitrepo.CloneRepoToLocal(ctx, repo, workDir, git.CloneRepoOptions{}); err != nil {
-		return fmt.Errorf("git clone %s/%s: %w", repo.OwnerName, repo.Name, err)
+	if err := os.MkdirAll(workDir, 0o755); err != nil {
+		return fmt.Errorf("create workdir for %s/%s: %w", repo.OwnerName, repo.Name, err)
 	}
-	if err := ensureGitWorkTree(ctx, workDir); err != nil {
-		return err
-	}
-	if err := ensureOriginRemote(ctx, workDir, repo.RepoPath()); err != nil {
-		return err
-	}
-	if err := ensureOriginVisible(ctx, workDir); err != nil {
-		return err
-	}
-	if err := copyTemplateDir(sourceDir, workDir); err != nil {
-		return fmt.Errorf("copy template content for %s/%s: %w", repo.OwnerName, repo.Name, err)
-	}
-	if err := commitAndPushTemplate(ctx, workDir, repo, owner, defaultBranch); err != nil {
+	if err := commitAndPushTemplate(ctx, workDir, sourceDir, repo, owner, defaultBranch); err != nil {
 		return err
 	}
 
@@ -427,7 +444,7 @@ func copyTemplateDir(sourceDir, destDir string) error {
 	})
 }
 
-func commitAndPushTemplate(ctx context.Context, workDir string, repo *repo_model.Repository, owner *user_model.User, defaultBranch string) error {
+func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo *repo_model.Repository, owner *user_model.User, defaultBranch string) error {
 	commitTime := time.Now().Format(time.RFC3339)
 	env := append(os.Environ(),
 		"GIT_AUTHOR_NAME="+templateCommitName,
@@ -439,9 +456,31 @@ func commitAndPushTemplate(ctx context.Context, workDir string, repo *repo_model
 	)
 	pushEnv := append(repo_module.InternalPushingEnvironment(owner, repo), env...)
 
+	if stdout, stderr, err := gitcmd.NewCommand("init").
+		AddDynamicArguments("-b", defaultBranch).
+		WithDir(workDir).
+		WithEnv(pushEnv).
+		RunStdString(ctx); err != nil {
+		log.Error("[seed] git init failed: stdout=%s stderr=%s", stdout, stderr)
+		return fmt.Errorf("git init: %w; stdout: %s; stderr: %s", err, stdout, stderr)
+	}
+	if stdout, stderr, err := gitcmd.NewCommand("status").
+		AddDynamicArguments("--porcelain", "-b").
+		WithDir(workDir).
+		WithEnv(pushEnv).
+		RunStdString(ctx); err != nil {
+		log.Error("[seed] git status failed: stdout=%s stderr=%s", stdout, stderr)
+		return fmt.Errorf("git status: %w; stdout: %s; stderr: %s", err, stdout, stderr)
+	}
+
+	if err := copyTemplateDir(sourceDir, workDir); err != nil {
+		return fmt.Errorf("copy template content for %s/%s: %w", repo.OwnerName, repo.Name, err)
+	}
+
 	if stdout, stderr, err := gitcmd.NewCommand("config").
 		AddDynamicArguments("user.name", templateCommitName).
 		WithDir(workDir).
+		WithEnv(pushEnv).
 		RunStdString(ctx); err != nil {
 		log.Error("[seed] git config user.name failed: stdout=%s stderr=%s", stdout, stderr)
 		return fmt.Errorf("git config user.name: %w; stdout: %s; stderr: %s", err, stdout, stderr)
@@ -449,41 +488,37 @@ func commitAndPushTemplate(ctx context.Context, workDir string, repo *repo_model
 	if stdout, stderr, err := gitcmd.NewCommand("config").
 		AddDynamicArguments("user.email", templateCommitEmail).
 		WithDir(workDir).
+		WithEnv(pushEnv).
 		RunStdString(ctx); err != nil {
 		log.Error("[seed] git config user.email failed: stdout=%s stderr=%s", stdout, stderr)
 		return fmt.Errorf("git config user.email: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
-	if stdout, stderr, err := gitcmd.NewCommand("rev-parse").
-		AddDynamicArguments("--is-inside-work-tree").
+	if stdout, stderr, err := gitcmd.NewCommand("add").
+		AddDynamicArguments("--all").
 		WithDir(workDir).
-		WithEnv(env).
-		RunStdString(ctx); err != nil || strings.TrimSpace(stdout) != "true" {
-		entries, readErr := os.ReadDir(workDir)
-		if readErr != nil {
-			log.Error("[seed] failed to read workDir for debug: %v", readErr)
-		}
-		for _, entry := range entries {
-			log.Error("[seed] workDir entry: %s", entry.Name())
-		}
-		if err != nil {
-			log.Error("[seed] git rev-parse failed: stdout=%s stderr=%s", stdout, stderr)
-			return fmt.Errorf("seed workDir is not a git work tree: %q err=%w; stdout: %s; stderr: %s", stdout, err, stdout, stderr)
-		}
-		return fmt.Errorf("seed workDir is not a git work tree: %q; stdout: %s; stderr: %s", stdout, stdout, stderr)
-	}
-
-	if stdout, stderr, err := gitcmd.NewCommand("add").AddDynamicArguments("--all").WithDir(workDir).WithEnv(env).RunStdString(ctx); err != nil {
+		WithEnv(pushEnv).
+		RunStdString(ctx); err != nil {
 		log.Error("[seed] git add failed: stdout=%s stderr=%s", stdout, stderr)
 		return fmt.Errorf("git add: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
 	if stdout, stderr, err := gitcmd.NewCommand("commit").AddDynamicArguments("--message=Initial template import", "--no-gpg-sign").
 		WithDir(workDir).
-		WithEnv(env).
+		WithEnv(pushEnv).
 		RunStdString(ctx); err != nil {
 		log.Error("[seed] git commit failed: stdout=%s stderr=%s", stdout, stderr)
 		return fmt.Errorf("git commit: %w; stdout: %s; stderr: %s", err, stdout, stderr)
+	}
+
+	repoBarePath := gitrepo.RepoPath(repo.OwnerName, repo.Name)
+	if stdout, stderr, err := gitcmd.NewCommand("remote").
+		AddDynamicArguments("add", "origin", repoBarePath).
+		WithDir(workDir).
+		WithEnv(pushEnv).
+		RunStdString(ctx); err != nil {
+		log.Error("[seed] git remote add failed: stdout=%s stderr=%s", stdout, stderr)
+		return fmt.Errorf("git remote add: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
 	refspec := fmt.Sprintf("HEAD:refs/heads/%s", defaultBranch)
@@ -541,64 +576,4 @@ func seedLogCommand(label, name string, args ...string) {
 			}
 		}
 	}
-}
-
-func ensureGitWorkTree(ctx context.Context, workDir string) error {
-	stdout, stderr, err := gitcmd.NewCommand("rev-parse").
-		AddDynamicArguments("--is-inside-work-tree").
-		WithDir(workDir).
-		RunStdString(ctx)
-	if err != nil || strings.TrimSpace(stdout) != "true" {
-		if err != nil {
-			log.Error("[seed] git rev-parse failed: stdout=%s stderr=%s", stdout, stderr)
-			return fmt.Errorf("seed workDir is not a git work tree: %q err=%w; stdout: %s; stderr: %s", stdout, err, stdout, stderr)
-		}
-		return fmt.Errorf("seed workDir is not a git work tree: %q; stdout: %s; stderr: %s", stdout, stdout, stderr)
-	}
-
-	return nil
-}
-
-func ensureOriginRemote(ctx context.Context, workDir, repoPath string) error {
-	stdout, stderr, err := gitcmd.NewCommand("remote").
-		AddDynamicArguments("get-url", "origin").
-		WithDir(workDir).
-		RunStdString(ctx)
-	if err != nil {
-		if addStdout, addStderr, addErr := gitcmd.NewCommand("remote").
-			AddDynamicArguments("add", "origin", repoPath).
-			WithDir(workDir).
-			RunStdString(ctx); addErr != nil {
-			log.Error("[seed] git remote add failed: stdout=%s stderr=%s", addStdout, addStderr)
-			return fmt.Errorf("git remote add: %w; stdout: %s; stderr: %s", addErr, addStdout, addStderr)
-		}
-		return nil
-	}
-
-	if strings.TrimSpace(stdout) == repoPath {
-		return nil
-	}
-	if stdout, stderr, err = gitcmd.NewCommand("remote").
-		AddDynamicArguments("set-url", "origin", repoPath).
-		WithDir(workDir).
-		RunStdString(ctx); err != nil {
-		log.Error("[seed] git remote set-url failed: stdout=%s stderr=%s", stdout, stderr)
-		return fmt.Errorf("git remote set-url: %w; stdout: %s; stderr: %s", err, stdout, stderr)
-	}
-	return nil
-}
-
-func ensureOriginVisible(ctx context.Context, workDir string) error {
-	stdout, stderr, err := gitcmd.NewCommand("remote").
-		AddDynamicArguments("-v").
-		WithDir(workDir).
-		RunStdString(ctx)
-	if err != nil {
-		log.Error("[seed] git remote -v failed: stdout=%s stderr=%s", stdout, stderr)
-		return fmt.Errorf("git remote -v: %w; stdout: %s; stderr: %s", err, stdout, stderr)
-	}
-	if !strings.Contains(stdout, "origin") {
-		return fmt.Errorf("git remote -v missing origin for workDir %q; stdout: %s; stderr: %s", workDir, stdout, stderr)
-	}
-	return nil
 }
