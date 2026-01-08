@@ -565,12 +565,12 @@ func ensureOriginRemote(ctx context.Context, workDir, repoPath string) error {
 		WithDir(workDir).
 		RunStdString(ctx)
 	if err != nil {
-		if _, addErr := gitcmd.NewCommand("remote").
+		if addStdout, addStderr, addErr := gitcmd.NewCommand("remote").
 			AddDynamicArguments("add", "origin", repoPath).
 			WithDir(workDir).
 			RunStdString(ctx); addErr != nil {
-			log.Error("[seed] git remote add failed: stdout=%s stderr=%s", stdout, stderr)
-			return fmt.Errorf("git remote add: %w; stdout: %s; stderr: %s", addErr, stdout, stderr)
+			log.Error("[seed] git remote add failed: stdout=%s stderr=%s", addStdout, addStderr)
+			return fmt.Errorf("git remote add: %w; stdout: %s; stderr: %s", addErr, addStdout, addStderr)
 		}
 		return nil
 	}
