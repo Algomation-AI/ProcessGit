@@ -42,9 +42,18 @@ function initRepoNewTemplateSearch(form: HTMLFormElement) {
           const results = [];
           results.push({name: '', value: ''}); // empty item means not using template
           for (const tmplRepo of response.data) {
+            const repository = tmplRepo.repository;
+            if (!repository) {
+              continue;
+            }
+            const fullName = repository.full_name ?? '';
+            const shortName = repository.name ?? (fullName.includes('/') ? fullName.split('/').pop() : fullName);
+            if (!shortName) {
+              continue;
+            }
             results.push({
-              name: htmlEscape(tmplRepo.repository.name),
-              value: String(tmplRepo.repository.id),
+              name: htmlEscape(shortName),
+              value: String(repository.id),
             });
           }
           $repoTemplateDropdown.fomanticExt.onResponseKeepSelectedItem($repoTemplateDropdown, inputRepoTemplate.value);
