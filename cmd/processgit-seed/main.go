@@ -18,6 +18,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/git/gitcmd"
 	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/log"
@@ -319,7 +320,13 @@ func ensureRepoContent(ctx context.Context, owner *user_model.User, repo *repo_m
 	}
 
 	seedLogf("Importing template content into %s/%s", repo.OwnerName, repo.Name)
-	defaultBranch := "main"
+	defaultBranch := repo.DefaultBranch
+	if defaultBranch == "" {
+		defaultBranch = setting.Repository.DefaultBranch
+	}
+	if defaultBranch == "" {
+		defaultBranch = "main"
+	}
 
 	tmpDir, cleanup, err := setting.AppDataTempDir("git-repo-content").MkdirTempRandom("template-seed-" + repo.Name)
 	if err != nil {
@@ -327,14 +334,18 @@ func ensureRepoContent(ctx context.Context, owner *user_model.User, repo *repo_m
 	}
 	defer cleanup()
 
-	if stdout, _, err := gitcmd.NewCommand("init", "-b", defaultBranch).WithDir(tmpDir).RunStdString(ctx); err != nil {
+	if stdout, _, err := gitcmd.NewCommand("init", "-b").
+		AddDynamicArguments(defaultBranch).
+		WithDir(tmpDir).
+		RunStdString(ctx); err != nil {
 		log.Error("[seed] git init failed: %s", stdout)
 		return fmt.Errorf("git init: %w", err)
 	}
 	if err := copyTemplateDir(sourceDir, tmpDir); err != nil {
 		return fmt.Errorf("copy template content for %s/%s: %w", repo.OwnerName, repo.Name, err)
 	}
-	if stdout, _, err := gitcmd.NewCommand("remote", "add", "origin", gitrepo.RepoGitURL(repo)).
+	if stdout, _, err := gitcmd.NewCommand("remote", "add", "origin").
+		AddDynamicArguments(gitrepo.RepoGitURL(repo)).
 		WithDir(tmpDir).
 		RunStdString(ctx); err != nil {
 		log.Error("[seed] git remote add failed: %s", stdout)
@@ -346,7 +357,7 @@ func ensureRepoContent(ctx context.Context, owner *user_model.User, repo *repo_m
 
 	repo.IsEmpty = false
 	repo.DefaultBranch = defaultBranch
-	if err := repo_model.UpdateRepositoryColsWithAutoTime(ctx, repo, "is_empty", "default_branch"); err != nil {
+	if err := repo_model.UpdateRepositoryColsWithAutoTime(ctx, repo, "processgit-seed", "is_empty", "default_branch"); err != nil {
 		return fmt.Errorf("update repo state for %s/%s: %w", repo.OwnerName, repo.Name, err)
 	}
 	return nil
@@ -414,8 +425,9 @@ func commitAndPushTemplate(ctx context.Context, workDir string, repo *repo_model
 		return fmt.Errorf("git commit: %w", err)
 	}
 
+	refspec := fmt.Sprintf("HEAD:refs/heads/%s", defaultBranch)
 	if stdout, _, err := gitcmd.NewCommand("push", "--set-upstream", "origin").
-		AddDynamicArguments(defaultBranch + ":refs/heads/" + defaultBranch).
+		AddDynamicArguments(refspec).
 		WithDir(workDir).
 		WithEnv(repo_module.InternalPushingEnvironment(owner, repo)).
 		RunStdString(ctx); err != nil {
