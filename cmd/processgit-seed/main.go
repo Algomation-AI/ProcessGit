@@ -12,6 +12,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"code.gitea.io/gitea/models"
@@ -103,32 +104,58 @@ func run() error {
 		return err
 	}
 
+	seedStrict, err := parseSeedStrict()
+	if err != nil {
+		return err
+	}
+
 	seedLogf("Bootstrapping %d template repos", len(repos))
+	hadFailure := false
 	for _, repoCfg := range repos {
-		if repoCfg.Name == "" {
-			return fmt.Errorf("template repo entry missing name")
+		repoName := repoCfg.Name
+		if repoName == "" {
+			repoName = "<unknown>"
 		}
-		if repoCfg.Path == "" {
-			return fmt.Errorf("template repo entry %q missing path", repoCfg.Name)
-		}
-		sourceDir := filepath.Join(templateRootPath, repoCfg.Path)
-		if err := ensureDirExists(sourceDir, fmt.Sprintf("template content for %s", repoCfg.Name)); err != nil {
-			return err
-		}
+		err := func() error {
+			if repoCfg.Name == "" {
+				return fmt.Errorf("template repo entry missing name")
+			}
+			if repoCfg.Path == "" {
+				return fmt.Errorf("template repo entry %q missing path", repoCfg.Name)
+			}
+			sourceDir := filepath.Join(templateRootPath, repoCfg.Path)
+			if err := ensureDirExists(sourceDir, fmt.Sprintf("template content for %s", repoCfg.Name)); err != nil {
+				return err
+			}
 
-		repo, err := ensureTemplateRepo(ctx, owner, repoCfg)
+			repo, err := ensureTemplateRepo(ctx, owner, repoCfg)
+			if err != nil {
+				return err
+			}
+
+			if err := ensureTemplateClassification(ctx, repo, owner); err != nil {
+				return err
+			}
+
+			if err := ensureRepoContent(ctx, owner, repo, sourceDir); err != nil {
+				return err
+			}
+			seedLogf("Template imported OK: %s/%s", owner.Name, repo.Name)
+			return nil
+		}()
 		if err != nil {
-			return err
+			if seedStrict {
+				return err
+			}
+			hadFailure = true
+			log.Error("[seed] Template import failed for %s: %v", repoName, err)
+			continue
 		}
+	}
 
-		if err := ensureTemplateClassification(ctx, repo, owner); err != nil {
-			return err
-		}
-
-		if err := ensureRepoContent(ctx, owner, repo, sourceDir); err != nil {
-			return err
-		}
-		seedLogf("Template imported OK: %s/%s", owner.Name, repo.Name)
+	if hadFailure {
+		seedLogf("Template bootstrap completed with failures; marker not written")
+		return nil
 	}
 
 	if err := os.MkdirAll(filepath.Dir(templateMarkerPath), 0o755); err != nil {
@@ -299,9 +326,6 @@ func ensureRepoContent(ctx context.Context, owner *user_model.User, repo *repo_m
 		if err := gitrepo.InitRepository(ctx, repo, repo.ObjectFormatName); err != nil {
 			return fmt.Errorf("init git repo %s/%s: %w", repo.OwnerName, repo.Name, err)
 		}
-		if err := gitrepo.CreateDelegateHooks(ctx, repo); err != nil {
-			return fmt.Errorf("create hooks for %s/%s: %w", repo.OwnerName, repo.Name, err)
-		}
 	}
 
 	gitRepo, err := gitrepo.OpenRepository(ctx, repo)
@@ -334,22 +358,11 @@ func ensureRepoContent(ctx context.Context, owner *user_model.User, repo *repo_m
 	}
 	defer cleanup()
 
-	if stdout, _, err := gitcmd.NewCommand("init", "-b").
-		AddDynamicArguments(defaultBranch).
-		WithDir(tmpDir).
-		RunStdString(ctx); err != nil {
-		log.Error("[seed] git init failed: %s", stdout)
-		return fmt.Errorf("git init: %w", err)
+	if err := gitrepo.CloneRepoToLocal(ctx, repo, tmpDir, git.CloneRepoOptions{}); err != nil {
+		return fmt.Errorf("git clone %s/%s: %w", repo.OwnerName, repo.Name, err)
 	}
 	if err := copyTemplateDir(sourceDir, tmpDir); err != nil {
 		return fmt.Errorf("copy template content for %s/%s: %w", repo.OwnerName, repo.Name, err)
-	}
-	if stdout, _, err := gitcmd.NewCommand("remote", "add", "origin").
-		AddDynamicArguments(gitrepo.RepoGitURL(repo)).
-		WithDir(tmpDir).
-		RunStdString(ctx); err != nil {
-		log.Error("[seed] git remote add failed: %s", stdout)
-		return fmt.Errorf("git remote add: %w", err)
 	}
 	if err := commitAndPushTemplate(ctx, tmpDir, repo, owner, defaultBranch); err != nil {
 		return err
@@ -412,12 +425,12 @@ func commitAndPushTemplate(ctx context.Context, workDir string, repo *repo_model
 		"GIT_COMMITTER_DATE="+commitTime,
 	)
 
-	if stdout, _, err := gitcmd.NewCommand("add", "--all").WithDir(workDir).RunStdString(ctx); err != nil {
+	if stdout, _, err := gitcmd.NewCommand("add").AddDynamicArguments("--all").WithDir(workDir).RunStdString(ctx); err != nil {
 		log.Error("[seed] git add failed: %s", stdout)
 		return fmt.Errorf("git add: %w", err)
 	}
 
-	if stdout, _, err := gitcmd.NewCommand("commit", "--message=Initial template import", "--no-gpg-sign").
+	if stdout, _, err := gitcmd.NewCommand("commit").AddDynamicArguments("--message=Initial template import", "--no-gpg-sign").
 		WithDir(workDir).
 		WithEnv(env).
 		RunStdString(ctx); err != nil {
@@ -426,8 +439,8 @@ func commitAndPushTemplate(ctx context.Context, workDir string, repo *repo_model
 	}
 
 	refspec := fmt.Sprintf("HEAD:refs/heads/%s", defaultBranch)
-	if stdout, _, err := gitcmd.NewCommand("push", "--set-upstream", "origin").
-		AddDynamicArguments(refspec).
+	if stdout, _, err := gitcmd.NewCommand("push").
+		AddDynamicArguments("--set-upstream", "origin", refspec).
 		WithDir(workDir).
 		WithEnv(repo_module.InternalPushingEnvironment(owner, repo)).
 		RunStdString(ctx); err != nil {
@@ -444,6 +457,18 @@ func envOrDefault(key, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+func parseSeedStrict() (bool, error) {
+	value := os.Getenv("PROCESSGIT_SEED_STRICT")
+	if value == "" {
+		return true, nil
+	}
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		return false, fmt.Errorf("parse PROCESSGIT_SEED_STRICT: %w", err)
+	}
+	return parsed, nil
 }
 
 func seedLogf(format string, args ...any) {
