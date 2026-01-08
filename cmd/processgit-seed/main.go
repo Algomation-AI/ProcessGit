@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"code.gitea.io/gitea/models"
@@ -424,28 +425,63 @@ func commitAndPushTemplate(ctx context.Context, workDir string, repo *repo_model
 		"GIT_COMMITTER_EMAIL="+templateCommitEmail,
 		"GIT_COMMITTER_DATE="+commitTime,
 	)
+	pushEnv := append(repo_module.InternalPushingEnvironment(owner, repo), env...)
 
-	if stdout, _, err := gitcmd.NewCommand("add").AddDynamicArguments("--all").WithDir(workDir).RunStdString(ctx); err != nil {
-		log.Error("[seed] git add failed: %s", stdout)
-		return fmt.Errorf("git add: %w", err)
+	if stdout, stderr, err := gitcmd.NewCommand("config").
+		AddDynamicArguments("user.name", templateCommitName).
+		WithDir(workDir).
+		RunStdString(ctx); err != nil {
+		log.Error("[seed] git config user.name failed: stdout=%s stderr=%s", stdout, stderr)
+		return fmt.Errorf("git config user.name: %w; stdout: %s; stderr: %s", err, stdout, stderr)
+	}
+	if stdout, stderr, err := gitcmd.NewCommand("config").
+		AddDynamicArguments("user.email", templateCommitEmail).
+		WithDir(workDir).
+		RunStdString(ctx); err != nil {
+		log.Error("[seed] git config user.email failed: stdout=%s stderr=%s", stdout, stderr)
+		return fmt.Errorf("git config user.email: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
-	if stdout, _, err := gitcmd.NewCommand("commit").AddDynamicArguments("--message=Initial template import", "--no-gpg-sign").
+	if stdout, stderr, err := gitcmd.NewCommand("rev-parse").
+		AddDynamicArguments("--is-inside-work-tree").
+		WithDir(workDir).
+		WithEnv(env).
+		RunStdString(ctx); err != nil || strings.TrimSpace(stdout) != "true" {
+		entries, readErr := os.ReadDir(workDir)
+		if readErr != nil {
+			log.Error("[seed] failed to read workDir for debug: %v", readErr)
+		}
+		for _, entry := range entries {
+			log.Error("[seed] workDir entry: %s", entry.Name())
+		}
+		if err != nil {
+			log.Error("[seed] git rev-parse failed: stdout=%s stderr=%s", stdout, stderr)
+			return fmt.Errorf("seed workDir is not a git work tree: %q err=%w; stdout: %s; stderr: %s", stdout, err, stdout, stderr)
+		}
+		return fmt.Errorf("seed workDir is not a git work tree: %q; stdout: %s; stderr: %s", stdout, stdout, stderr)
+	}
+
+	if stdout, stderr, err := gitcmd.NewCommand("add").AddDynamicArguments("--all").WithDir(workDir).WithEnv(env).RunStdString(ctx); err != nil {
+		log.Error("[seed] git add failed: stdout=%s stderr=%s", stdout, stderr)
+		return fmt.Errorf("git add: %w; stdout: %s; stderr: %s", err, stdout, stderr)
+	}
+
+	if stdout, stderr, err := gitcmd.NewCommand("commit").AddDynamicArguments("--message=Initial template import", "--no-gpg-sign").
 		WithDir(workDir).
 		WithEnv(env).
 		RunStdString(ctx); err != nil {
-		log.Error("[seed] git commit failed: %s", stdout)
-		return fmt.Errorf("git commit: %w", err)
+		log.Error("[seed] git commit failed: stdout=%s stderr=%s", stdout, stderr)
+		return fmt.Errorf("git commit: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
 	refspec := fmt.Sprintf("HEAD:refs/heads/%s", defaultBranch)
-	if stdout, _, err := gitcmd.NewCommand("push").
-		AddDynamicArguments("--set-upstream", "origin", refspec).
+	if stdout, stderr, err := gitcmd.NewCommand("push").
+		AddDynamicArguments("origin", refspec).
 		WithDir(workDir).
-		WithEnv(repo_module.InternalPushingEnvironment(owner, repo)).
+		WithEnv(pushEnv).
 		RunStdString(ctx); err != nil {
-		log.Error("[seed] git push failed: %s", stdout)
-		return fmt.Errorf("git push: %w", err)
+		log.Error("[seed] git push failed: stdout=%s stderr=%s", stdout, stderr)
+		return fmt.Errorf("git push: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
 	return nil
