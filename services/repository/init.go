@@ -29,6 +29,7 @@ func initRepoCommit(ctx context.Context, tmpPath string, repo *repo_model.Reposi
 		"GIT_AUTHOR_EMAIL="+sig.Email,
 		"GIT_AUTHOR_DATE="+commitTimeStr,
 		"GIT_COMMITTER_DATE="+commitTimeStr,
+		"GIT_TERMINAL_PROMPT=0",
 	)
 	committerName := sig.Name
 	committerEmail := sig.Email
@@ -71,12 +72,17 @@ func initRepoCommit(ctx context.Context, tmpPath string, repo *repo_model.Reposi
 		defaultBranch = setting.Repository.DefaultBranch
 	}
 
-	if stdout, _, err := gitcmd.NewCommand("push", "origin").
-		AddDynamicArguments("HEAD:" + defaultBranch).
+	// FIX: Use file:// protocol to bypass hooks during repo initialization
+	// This prevents quarantine issues when creating repos from templates
+	fileURL := "file://" + repo.RepoPath()
+	log.Debug("Pushing initial commit to %s via file:// protocol", fileURL)
+
+	if stdout, _, err := gitcmd.NewCommand("push").
+		AddDynamicArguments(fileURL, "HEAD:"+defaultBranch).
 		WithDir(tmpPath).
-		WithEnv(repo_module.InternalPushingEnvironment(u, repo)).
+		WithEnv(env).
 		RunStdString(ctx); err != nil {
-		log.Error("Failed to push back to HEAD: Stdout: %s\nError: %v", stdout, err)
+		log.Error("Failed to push to %s: Stdout: %s\nError: %v", fileURL, stdout, err)
 		return fmt.Errorf("git push: %w", err)
 	}
 
