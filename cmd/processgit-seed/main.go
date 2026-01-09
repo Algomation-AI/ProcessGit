@@ -456,23 +456,27 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 		"GIT_TERMINAL_PROMPT=0",
 	)
 
-	// Initialize git repository (no branch flag - Gitea blocks them all)
-	if stdout, stderr, err := gitcmd.NewCommand("init").
-		WithDir(workDir).
-		WithEnv(env).
-		RunStdString(ctx); err != nil {
-		log.Error("[seed] git init failed: stdout=%s stderr=%s", stdout, stderr)
-		return fmt.Errorf("git init: %w; stdout: %s; stderr: %s", err, stdout, stderr)
+	// Helper to run git commands directly (bypassing gitcmd security)
+	runGit := func(args ...string) error {
+		cmd := exec.CommandContext(ctx, "git", args...)
+		cmd.Dir = workDir
+		cmd.Env = env
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Error("[seed] git %v failed: %s", args, string(output))
+			return fmt.Errorf("git %v: %w; output: %s", args, err, string(output))
+		}
+		return nil
 	}
 
-	// Set default branch using symbolic-ref (after init)
-	if stdout, stderr, err := gitcmd.NewCommand("symbolic-ref").
-		AddDynamicArguments("HEAD", "refs/heads/"+defaultBranch).
-		WithDir(workDir).
-		WithEnv(env).
-		RunStdString(ctx); err != nil {
-		log.Error("[seed] git symbolic-ref failed: stdout=%s stderr=%s", stdout, stderr)
-		return fmt.Errorf("git symbolic-ref: %w; stdout: %s; stderr: %s", err, stdout, stderr)
+	// Initialize git repository
+	if err := runGit("init"); err != nil {
+		return err
+	}
+
+	// Set default branch using symbolic-ref
+	if err := runGit("symbolic-ref", "HEAD", "refs/heads/"+defaultBranch); err != nil {
+		return err
 	}
 
 	// Copy template content
@@ -481,42 +485,21 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 	}
 
 	// Configure git identity
-	if stdout, stderr, err := gitcmd.NewCommand("config").
-		AddDynamicArguments("user.name", templateCommitName).
-		WithDir(workDir).
-		WithEnv(env).
-		RunStdString(ctx); err != nil {
-		log.Error("[seed] git config user.name failed: stdout=%s stderr=%s", stdout, stderr)
-		return fmt.Errorf("git config user.name: %w; stdout: %s; stderr: %s", err, stdout, stderr)
+	if err := runGit("config", "user.name", templateCommitName); err != nil {
+		return err
+	}
+	if err := runGit("config", "user.email", templateCommitEmail); err != nil {
+		return err
 	}
 
-	if stdout, stderr, err := gitcmd.NewCommand("config").
-		AddDynamicArguments("user.email", templateCommitEmail).
-		WithDir(workDir).
-		WithEnv(env).
-		RunStdString(ctx); err != nil {
-		log.Error("[seed] git config user.email failed: stdout=%s stderr=%s", stdout, stderr)
-		return fmt.Errorf("git config user.email: %w; stdout: %s; stderr: %s", err, stdout, stderr)
+	// Stage all files
+	if err := runGit("add", "."); err != nil {
+		return err
 	}
 
-	// Stage all files (using . instead of --all - Gitea blocks --all)
-	if stdout, stderr, err := gitcmd.NewCommand("add").
-		AddDynamicArguments(".").
-		WithDir(workDir).
-		WithEnv(env).
-		RunStdString(ctx); err != nil {
-		log.Error("[seed] git add failed: stdout=%s stderr=%s", stdout, stderr)
-		return fmt.Errorf("git add: %w; stdout: %s; stderr: %s", err, stdout, stderr)
-	}
-
-	// Create initial commit (using -m as separate arg)
-	if stdout, stderr, err := gitcmd.NewCommand("commit").
-		AddDynamicArguments("-m", "Initial template import", "--no-gpg-sign").
-		WithDir(workDir).
-		WithEnv(env).
-		RunStdString(ctx); err != nil {
-		log.Error("[seed] git commit failed: stdout=%s stderr=%s", stdout, stderr)
-		return fmt.Errorf("git commit: %w; stdout: %s; stderr: %s", err, stdout, stderr)
+	// Create initial commit
+	if err := runGit("commit", "-m", "Initial template import", "--no-gpg-sign"); err != nil {
+		return err
 	}
 
 	// Get bare repo path and push using file:// protocol
@@ -525,13 +508,8 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 	refspec := fmt.Sprintf("HEAD:refs/heads/%s", defaultBranch)
 
 	seedLogf("Pushing to bare repo via file:// protocol: %s", fileURL)
-	if stdout, stderr, err := gitcmd.NewCommand("push").
-		AddDynamicArguments(fileURL, refspec).
-		WithDir(workDir).
-		WithEnv(env).
-		RunStdString(ctx); err != nil {
-		log.Error("[seed] git push failed: stdout=%s stderr=%s", stdout, stderr)
-		return fmt.Errorf("git push: %w; stdout: %s; stderr: %s", err, stdout, stderr)
+	if err := runGit("push", fileURL, refspec); err != nil {
+		return err
 	}
 
 	seedLogf("Successfully pushed template content to %s/%s", repo.OwnerName, repo.Name)
