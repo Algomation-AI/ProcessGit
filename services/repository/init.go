@@ -13,6 +13,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git/gitcmd"
 	"code.gitea.io/gitea/modules/log"
+	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
 	asymkey_service "code.gitea.io/gitea/services/asymkey"
 )
@@ -29,6 +30,7 @@ func initRepoCommit(ctx context.Context, tmpPath string, repo *repo_model.Reposi
 		"GIT_AUTHOR_DATE="+commitTimeStr,
 		"GIT_COMMITTER_DATE="+commitTimeStr,
 		"GIT_TERMINAL_PROMPT=0",
+		repo_module.EnvIsInternal+"=true",
 	)
 	committerName := sig.Name
 	committerEmail := sig.Email
@@ -71,8 +73,9 @@ func initRepoCommit(ctx context.Context, tmpPath string, repo *repo_model.Reposi
 		defaultBranch = setting.Repository.DefaultBranch
 	}
 
-	// FIX: Use file:// protocol to bypass hooks during repo initialization
-	// This prevents quarantine issues when creating repos from templates
+	// FIX: Use file:// protocol with GITEA_INTERNAL_PUSH for template repo creation
+	// file:// bypasses network issues and quarantine problems
+	// GITEA_INTERNAL_PUSH=true tells pre-receive hook to allow the push
 	fileURL := "file://" + repo.RepoPath()
 	log.Debug("Pushing initial commit to %s via file:// protocol", fileURL)
 
