@@ -46,12 +46,12 @@ function initRepoNewTemplateSearch(form: HTMLFormElement) {
             if (!repository) {
               continue;
             }
-            const fullName = repository.full_name ?? '';
-            if (!fullName) {
+            const name = repository.name ?? '';
+            if (!name) {
               continue;
             }
             results.push({
-              name: htmlEscape(fullName),
+              name: htmlEscape(name),
               value: String(repository.id),
             });
           }
