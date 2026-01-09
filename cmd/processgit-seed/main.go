@@ -453,24 +453,16 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 		"GIT_COMMITTER_NAME="+templateCommitName,
 		"GIT_COMMITTER_EMAIL="+templateCommitEmail,
 		"GIT_COMMITTER_DATE="+commitTime,
+		"GIT_TERMINAL_PROMPT=0",
 	)
-	pushEnv := append(repo_module.InternalPushingEnvironment(owner, repo), env...)
 
 	if stdout, stderr, err := gitcmd.NewCommand("init").
 		AddDynamicArguments("-b", defaultBranch).
 		WithDir(workDir).
-		WithEnv(pushEnv).
+		WithEnv(env).
 		RunStdString(ctx); err != nil {
 		log.Error("[seed] git init failed: stdout=%s stderr=%s", stdout, stderr)
 		return fmt.Errorf("git init: %w; stdout: %s; stderr: %s", err, stdout, stderr)
-	}
-	if stdout, stderr, err := gitcmd.NewCommand("status").
-		AddDynamicArguments("--porcelain", "-b").
-		WithDir(workDir).
-		WithEnv(pushEnv).
-		RunStdString(ctx); err != nil {
-		log.Error("[seed] git status failed: stdout=%s stderr=%s", stdout, stderr)
-		return fmt.Errorf("git status: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
 	if err := copyTemplateDir(sourceDir, workDir); err != nil {
@@ -480,7 +472,7 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 	if stdout, stderr, err := gitcmd.NewCommand("config").
 		AddDynamicArguments("user.name", templateCommitName).
 		WithDir(workDir).
-		WithEnv(pushEnv).
+		WithEnv(env).
 		RunStdString(ctx); err != nil {
 		log.Error("[seed] git config user.name failed: stdout=%s stderr=%s", stdout, stderr)
 		return fmt.Errorf("git config user.name: %w; stdout: %s; stderr: %s", err, stdout, stderr)
@@ -488,7 +480,7 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 	if stdout, stderr, err := gitcmd.NewCommand("config").
 		AddDynamicArguments("user.email", templateCommitEmail).
 		WithDir(workDir).
-		WithEnv(pushEnv).
+		WithEnv(env).
 		RunStdString(ctx); err != nil {
 		log.Error("[seed] git config user.email failed: stdout=%s stderr=%s", stdout, stderr)
 		return fmt.Errorf("git config user.email: %w; stdout: %s; stderr: %s", err, stdout, stderr)
@@ -497,7 +489,7 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 	if stdout, stderr, err := gitcmd.NewCommand("add").
 		AddDynamicArguments("--all").
 		WithDir(workDir).
-		WithEnv(pushEnv).
+		WithEnv(env).
 		RunStdString(ctx); err != nil {
 		log.Error("[seed] git add failed: stdout=%s stderr=%s", stdout, stderr)
 		return fmt.Errorf("git add: %w; stdout: %s; stderr: %s", err, stdout, stderr)
@@ -505,27 +497,19 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 
 	if stdout, stderr, err := gitcmd.NewCommand("commit").AddDynamicArguments("--message=Initial template import", "--no-gpg-sign").
 		WithDir(workDir).
-		WithEnv(pushEnv).
+		WithEnv(env).
 		RunStdString(ctx); err != nil {
 		log.Error("[seed] git commit failed: stdout=%s stderr=%s", stdout, stderr)
 		return fmt.Errorf("git commit: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
 	repoBarePath := gitrepo.RepoPath(repo.OwnerName, repo.Name)
-	if stdout, stderr, err := gitcmd.NewCommand("remote").
-		AddDynamicArguments("add", "origin", repoBarePath).
-		WithDir(workDir).
-		WithEnv(pushEnv).
-		RunStdString(ctx); err != nil {
-		log.Error("[seed] git remote add failed: stdout=%s stderr=%s", stdout, stderr)
-		return fmt.Errorf("git remote add: %w; stdout: %s; stderr: %s", err, stdout, stderr)
-	}
-
 	refspec := fmt.Sprintf("HEAD:refs/heads/%s", defaultBranch)
+	fileURL := "file://" + repoBarePath
 	if stdout, stderr, err := gitcmd.NewCommand("push").
-		AddDynamicArguments("origin", refspec).
+		AddDynamicArguments(fileURL, refspec).
 		WithDir(workDir).
-		WithEnv(pushEnv).
+		WithEnv(env).
 		RunStdString(ctx); err != nil {
 		log.Error("[seed] git push failed: stdout=%s stderr=%s", stdout, stderr)
 		return fmt.Errorf("git push: %w; stdout: %s; stderr: %s", err, stdout, stderr)
