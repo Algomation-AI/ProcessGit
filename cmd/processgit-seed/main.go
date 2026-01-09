@@ -499,9 +499,9 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 		return fmt.Errorf("git config user.email: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
-	// Stage all files
+	// Stage all files (using . instead of --all - Gitea blocks --all)
 	if stdout, stderr, err := gitcmd.NewCommand("add").
-		AddDynamicArguments("--all").
+		AddDynamicArguments(".").
 		WithDir(workDir).
 		WithEnv(env).
 		RunStdString(ctx); err != nil {
