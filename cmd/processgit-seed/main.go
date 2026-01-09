@@ -520,7 +520,7 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 	}
 
 	// Get bare repo path and push using file:// protocol
-	repoBarePath := gitrepo.RepoPath(repo.OwnerName, repo.Name)
+	repoBarePath := repo_model.RepoPath(repo.OwnerName, repo.Name)
 	fileURL := "file://" + repoBarePath
 	refspec := fmt.Sprintf("HEAD:refs/heads/%s", defaultBranch)
 
