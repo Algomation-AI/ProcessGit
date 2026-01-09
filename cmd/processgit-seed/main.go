@@ -445,6 +445,7 @@ func copyTemplateDir(sourceDir, destDir string) error {
 
 func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo *repo_model.Repository, owner *user_model.User, defaultBranch string) error {
 	commitTime := time.Now().Format(time.RFC3339)
+
 	env := append(os.Environ(),
 		"GIT_AUTHOR_NAME="+templateCommitName,
 		"GIT_AUTHOR_EMAIL="+templateCommitEmail,
@@ -455,8 +456,8 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 		"GIT_TERMINAL_PROMPT=0",
 	)
 
+	// Initialize git repository (no branch flag - Gitea blocks them all)
 	if stdout, stderr, err := gitcmd.NewCommand("init").
-		AddDynamicArguments("--initial-branch=" + defaultBranch).
 		WithDir(workDir).
 		WithEnv(env).
 		RunStdString(ctx); err != nil {
@@ -464,10 +465,22 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 		return fmt.Errorf("git init: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
+	// Set default branch using symbolic-ref (after init)
+	if stdout, stderr, err := gitcmd.NewCommand("symbolic-ref").
+		AddDynamicArguments("HEAD", "refs/heads/"+defaultBranch).
+		WithDir(workDir).
+		WithEnv(env).
+		RunStdString(ctx); err != nil {
+		log.Error("[seed] git symbolic-ref failed: stdout=%s stderr=%s", stdout, stderr)
+		return fmt.Errorf("git symbolic-ref: %w; stdout: %s; stderr: %s", err, stdout, stderr)
+	}
+
+	// Copy template content
 	if err := copyTemplateDir(sourceDir, workDir); err != nil {
 		return fmt.Errorf("copy template content for %s/%s: %w", repo.OwnerName, repo.Name, err)
 	}
 
+	// Configure git identity
 	if stdout, stderr, err := gitcmd.NewCommand("config").
 		AddDynamicArguments("user.name", templateCommitName).
 		WithDir(workDir).
@@ -476,6 +489,7 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 		log.Error("[seed] git config user.name failed: stdout=%s stderr=%s", stdout, stderr)
 		return fmt.Errorf("git config user.name: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
+
 	if stdout, stderr, err := gitcmd.NewCommand("config").
 		AddDynamicArguments("user.email", templateCommitEmail).
 		WithDir(workDir).
@@ -485,6 +499,7 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 		return fmt.Errorf("git config user.email: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
+	// Stage all files
 	if stdout, stderr, err := gitcmd.NewCommand("add").
 		AddDynamicArguments("--all").
 		WithDir(workDir).
@@ -494,7 +509,9 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 		return fmt.Errorf("git add: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
-	if stdout, stderr, err := gitcmd.NewCommand("commit").AddDynamicArguments("--message=Initial template import", "--no-gpg-sign").
+	// Create initial commit
+	if stdout, stderr, err := gitcmd.NewCommand("commit").
+		AddDynamicArguments("--message=Initial template import", "--no-gpg-sign").
 		WithDir(workDir).
 		WithEnv(env).
 		RunStdString(ctx); err != nil {
@@ -502,9 +519,12 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 		return fmt.Errorf("git commit: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
-	repoBarePath := repo_model.RepoPath(repo.OwnerName, repo.Name)
-	refspec := fmt.Sprintf("HEAD:refs/heads/%s", defaultBranch)
+	// Get bare repo path and push using file:// protocol
+	repoBarePath := gitrepo.RepoPath(repo.OwnerName, repo.Name)
 	fileURL := "file://" + repoBarePath
+	refspec := fmt.Sprintf("HEAD:refs/heads/%s", defaultBranch)
+
+	seedLogf("Pushing to bare repo via file:// protocol: %s", fileURL)
 	if stdout, stderr, err := gitcmd.NewCommand("push").
 		AddDynamicArguments(fileURL, refspec).
 		WithDir(workDir).
@@ -514,6 +534,7 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 		return fmt.Errorf("git push: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
+	seedLogf("Successfully pushed template content to %s/%s", repo.OwnerName, repo.Name)
 	return nil
 }
 
