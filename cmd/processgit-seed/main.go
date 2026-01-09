@@ -509,9 +509,9 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 		return fmt.Errorf("git add: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
-	// Create initial commit
+	// Create initial commit (using -m as separate arg)
 	if stdout, stderr, err := gitcmd.NewCommand("commit").
-		AddDynamicArguments("--message=Initial template import", "--no-gpg-sign").
+		AddDynamicArguments("-m", "Initial template import", "--no-gpg-sign").
 		WithDir(workDir).
 		WithEnv(env).
 		RunStdString(ctx); err != nil {
