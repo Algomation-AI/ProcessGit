@@ -26,7 +26,6 @@ import (
 	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/optional"
-	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
 	repo_service "code.gitea.io/gitea/services/repository"
@@ -503,7 +502,7 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 		return fmt.Errorf("git commit: %w; stdout: %s; stderr: %s", err, stdout, stderr)
 	}
 
-	repoBarePath := gitrepo.RepoPath(repo.OwnerName, repo.Name)
+	repoBarePath := repo_model.RepoPath(repo.OwnerName, repo.Name)
 	refspec := fmt.Sprintf("HEAD:refs/heads/%s", defaultBranch)
 	fileURL := "file://" + repoBarePath
 	if stdout, stderr, err := gitcmd.NewCommand("push").
