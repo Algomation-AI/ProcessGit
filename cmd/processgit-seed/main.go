@@ -456,7 +456,7 @@ func commitAndPushTemplate(ctx context.Context, workDir, sourceDir string, repo 
 	)
 
 	if stdout, stderr, err := gitcmd.NewCommand("init").
-		AddDynamicArguments("-b", defaultBranch).
+		AddDynamicArguments("--initial-branch=" + defaultBranch).
 		WithDir(workDir).
 		WithEnv(env).
 		RunStdString(ctx); err != nil {
