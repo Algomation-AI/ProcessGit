@@ -1,0 +1,13 @@
+kind: uapf.enterprise.index
+level: 0
+enterprise:
+  id: "{{.RepoName}}"
+  name: "{{.RepoName}}"
+  description: Decision-first architecture with reusable decisions
+packages:
+  - ref: ../decisions/loan-approval
+    level: 4
+    domain: decisioning
+  - ref: ../decision-process
+    level: 4
+    domain: operations

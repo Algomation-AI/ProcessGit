@@ -1,6 +1,0 @@
-{
-  "enterpriseId": "enterprise.placeholder",
-  "name": "Enterprise Placeholder",
-  "sourceRepo": "{{.RepoOwner}}/{{.RepoName}}",
-  "packages": []
-}

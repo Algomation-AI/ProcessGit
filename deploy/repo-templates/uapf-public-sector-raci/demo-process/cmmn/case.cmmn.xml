@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL"
+             xmlns:dc="http://www.omg.org/spec/CMMN/20151109/DC"
+             xmlns:di="http://www.omg.org/spec/CMMN/20151109/DI"
+             xmlns:cmmndi="http://www.omg.org/spec/CMMN/20151109/CMMNDI"
+             id="PolicyPublicationCase"
+             targetNamespace="http://processgit.local/cmmn">
+  
+  <case id="Case_PolicyPublication" name="Policy Publication Case">
+    <casePlanModel id="CasePlanModel_1" name="Policy Publication Management">
+      
+      <planItem id="PlanItem_Review" definitionRef="HumanTask_Review">
+        <entryCriterion id="EntryCriterion_1" sentryRef="Sentry_Start"/>
+      </planItem>
+      
+      <planItem id="PlanItem_Approval" definitionRef="HumanTask_Approval">
+        <entryCriterion id="EntryCriterion_2" sentryRef="Sentry_AfterReview"/>
+      </planItem>
+      
+      <planItem id="PlanItem_Revision" definitionRef="HumanTask_Revision">
+        <entryCriterion id="EntryCriterion_3" sentryRef="Sentry_NeedsRevision"/>
+      </planItem>
+      
+      <planItem id="PlanItem_Publication" definitionRef="Task_Publish">
+        <entryCriterion id="EntryCriterion_4" sentryRef="Sentry_Approved"/>
+      </planItem>
+      
+      <planItem id="PlanItem_Notification" definitionRef="Task_Notify">
+        <entryCriterion id="EntryCriterion_5" sentryRef="Sentry_Published"/>
+      </planItem>
+      
+      <sentry id="Sentry_Start">
+        <planItemOnPart id="OnPart_1" sourceRef="PlanItem_Review">
+          <standardEvent>create</standardEvent>
+        </planItemOnPart>
+      </sentry>
+      
+      <sentry id="Sentry_AfterReview">
+        <planItemOnPart id="OnPart_2" sourceRef="PlanItem_Review">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+      </sentry>
+      
+      <sentry id="Sentry_NeedsRevision">
+        <planItemOnPart id="OnPart_3" sourceRef="PlanItem_Approval">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <ifPart id="IfPart_1">
+          <condition id="Condition_1">
+            <body>approvalStatus == 'REJECTED'</body>
+          </condition>
+        </ifPart>
+      </sentry>
+      
+      <sentry id="Sentry_Approved">
+        <planItemOnPart id="OnPart_4" sourceRef="PlanItem_Approval">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <ifPart id="IfPart_2">
+          <condition id="Condition_2">
+            <body>approvalStatus == 'APPROVED'</body>
+          </condition>
+        </ifPart>
+      </sentry>
+      
+      <sentry id="Sentry_Published">
+        <planItemOnPart id="OnPart_5" sourceRef="PlanItem_Publication">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+      </sentry>
+      
+      <humanTask id="HumanTask_Review" name="Review Policy Draft"/>
+      <humanTask id="HumanTask_Approval" name="Approve Policy"/>
+      <humanTask id="HumanTask_Revision" name="Revise Policy"/>
+      <task id="Task_Publish" name="Publish Policy"/>
+      <task id="Task_Notify" name="Notify Stakeholders"/>
+    </casePlanModel>
+  </case>
+  
+  <cmmndi:CMMNDI>
+    <cmmndi:CMMNDiagram id="CMMNDiagram_1">
+      <cmmndi:CMMNShape id="CMMNShape_CasePlan_1" cmmnElementRef="CasePlanModel_1">
+        <dc:Bounds x="50" y="50" width="700" height="400"/>
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_1" cmmnElementRef="PlanItem_Review">
+        <dc:Bounds x="100" y="100" width="100" height="80"/>
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_2" cmmnElementRef="PlanItem_Approval">
+        <dc:Bounds x="250" y="100" width="100" height="80"/>
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_3" cmmnElementRef="PlanItem_Revision">
+        <dc:Bounds x="250" y="250" width="100" height="80"/>
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_4" cmmnElementRef="PlanItem_Publication">
+        <dc:Bounds x="400" y="100" width="100" height="80"/>
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_5" cmmnElementRef="PlanItem_Notification">
+        <dc:Bounds x="550" y="100" width="100" height="80"/>
+      </cmmndi:CMMNShape>
+    </cmmndi:CMMNDiagram>
+  </cmmndi:CMMNDI>
+</definitions>

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cmmn:definitions xmlns:cmmn="http://www.omg.org/spec/CMMN/20151109/MODEL" 
+                  xmlns:cmmndi="http://www.omg.org/spec/CMMN/20151109/CMMNDI" 
+                  xmlns:dc="http://www.omg.org/spec/CMMN/20151109/DC" 
+                  xmlns:di="http://www.omg.org/spec/CMMN/20151109/DI" 
+                  xmlns:camunda="http://camunda.org/schema/1.0/cmmn"
+                  id="Definitions_ReturnDispute" 
+                  targetNamespace="http://bpmn.io/schema/cmmn">
+  
+  <cmmn:case id="Case_ReturnDisputeHandling" name="Return Dispute Handling">
+    <cmmn:casePlanModel id="CasePlanModel_ReturnDispute" name="Return Dispute Case">
+      
+      <!-- Stage: Initial Assessment -->
+      <cmmn:stage id="Stage_InitialAssessment" name="Initial Assessment">
+        <cmmn:planItem id="PlanItem_ReviewDispute" definitionRef="Task_ReviewDispute"/>
+        <cmmn:planItem id="PlanItem_GatherEvidence" definitionRef="Task_GatherEvidence"/>
+        <cmmn:planItem id="PlanItem_ReviewPhotos" definitionRef="Task_ReviewPhotos"/>
+      </cmmn:stage>
+      
+      <!-- Stage: Investigation -->
+      <cmmn:stage id="Stage_Investigation" name="Investigation">
+        <cmmn:planItem id="PlanItem_ContactCustomer" definitionRef="Task_ContactCustomer"/>
+        <cmmn:planItem id="PlanItem_ReviewPurchaseHistory" definitionRef="Task_ReviewPurchaseHistory"/>
+        <cmmn:planItem id="PlanItem_InspectReturnedItem" definitionRef="Task_InspectReturnedItem"/>
+        <cmmn:planItem id="PlanItem_ConsultExpert" definitionRef="Task_ConsultExpert"/>
+        <cmmn:entryCriterion id="EntryCriterion_InvestigationStart" sentryRef="Sentry_AssessmentComplete"/>
+      </cmmn:stage>
+      
+      <!-- Stage: Resolution -->
+      <cmmn:stage id="Stage_Resolution" name="Resolution">
+        <cmmn:planItem id="PlanItem_MakeDecision" definitionRef="Task_MakeDecision"/>
+        <cmmn:planItem id="PlanItem_ApproveRefund" definitionRef="Task_ApproveRefund"/>
+        <cmmn:planItem id="PlanItem_OfferPartialRefund" definitionRef="Task_OfferPartialRefund"/>
+        <cmmn:planItem id="PlanItem_DenyRefund" definitionRef="Task_DenyRefund"/>
+        <cmmn:planItem id="PlanItem_OfferStoreCredit" definitionRef="Task_OfferStoreCredit"/>
+        <cmmn:entryCriterion id="EntryCriterion_ResolutionStart" sentryRef="Sentry_InvestigationComplete"/>
+      </cmmn:stage>
+      
+      <!-- Stage: Communication -->
+      <cmmn:stage id="Stage_Communication" name="Communication">
+        <cmmn:planItem id="PlanItem_NotifyCustomer" definitionRef="Task_NotifyCustomer"/>
+        <cmmn:planItem id="PlanItem_UpdateRecords" definitionRef="Task_UpdateRecords"/>
+        <cmmn:planItem id="PlanItem_DocumentDecision" definitionRef="Task_DocumentDecision"/>
+        <cmmn:entryCriterion id="EntryCriterion_CommunicationStart" sentryRef="Sentry_DecisionMade"/>
+      </cmmn:stage>
+      
+      <!-- Stage: Follow-up (optional) -->
+      <cmmn:stage id="Stage_Followup" name="Follow-up" autoComplete="true">
+        <cmmn:planItem id="PlanItem_CustomerSatisfactionSurvey" definitionRef="Task_CustomerSatisfactionSurvey"/>
+        <cmmn:planItem id="PlanItem_ManagerReview" definitionRef="Task_ManagerReview"/>
+        <cmmn:entryCriterion id="EntryCriterion_FollowupStart" sentryRef="Sentry_CustomerNotified"/>
+      </cmmn:stage>
+      
+      <!-- Tasks - Initial Assessment -->
+      <cmmn:humanTask id="Task_ReviewDispute" name="Review Dispute Details" camunda:assignee="returns.specialist" isBlocking="true"/>
+      
+      <cmmn:humanTask id="Task_GatherEvidence" name="Gather Evidence" camunda:assignee="returns.specialist"/>
+      
+      <cmmn:humanTask id="Task_ReviewPhotos" name="Review Photos/Documentation" camunda:assignee="returns.specialist"/>
+      
+      <!-- Tasks - Investigation -->
+      <cmmn:humanTask id="Task_ContactCustomer" name="Contact Customer for Details" camunda:assignee="customer.service"/>
+      
+      <cmmn:humanTask id="Task_ReviewPurchaseHistory" name="Review Purchase History" camunda:assignee="returns.specialist"/>
+      
+      <cmmn:humanTask id="Task_InspectReturnedItem" name="Inspect Returned Item" camunda:assignee="quality.inspector"/>
+      
+      <cmmn:humanTask id="Task_ConsultExpert" name="Consult Product Expert" camunda:assignee="product.specialist"/>
+      
+      <!-- Tasks - Resolution -->
+      <cmmn:humanTask id="Task_MakeDecision" name="Make Decision" camunda:assignee="returns.manager" isBlocking="true"/>
+      
+      <cmmn:humanTask id="Task_ApproveRefund" name="Approve Full Refund" camunda:assignee="returns.specialist"/>
+      
+      <cmmn:humanTask id="Task_OfferPartialRefund" name="Offer Partial Refund" camunda:assignee="returns.specialist"/>
+      
+      <cmmn:humanTask id="Task_DenyRefund" name="Deny Refund" camunda:assignee="returns.specialist"/>
+      
+      <cmmn:humanTask id="Task_OfferStoreCredit" name="Offer Store Credit" camunda:assignee="returns.specialist"/>
+      
+      <!-- Tasks - Communication -->
+      <cmmn:humanTask id="Task_NotifyCustomer" name="Notify Customer of Decision" camunda:assignee="customer.service"/>
+      
+      <cmmn:processTask id="Task_UpdateRecords" name="Update Records" camunda:processRef="UpdateRecordsProcess"/>
+      
+      <cmmn:humanTask id="Task_DocumentDecision" name="Document Decision and Rationale" camunda:assignee="returns.specialist"/>
+      
+      <!-- Tasks - Follow-up -->
+      <cmmn:humanTask id="Task_CustomerSatisfactionSurvey" name="Send Customer Satisfaction Survey" camunda:assignee="customer.service"/>
+      
+      <cmmn:humanTask id="Task_ManagerReview" name="Manager Review of Case" camunda:assignee="returns.manager"/>
+      
+      <!-- Sentries -->
+      <cmmn:sentry id="Sentry_AssessmentComplete">
+        <cmmn:planItemOnPart id="OnPart_AssessmentComplete" sourceRef="PlanItem_ReviewDispute">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <cmmn:sentry id="Sentry_InvestigationComplete">
+        <cmmn:planItemOnPart id="OnPart_InvestigationComplete" sourceRef="PlanItem_InspectReturnedItem">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <cmmn:sentry id="Sentry_DecisionMade">
+        <cmmn:planItemOnPart id="OnPart_DecisionMade" sourceRef="PlanItem_MakeDecision">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <cmmn:sentry id="Sentry_CustomerNotified">
+        <cmmn:planItemOnPart id="OnPart_CustomerNotified" sourceRef="PlanItem_NotifyCustomer">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <cmmn:sentry id="Sentry_DisputeResolved">
+        <cmmn:planItemOnPart id="OnPart_DisputeResolved" sourceRef="PlanItem_DocumentDecision">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <!-- Milestone -->
+      <cmmn:planItem id="PlanItem_DisputeResolved" definitionRef="Milestone_DisputeResolved">
+        <cmmn:entryCriterion id="EntryCriterion_MilestoneReached" sentryRef="Sentry_DisputeResolved"/>
+      </cmmn:planItem>
+      
+      <cmmn:milestone id="Milestone_DisputeResolved" name="Dispute Resolved"/>
+      
+    </cmmn:casePlanModel>
+  </cmmn:case>
+  
+</cmmn:definitions>

@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cmmn:definitions xmlns:cmmn="http://www.omg.org/spec/CMMN/20151109/MODEL"
+                  xmlns:cmmndi="http://www.omg.org/spec/CMMN/20151109/CMMNDI"
+                  xmlns:dc="http://www.omg.org/spec/CMMN/20151109/DC"
+                  xmlns:di="http://www.omg.org/spec/CMMN/20151109/DI"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="OnboardingException"
+                  targetNamespace="http://processgit.io/cmmn/onboarding-exception">
+  
+  <cmmn:case id="Case_OnboardingException" name="Onboarding Exception Case">
+    
+    <cmmn:casePlanModel id="CasePlanModel_1" name="Onboarding Exception Management">
+      
+      <!-- Case File -->
+      <cmmn:caseFileModel id="CaseFileModel_1">
+        <cmmn:caseFileItem id="CaseFile_ExceptionDetails" name="Exception Details" definitionRef="ExceptionDetails"/>
+        <cmmn:caseFileItem id="CaseFile_EmployeeInfo" name="Employee Information" definitionRef="EmployeeInfo"/>
+        <cmmn:caseFileItem id="CaseFile_Resolution" name="Resolution" definitionRef="Resolution"/>
+      </cmmn:caseFileModel>
+      
+      <!-- Plan Items -->
+      
+      <!-- Stage: Initial Assessment -->
+      <cmmn:planItem id="PI_InitialAssessment" definitionRef="Stage_InitialAssessment">
+        <cmmn:entryCriterion id="EntryCriterion_1" sentryRef="Sentry_CaseStart"/>
+      </cmmn:planItem>
+      
+      <!-- Stage: Exception Resolution -->
+      <cmmn:planItem id="PI_ExceptionResolution" definitionRef="Stage_ExceptionResolution">
+        <cmmn:entryCriterion id="EntryCriterion_2" sentryRef="Sentry_AssessmentComplete"/>
+      </cmmn:planItem>
+      
+      <!-- Stage: Escalation (Optional) -->
+      <cmmn:planItem id="PI_Escalation" definitionRef="Stage_Escalation">
+        <cmmn:entryCriterion id="EntryCriterion_3" sentryRef="Sentry_EscalationNeeded"/>
+      </cmmn:planItem>
+      
+      <!-- Milestone: Case Resolved -->
+      <cmmn:planItem id="PI_CaseResolved" definitionRef="Milestone_CaseResolved">
+        <cmmn:entryCriterion id="EntryCriterion_4" sentryRef="Sentry_ResolutionComplete"/>
+      </cmmn:planItem>
+      
+      <!-- Sentries -->
+      <cmmn:sentry id="Sentry_CaseStart">
+        <cmmn:planItemOnPart id="PlanItemOnPart_1" sourceRef="PI_InitialAssessment">
+          <cmmn:standardEvent>create</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <cmmn:sentry id="Sentry_AssessmentComplete">
+        <cmmn:planItemOnPart id="PlanItemOnPart_2" sourceRef="PI_InitialAssessment">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <cmmn:sentry id="Sentry_EscalationNeeded">
+        <cmmn:ifPart id="IfPart_1">
+          <cmmn:condition xsi:type="cmmn:tExpression">
+            <cmmn:body>exceptionSeverity == "high" || resolutionTime &gt; 48</cmmn:body>
+          </cmmn:condition>
+        </cmmn:ifPart>
+      </cmmn:sentry>
+      
+      <cmmn:sentry id="Sentry_ResolutionComplete">
+        <cmmn:planItemOnPart id="PlanItemOnPart_3" sourceRef="PI_ExceptionResolution">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <!-- Stage Definitions -->
+      
+      <!-- Initial Assessment Stage -->
+      <cmmn:stage id="Stage_InitialAssessment" name="Initial Assessment">
+        
+        <cmmn:planItem id="PI_CaptureException" definitionRef="Task_CaptureException"/>
+        <cmmn:planItem id="PI_ClassifyException" definitionRef="Task_ClassifyException">
+          <cmmn:entryCriterion id="EntryCriterion_5" sentryRef="Sentry_ExceptionCaptured"/>
+        </cmmn:planItem>
+        <cmmn:planItem id="PI_AssignOwner" definitionRef="Task_AssignOwner">
+          <cmmn:entryCriterion id="EntryCriterion_6" sentryRef="Sentry_ExceptionClassified"/>
+        </cmmn:planItem>
+        
+        <cmmn:sentry id="Sentry_ExceptionCaptured">
+          <cmmn:planItemOnPart id="PlanItemOnPart_4" sourceRef="PI_CaptureException">
+            <cmmn:standardEvent>complete</cmmn:standardEvent>
+          </cmmn:planItemOnPart>
+        </cmmn:sentry>
+        
+        <cmmn:sentry id="Sentry_ExceptionClassified">
+          <cmmn:planItemOnPart id="PlanItemOnPart_5" sourceRef="PI_ClassifyException">
+            <cmmn:standardEvent>complete</cmmn:standardEvent>
+          </cmmn:planItemOnPart>
+        </cmmn:sentry>
+        
+      </cmmn:stage>
+      
+      <!-- Exception Resolution Stage -->
+      <cmmn:stage id="Stage_ExceptionResolution" name="Exception Resolution">
+        
+        <cmmn:planItem id="PI_InvestigateIssue" definitionRef="Task_InvestigateIssue"/>
+        
+        <cmmn:planItem id="PI_CoordinateWithHR" definitionRef="Task_CoordinateWithHR">
+          <cmmn:itemControl id="ItemControl_1">
+            <cmmn:manualActivationRule id="ManualActivationRule_1"/>
+          </cmmn:itemControl>
+        </cmmn:planItem>
+        
+        <cmmn:planItem id="PI_CoordinateWithIT" definitionRef="Task_CoordinateWithIT">
+          <cmmn:itemControl id="ItemControl_2">
+            <cmmn:manualActivationRule id="ManualActivationRule_2"/>
+          </cmmn:itemControl>
+        </cmmn:planItem>
+        
+        <cmmn:planItem id="PI_CoordinateWithFacilities" definitionRef="Task_CoordinateWithFacilities">
+          <cmmn:itemControl id="ItemControl_3">
+            <cmmn:manualActivationRule id="ManualActivationRule_3"/>
+          </cmmn:itemControl>
+        </cmmn:planItem>
+        
+        <cmmn:planItem id="PI_ImplementSolution" definitionRef="Task_ImplementSolution">
+          <cmmn:entryCriterion id="EntryCriterion_7" sentryRef="Sentry_InvestigationComplete"/>
+        </cmmn:planItem>
+        
+        <cmmn:planItem id="PI_VerifyResolution" definitionRef="Task_VerifyResolution">
+          <cmmn:entryCriterion id="EntryCriterion_8" sentryRef="Sentry_SolutionImplemented"/>
+        </cmmn:planItem>
+        
+        <cmmn:sentry id="Sentry_InvestigationComplete">
+          <cmmn:planItemOnPart id="PlanItemOnPart_6" sourceRef="PI_InvestigateIssue">
+            <cmmn:standardEvent>complete</cmmn:standardEvent>
+          </cmmn:planItemOnPart>
+        </cmmn:sentry>
+        
+        <cmmn:sentry id="Sentry_SolutionImplemented">
+          <cmmn:planItemOnPart id="PlanItemOnPart_7" sourceRef="PI_ImplementSolution">
+            <cmmn:standardEvent>complete</cmmn:standardEvent>
+          </cmmn:planItemOnPart>
+        </cmmn:sentry>
+        
+      </cmmn:stage>
+      
+      <!-- Escalation Stage -->
+      <cmmn:stage id="Stage_Escalation" name="Escalation">
+        
+        <cmmn:planItem id="PI_NotifyManagement" definitionRef="Task_NotifyManagement"/>
+        
+        <cmmn:planItem id="PI_ConveneReviewMeeting" definitionRef="Task_ConveneReviewMeeting">
+          <cmmn:entryCriterion id="EntryCriterion_9" sentryRef="Sentry_ManagementNotified"/>
+        </cmmn:planItem>
+        
+        <cmmn:planItem id="PI_DevelopActionPlan" definitionRef="Task_DevelopActionPlan">
+          <cmmn:entryCriterion id="EntryCriterion_10" sentryRef="Sentry_ReviewComplete"/>
+        </cmmn:planItem>
+        
+        <cmmn:sentry id="Sentry_ManagementNotified">
+          <cmmn:planItemOnPart id="PlanItemOnPart_8" sourceRef="PI_NotifyManagement">
+            <cmmn:standardEvent>complete</cmmn:standardEvent>
+          </cmmn:planItemOnPart>
+        </cmmn:sentry>
+        
+        <cmmn:sentry id="Sentry_ReviewComplete">
+          <cmmn:planItemOnPart id="PlanItemOnPart_9" sourceRef="PI_ConveneReviewMeeting">
+            <cmmn:standardEvent>complete</cmmn:standardEvent>
+          </cmmn:planItemOnPart>
+        </cmmn:sentry>
+        
+      </cmmn:stage>
+      
+      <!-- Task Definitions -->
+      
+      <!-- Initial Assessment Tasks -->
+      <cmmn:humanTask id="Task_CaptureException" name="Capture Exception Details"/>
+      <cmmn:humanTask id="Task_ClassifyException" name="Classify Exception"/>
+      <cmmn:humanTask id="Task_AssignOwner" name="Assign Owner"/>
+      
+      <!-- Exception Resolution Tasks -->
+      <cmmn:humanTask id="Task_InvestigateIssue" name="Investigate Issue"/>
+      <cmmn:humanTask id="Task_CoordinateWithHR" name="Coordinate with HR"/>
+      <cmmn:humanTask id="Task_CoordinateWithIT" name="Coordinate with IT"/>
+      <cmmn:humanTask id="Task_CoordinateWithFacilities" name="Coordinate with Facilities"/>
+      <cmmn:humanTask id="Task_ImplementSolution" name="Implement Solution"/>
+      <cmmn:humanTask id="Task_VerifyResolution" name="Verify Resolution"/>
+      
+      <!-- Escalation Tasks -->
+      <cmmn:humanTask id="Task_NotifyManagement" name="Notify Management"/>
+      <cmmn:humanTask id="Task_ConveneReviewMeeting" name="Convene Review Meeting"/>
+      <cmmn:humanTask id="Task_DevelopActionPlan" name="Develop Action Plan"/>
+      
+      <!-- Milestone Definition -->
+      <cmmn:milestone id="Milestone_CaseResolved" name="Case Resolved"/>
+      
+    </cmmn:casePlanModel>
+    
+  </cmmn:case>
+  
+  <!-- Case File Item Definitions -->
+  <cmmn:caseFileItemDefinition id="ExceptionDetails" name="Exception Details"/>
+  <cmmn:caseFileItemDefinition id="EmployeeInfo" name="Employee Information"/>
+  <cmmn:caseFileItemDefinition id="Resolution" name="Resolution"/>
+  
+  <!-- Diagram -->
+  <cmmndi:CMMNDI>
+    <cmmndi:CMMNDiagram id="CMMNDiagram_1">
+      <cmmndi:Size width="1200" height="800"/>
+      
+      <cmmndi:CMMNShape id="CMMNShape_CasePlan" cmmnElementRef="CasePlanModel_1">
+        <dc:Bounds x="50" y="50" width="1100" height="700"/>
+      </cmmndi:CMMNShape>
+      
+      <!-- Initial Assessment Stage -->
+      <cmmndi:CMMNShape id="CMMNShape_InitialAssessment" cmmnElementRef="PI_InitialAssessment">
+        <dc:Bounds x="100" y="100" width="300" height="200"/>
+      </cmmndi:CMMNShape>
+      
+      <!-- Exception Resolution Stage -->
+      <cmmndi:CMMNShape id="CMMNShape_ExceptionResolution" cmmnElementRef="PI_ExceptionResolution">
+        <dc:Bounds x="450" y="100" width="350" height="300"/>
+      </cmmndi:CMMNShape>
+      
+      <!-- Escalation Stage -->
+      <cmmndi:CMMNShape id="CMMNShape_Escalation" cmmnElementRef="PI_Escalation">
+        <dc:Bounds x="850" y="100" width="250" height="200"/>
+      </cmmndi:CMMNShape>
+      
+      <!-- Case Resolved Milestone -->
+      <cmmndi:CMMNShape id="CMMNShape_CaseResolved" cmmnElementRef="PI_CaseResolved">
+        <dc:Bounds x="950" y="450" width="100" height="80"/>
+      </cmmndi:CMMNShape>
+      
+    </cmmndi:CMMNDiagram>
+  </cmmndi:CMMNDI>
+  
+</cmmn:definitions>

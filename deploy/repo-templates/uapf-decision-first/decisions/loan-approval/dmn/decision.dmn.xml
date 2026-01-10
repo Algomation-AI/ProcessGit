@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             id="LoanApprovalDecisions"
+             name="Loan Approval Decisions"
+             namespace="http://processgit.local/dmn">
+  
+  <decision id="Decision_LoanApproval" name="Loan Approval">
+    <informationRequirement id="InfoReq_1">
+      <requiredDecision href="#Decision_RiskCategory"/>
+    </informationRequirement>
+    <decisionTable id="DecisionTable_LoanApproval">
+      <input id="Input_Risk" label="Risk Category">
+        <inputExpression id="InputExpression_Risk" typeRef="string">
+          <text>riskCategory</text>
+        </inputExpression>
+      </input>
+      <output id="Output_Approval" label="Loan Approved" name="loanApproved" typeRef="boolean"/>
+      <output id="Output_ReviewRequired" label="Review Required" name="reviewRequired" typeRef="boolean"/>
+      
+      <rule id="Rule_1">
+        <inputEntry id="InputEntry_1_1">
+          <text>"LOW"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_1_1">
+          <text>true</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_1_2">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      
+      <rule id="Rule_2">
+        <inputEntry id="InputEntry_2_1">
+          <text>"MEDIUM"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_2_1">
+          <text>true</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_2_2">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      
+      <rule id="Rule_3">
+        <inputEntry id="InputEntry_3_1">
+          <text>"HIGH"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_3_1">
+          <text>false</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_3_2">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  
+  <decision id="Decision_RiskCategory" name="Risk Category">
+    <informationRequirement id="InfoReq_2">
+      <requiredInput href="#InputData_CreditScore"/>
+    </informationRequirement>
+    <decisionTable id="DecisionTable_RiskCategory">
+      <input id="Input_CreditScore" label="Credit Score">
+        <inputExpression id="InputExpression_CreditScore" typeRef="number">
+          <text>creditScore</text>
+        </inputExpression>
+      </input>
+      <output id="Output_RiskCategory" label="Risk Category" name="riskCategory" typeRef="string"/>
+      
+      <rule id="Rule_Risk_1">
+        <inputEntry id="InputEntry_Risk_1_1">
+          <text>&gt;= 700</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_Risk_1_1">
+          <text>"LOW"</text>
+        </outputEntry>
+      </rule>
+      
+      <rule id="Rule_Risk_2">
+        <inputEntry id="InputEntry_Risk_2_1">
+          <text>[600..700)</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_Risk_2_1">
+          <text>"MEDIUM"</text>
+        </outputEntry>
+      </rule>
+      
+      <rule id="Rule_Risk_3">
+        <inputEntry id="InputEntry_Risk_3_1">
+          <text>&lt; 600</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_Risk_3_1">
+          <text>"HIGH"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  
+  <inputData id="InputData_CreditScore" name="Credit Score"/>
+  
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_1">
+      <dmndi:DMNShape id="DMNShape_Decision_LoanApproval" dmnElementRef="Decision_LoanApproval">
+        <dc:Bounds x="160" y="80" width="180" height="80"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Decision_RiskCategory" dmnElementRef="Decision_RiskCategory">
+        <dc:Bounds x="160" y="220" width="180" height="80"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Input_CreditScore" dmnElementRef="InputData_CreditScore">
+        <dc:Bounds x="187" y="360" width="125" height="45"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_InfoReq_1" dmnElementRef="InfoReq_1">
+        <di:waypoint x="250" y="220"/>
+        <di:waypoint x="250" y="160"/>
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_InfoReq_2" dmnElementRef="InfoReq_2">
+        <di:waypoint x="250" y="360"/>
+        <di:waypoint x="250" y="300"/>
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

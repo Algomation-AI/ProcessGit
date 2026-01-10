@@ -3,31 +3,31 @@
     "name": "single-bpmn-process-xml",
     "title": "Single BPMN process (XML)",
     "path": "single-bpmn-xml",
-    "description": "Single BPMN process scratchpad with placeholder README and model."
+    "description": "Single BPMN process scratchpad with Request Approval demo process."
   },
   {
     "name": "single-dmn-decision-xml",
     "title": "Single DMN decision (XML)",
     "path": "single-dmn-xml",
-    "description": "Single DMN decision scratchpad with placeholder README and model."
+    "description": "Single DMN decision scratchpad with Discount Eligibility demo."
   },
   {
     "name": "single-cmmn-case-xml",
     "title": "Single CMMN case (XML)",
     "path": "single-cmmn-xml",
-    "description": "Single CMMN case scratchpad with placeholder README and model."
+    "description": "Single CMMN case scratchpad with Customer Complaint Handling demo."
   },
   {
     "name": "uapf-single-process-package",
     "title": "UAPF: Single-process package",
     "path": "uapf-single-process-package",
-    "description": "UAPF single Level-4 process package with BPMN/DMN/CMMN assets."
+    "description": "UAPF v1 compliant single L4 process with Employee Onboarding demo."
   },
   {
     "name": "uapf-multi-process-package",
     "title": "UAPF: Multi-process package",
     "path": "uapf-multi-process-package",
-    "description": "UAPF multi-process package with shared resources."
+    "description": "UAPF v1 compliant multi-process template with Order Fulfillment and Returns."
   },
   {
     "name": "uapf-enterprise-l0-l4",
@@ -69,6 +69,6 @@
     "name": "uapf-example-minimal-l4",
     "title": "UAPF: Example (minimal L4 sample)",
     "path": "uapf-example-minimal-l4",
-    "description": "Known-good minimal example: L4 process with BPMN/DMN/CMMN and placeholders."
+    "description": "UAPF v1 compliant minimal example with Hello World BPMN process."
   }
 ]

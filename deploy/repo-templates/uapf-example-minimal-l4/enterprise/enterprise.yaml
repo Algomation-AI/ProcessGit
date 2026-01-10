@@ -1,0 +1,10 @@
+kind: uapf.enterprise.index
+level: 0
+enterprise:
+  id: "{{.RepoName}}"
+  name: "{{.RepoName}}"
+  description: Minimal example template - Start here for simple processes
+packages:
+  - ref: ../example-process
+    level: 4
+    domain: examples

@@ -1,0 +1,13 @@
+kind: uapf.enterprise.index
+level: 0
+enterprise:
+  id: "{{.RepoName}}"
+  name: "{{.RepoName}}"
+  description: Multi-process enterprise template
+packages:
+  - ref: ../processes/demo-process1
+    level: 4
+    domain: operations
+  - ref: ../processes/demo-process2
+    level: 4
+    domain: operations

@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/"
+             id="DocumentApprovalDecision"
+             name="Document Approval Decision"
+             namespace="http://processgit.io/dmn/document-approval">
+  
+  <decision id="Decision_ApprovalRequirements" name="Approval Requirements">
+    <informationRequirement id="InformationRequirement_1">
+      <requiredInput href="#InputData_DocumentType"/>
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_2">
+      <requiredInput href="#InputData_DocumentValue"/>
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_3">
+      <requiredInput href="#InputData_Department"/>
+    </informationRequirement>
+    
+    <decisionTable id="DecisionTable_1" hitPolicy="FIRST">
+      
+      <!-- Input Columns -->
+      <input id="Input_DocumentType" label="Document Type">
+        <inputExpression id="InputExpression_DocumentType" typeRef="string">
+          <text>documentType</text>
+        </inputExpression>
+      </input>
+      
+      <input id="Input_Value" label="Document Value ($)">
+        <inputExpression id="InputExpression_Value" typeRef="number">
+          <text>documentValue</text>
+        </inputExpression>
+      </input>
+      
+      <input id="Input_Department" label="Department">
+        <inputExpression id="InputExpression_Department" typeRef="string">
+          <text>department</text>
+        </inputExpression>
+      </input>
+      
+      <!-- Output Columns -->
+      <output id="Output_ApprovalLevel" label="Approval Level" name="approvalLevel" typeRef="string"/>
+      <output id="Output_RequiredApprovers" label="Required Approvers" name="requiredApprovers" typeRef="number"/>
+      <output id="Output_ApprovalAuthority" label="Approval Authority" name="approvalAuthority" typeRef="string"/>
+      <output id="Output_ReviewTime" label="Max Review Time (hours)" name="reviewTimeHours" typeRef="number"/>
+      
+      <!-- Decision Rules -->
+      
+      <!-- Financial - High Value -->
+      <rule id="Rule_1">
+        <inputEntry id="InputEntry_1_1">
+          <text>"Contract","Purchase Order","Financial Statement"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_1_2">
+          <text>&gt;= 100000</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_1_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_1_1">
+          <text>"Executive"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_1_2">
+          <text>3</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_1_3">
+          <text>"CFO, CEO, Board Member"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_1_4">
+          <text>72</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Financial - Medium Value -->
+      <rule id="Rule_2">
+        <inputEntry id="InputEntry_2_1">
+          <text>"Contract","Purchase Order"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_2_2">
+          <text>[10000..100000)</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_2_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_2_1">
+          <text>"Senior Management"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_2_2">
+          <text>2</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_2_3">
+          <text>"Director, VP Finance"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_2_4">
+          <text>48</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Financial - Low Value -->
+      <rule id="Rule_3">
+        <inputEntry id="InputEntry_3_1">
+          <text>"Purchase Order"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_3_2">
+          <text>&lt; 10000</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_3_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_3_1">
+          <text>"Manager"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_3_2">
+          <text>1</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_3_3">
+          <text>"Department Manager"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_3_4">
+          <text>24</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Legal Documents -->
+      <rule id="Rule_4">
+        <inputEntry id="InputEntry_4_1">
+          <text>"Legal Agreement","NDA","Compliance Document"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_4_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_4_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_4_1">
+          <text>"Legal"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_4_2">
+          <text>2</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_4_3">
+          <text>"Legal Counsel, CLO"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_4_4">
+          <text>48</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- HR Policy Documents -->
+      <rule id="Rule_5">
+        <inputEntry id="InputEntry_5_1">
+          <text>"HR Policy","Employee Handbook"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_5_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_5_3">
+          <text>"Human Resources"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_5_1">
+          <text>"HR Leadership"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_5_2">
+          <text>2</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_5_3">
+          <text>"HR Director, CHRO"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_5_4">
+          <text>48</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Technical Documentation -->
+      <rule id="Rule_6">
+        <inputEntry id="InputEntry_6_1">
+          <text>"Technical Specification","Architecture Document","API Documentation"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_6_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_6_3">
+          <text>"Engineering"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_6_1">
+          <text>"Technical"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_6_2">
+          <text>2</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_6_3">
+          <text>"Tech Lead, Engineering Manager"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_6_4">
+          <text>24</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Marketing Materials -->
+      <rule id="Rule_7">
+        <inputEntry id="InputEntry_7_1">
+          <text>"Marketing Material","Press Release","Blog Post"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_7_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_7_3">
+          <text>"Marketing"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_7_1">
+          <text>"Marketing"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_7_2">
+          <text>1</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_7_3">
+          <text>"Marketing Manager"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_7_4">
+          <text>12</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Standard Operating Procedures -->
+      <rule id="Rule_8">
+        <inputEntry id="InputEntry_8_1">
+          <text>"SOP","Process Document","Work Instruction"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_8_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_8_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_8_1">
+          <text>"Process Owner"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_8_2">
+          <text>2</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_8_3">
+          <text>"Process Owner, Quality Manager"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_8_4">
+          <text>36</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Training Materials -->
+      <rule id="Rule_9">
+        <inputEntry id="InputEntry_9_1">
+          <text>"Training Material","User Guide","Tutorial"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_9_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_9_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_9_1">
+          <text>"Standard"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_9_2">
+          <text>1</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_9_3">
+          <text>"Department Manager"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_9_4">
+          <text>24</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Default Rule -->
+      <rule id="Rule_Default">
+        <inputEntry id="InputEntry_Default_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_Default_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_Default_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_Default_1">
+          <text>"Standard"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_Default_2">
+          <text>1</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_Default_3">
+          <text>"Manager"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_Default_4">
+          <text>24</text>
+        </outputEntry>
+      </rule>
+      
+    </decisionTable>
+  </decision>
+  
+  <!-- Input Data -->
+  <inputData id="InputData_DocumentType" name="Document Type"/>
+  <inputData id="InputData_DocumentValue" name="Document Value"/>
+  <inputData id="InputData_Department" name="Department"/>
+  
+  <!-- Diagram -->
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_1">
+      
+      <dmndi:DMNShape id="DMNShape_Decision" dmnElementRef="Decision_ApprovalRequirements">
+        <dc:Bounds x="300" y="80" width="180" height="80"/>
+      </dmndi:DMNShape>
+      
+      <dmndi:DMNShape id="DMNShape_InputDocType" dmnElementRef="InputData_DocumentType">
+        <dc:Bounds x="150" y="230" width="125" height="45"/>
+      </dmndi:DMNShape>
+      
+      <dmndi:DMNShape id="DMNShape_InputValue" dmnElementRef="InputData_DocumentValue">
+        <dc:Bounds x="325" y="230" width="125" height="45"/>
+      </dmndi:DMNShape>
+      
+      <dmndi:DMNShape id="DMNShape_InputDepartment" dmnElementRef="InputData_Department">
+        <dc:Bounds x="500" y="230" width="125" height="45"/>
+      </dmndi:DMNShape>
+      
+      <dmndi:DMNEdge id="DMNEdge_1" dmnElementRef="InformationRequirement_1">
+        <di:waypoint x="212" y="230"/>
+        <di:waypoint x="360" y="160"/>
+      </dmndi:DMNEdge>
+      
+      <dmndi:DMNEdge id="DMNEdge_2" dmnElementRef="InformationRequirement_2">
+        <di:waypoint x="387" y="230"/>
+        <di:waypoint x="390" y="160"/>
+      </dmndi:DMNEdge>
+      
+      <dmndi:DMNEdge id="DMNEdge_3" dmnElementRef="InformationRequirement_3">
+        <di:waypoint x="562" y="230"/>
+        <di:waypoint x="420" y="160"/>
+      </dmndi:DMNEdge>
+      
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+  
+</definitions>

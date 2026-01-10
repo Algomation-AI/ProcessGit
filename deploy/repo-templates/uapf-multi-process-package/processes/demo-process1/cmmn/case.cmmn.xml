@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cmmn:definitions xmlns:cmmn="http://www.omg.org/spec/CMMN/20151109/MODEL" 
+                  xmlns:cmmndi="http://www.omg.org/spec/CMMN/20151109/CMMNDI" 
+                  xmlns:dc="http://www.omg.org/spec/CMMN/20151109/DC" 
+                  xmlns:di="http://www.omg.org/spec/CMMN/20151109/DI" 
+                  xmlns:camunda="http://camunda.org/schema/1.0/cmmn"
+                  id="Definitions_OrderException" 
+                  targetNamespace="http://bpmn.io/schema/cmmn">
+  
+  <cmmn:case id="Case_OrderExceptionHandling" name="Order Exception Handling">
+    <cmmn:casePlanModel id="CasePlanModel_OrderException" name="Order Exception Case">
+      
+      <!-- Stage: Investigation -->
+      <cmmn:stage id="Stage_Investigation" name="Investigation">
+        <cmmn:planItem id="PlanItem_ReviewOrder" definitionRef="Task_ReviewOrder"/>
+        <cmmn:planItem id="PlanItem_ContactCustomer" definitionRef="Task_ContactCustomer"/>
+        <cmmn:planItem id="PlanItem_CheckInventory" definitionRef="Task_CheckInventory"/>
+      </cmmn:stage>
+      
+      <!-- Stage: Resolution -->
+      <cmmn:stage id="Stage_Resolution" name="Resolution">
+        <cmmn:planItem id="PlanItem_DecideResolution" definitionRef="Task_DecideResolution"/>
+        <cmmn:planItem id="PlanItem_ProcessRefund" definitionRef="Task_ProcessRefund"/>
+        <cmmn:planItem id="PlanItem_ArrangeReplacement" definitionRef="Task_ArrangeReplacement"/>
+        <cmmn:planItem id="PlanItem_EscalateToManager" definitionRef="Task_EscalateToManager"/>
+        <cmmn:entryCriterion id="EntryCriterion_ResolutionStart" sentryRef="Sentry_InvestigationComplete"/>
+      </cmmn:stage>
+      
+      <!-- Stage: Closure -->
+      <cmmn:stage id="Stage_Closure" name="Closure">
+        <cmmn:planItem id="PlanItem_NotifyCustomer" definitionRef="Task_NotifyCustomer"/>
+        <cmmn:planItem id="PlanItem_UpdateRecords" definitionRef="Task_UpdateRecords"/>
+        <cmmn:planItem id="PlanItem_CloseCase" definitionRef="Task_CloseCase"/>
+        <cmmn:entryCriterion id="EntryCriterion_ClosureStart" sentryRef="Sentry_ResolutionComplete"/>
+      </cmmn:stage>
+      
+      <!-- Tasks -->
+      <cmmn:humanTask id="Task_ReviewOrder" name="Review Order Details" camunda:assignee="order.specialist"/>
+      
+      <cmmn:humanTask id="Task_ContactCustomer" name="Contact Customer" camunda:assignee="customer.service"/>
+      
+      <cmmn:humanTask id="Task_CheckInventory" name="Check Inventory Status" camunda:assignee="warehouse.manager"/>
+      
+      <cmmn:humanTask id="Task_DecideResolution" name="Decide Resolution" camunda:assignee="order.specialist" isBlocking="true"/>
+      
+      <cmmn:humanTask id="Task_ProcessRefund" name="Process Refund" camunda:assignee="finance.clerk"/>
+      
+      <cmmn:humanTask id="Task_ArrangeReplacement" name="Arrange Replacement" camunda:assignee="order.specialist"/>
+      
+      <cmmn:humanTask id="Task_EscalateToManager" name="Escalate to Manager" camunda:assignee="order.manager"/>
+      
+      <cmmn:humanTask id="Task_NotifyCustomer" name="Notify Customer of Resolution" camunda:assignee="customer.service"/>
+      
+      <cmmn:processTask id="Task_UpdateRecords" name="Update Records" camunda:processRef="UpdateRecordsProcess"/>
+      
+      <cmmn:humanTask id="Task_CloseCase" name="Close Case" camunda:assignee="order.specialist"/>
+      
+      <!-- Sentries -->
+      <cmmn:sentry id="Sentry_InvestigationComplete">
+        <cmmn:planItemOnPart id="OnPart_InvestigationComplete" sourceRef="PlanItem_ReviewOrder">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <cmmn:sentry id="Sentry_ResolutionComplete">
+        <cmmn:planItemOnPart id="OnPart_ResolutionComplete" sourceRef="PlanItem_DecideResolution">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <!-- Milestone -->
+      <cmmn:planItem id="PlanItem_ExceptionResolved" definitionRef="Milestone_ExceptionResolved">
+        <cmmn:entryCriterion id="EntryCriterion_MilestoneReached" sentryRef="Sentry_CaseComplete"/>
+      </cmmn:planItem>
+      
+      <cmmn:milestone id="Milestone_ExceptionResolved" name="Exception Resolved"/>
+      
+      <cmmn:sentry id="Sentry_CaseComplete">
+        <cmmn:planItemOnPart id="OnPart_CaseComplete" sourceRef="PlanItem_CloseCase">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+    </cmmn:casePlanModel>
+  </cmmn:case>
+  
+</cmmn:definitions>

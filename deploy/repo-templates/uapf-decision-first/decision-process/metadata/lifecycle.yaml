@@ -1,0 +1,16 @@
+status: draft
+created: "2026-01-10"
+lastModified: "2026-01-10"
+version: 0.1.0
+
+history:
+  - version: 0.1.0
+    date: "2026-01-10"
+    author: "{{.RepoOwner}}"
+    changes: Initial template creation with decision-first architecture
+    
+reviews:
+  nextReview: "2026-04-10"
+  frequency: quarterly
+  
+approvals: []

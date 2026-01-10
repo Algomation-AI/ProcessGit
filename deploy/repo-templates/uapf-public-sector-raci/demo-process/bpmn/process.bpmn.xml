@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                   xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                   id="Definitions_PolicyPublication"
+                   targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="PolicyPublicationProcess" name="Policy Publication Process" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Policy Draft Ready">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_Review"/>
+    
+    <bpmn:userTask id="Task_Review" name="Review Policy Draft">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_Review" targetRef="Gateway_Approve"/>
+    
+    <bpmn:exclusiveGateway id="Gateway_Approve" name="Approved?">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_Approved</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Rejected</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_Approved" name="Yes" sourceRef="Gateway_Approve" targetRef="Task_Publish"/>
+    <bpmn:sequenceFlow id="Flow_Rejected" name="No" sourceRef="Gateway_Approve" targetRef="Task_Revise"/>
+    
+    <bpmn:userTask id="Task_Revise" name="Revise Policy">
+      <bpmn:incoming>Flow_Rejected</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_Revise" targetRef="Task_Review"/>
+    
+    <bpmn:serviceTask id="Task_Publish" name="Publish Policy">
+      <bpmn:incoming>Flow_Approved</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_Publish" targetRef="Task_Notify"/>
+    
+    <bpmn:sendTask id="Task_Notify" name="Notify Stakeholders">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_5</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_Notify" targetRef="EndEvent_1"/>
+    
+    <bpmn:endEvent id="EndEvent_1" name="Policy Published">
+      <bpmn:incoming>Flow_5</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="PolicyPublicationProcess">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="102" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="132" y="145" width="76" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Review_di" bpmnElement="Task_Review">
+        <dc:Bounds x="240" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Approve_di" bpmnElement="Gateway_Approve" isMarkerVisible="true">
+        <dc:Bounds x="395" y="95" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="394" y="71" width="53" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Revise_di" bpmnElement="Task_Revise">
+        <dc:Bounds x="370" y="200" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Publish_di" bpmnElement="Task_Publish">
+        <dc:Bounds x="500" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Notify_di" bpmnElement="Task_Notify">
+        <dc:Bounds x="660" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="822" y="102" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="816" y="145" width="48" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="188" y="120"/>
+        <di:waypoint x="240" y="120"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="340" y="120"/>
+        <di:waypoint x="395" y="120"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Approved_di" bpmnElement="Flow_Approved">
+        <di:waypoint x="445" y="120"/>
+        <di:waypoint x="500" y="120"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="463" y="102" width="19" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Rejected_di" bpmnElement="Flow_Rejected">
+        <di:waypoint x="420" y="145"/>
+        <di:waypoint x="420" y="200"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="428" y="170" width="15" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="370" y="240"/>
+        <di:waypoint x="290" y="240"/>
+        <di:waypoint x="290" y="160"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
+        <di:waypoint x="600" y="120"/>
+        <di:waypoint x="660" y="120"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_5_di" bpmnElement="Flow_5">
+        <di:waypoint x="760" y="120"/>
+        <di:waypoint x="822" y="120"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

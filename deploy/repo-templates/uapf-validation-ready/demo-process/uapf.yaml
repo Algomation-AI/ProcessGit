@@ -1,0 +1,25 @@
+kind: uapf.package
+id: uapf.validation-ready
+name: Validation Ready Process
+description: Process with validation schemas
+level: 4
+version: 0.1.0
+includes: []
+cornerstones:
+  bpmn: true
+  dmn: true
+  cmmn: true
+  resources: true
+  validation: true
+paths:
+  bpmn: bpmn
+  dmn: dmn
+  cmmn: cmmn
+  resources: resources
+  metadata: metadata
+  validation: ../validation
+owners:
+  - type: team
+    id: "{{.RepoOwner}}"
+    contact: "{{.RepoOwner}}@processgit.local"
+lifecycle: draft

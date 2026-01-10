@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+                   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+                   xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
+                   xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                   id="Definitions_OrderFulfillment" 
+                   targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="OrderFulfillmentProcess" name="Order Fulfillment Process" isExecutable="true">
+    
+    <bpmn:startEvent id="StartEvent_OrderReceived" name="Order Received">
+      <bpmn:outgoing>Flow_ToValidateOrder</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <bpmn:sequenceFlow id="Flow_ToValidateOrder" sourceRef="StartEvent_OrderReceived" targetRef="Task_ValidateOrder"/>
+    
+    <bpmn:userTask id="Task_ValidateOrder" name="Validate Order" camunda:assignee="order.validator">
+      <bpmn:incoming>Flow_ToValidateOrder</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToCheckInventory</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:sequenceFlow id="Flow_ToCheckInventory" sourceRef="Task_ValidateOrder" targetRef="Task_CheckInventory"/>
+    
+    <bpmn:serviceTask id="Task_CheckInventory" name="Check Inventory" camunda:type="external" camunda:topic="inventory-check">
+      <bpmn:incoming>Flow_ToCheckInventory</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToInventoryGateway</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_ToInventoryGateway" sourceRef="Task_CheckInventory" targetRef="Gateway_InventoryAvailable"/>
+    
+    <bpmn:exclusiveGateway id="Gateway_InventoryAvailable" name="Inventory Available?">
+      <bpmn:incoming>Flow_ToInventoryGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToPickPack</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ToBackorder</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <bpmn:sequenceFlow id="Flow_ToPickPack" name="Yes" sourceRef="Gateway_InventoryAvailable" targetRef="Task_PickAndPack">
+      <bpmn:conditionExpression>#{inventoryAvailable == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:sequenceFlow id="Flow_ToBackorder" name="No" sourceRef="Gateway_InventoryAvailable" targetRef="Task_CreateBackorder">
+      <bpmn:conditionExpression>#{inventoryAvailable == false}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:userTask id="Task_PickAndPack" name="Pick and Pack Items" camunda:assignee="warehouse.worker">
+      <bpmn:incoming>Flow_ToPickPack</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToShipOrder</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:sequenceFlow id="Flow_ToShipOrder" sourceRef="Task_PickAndPack" targetRef="Task_ShipOrder"/>
+    
+    <bpmn:serviceTask id="Task_ShipOrder" name="Ship Order" camunda:type="external" camunda:topic="shipping">
+      <bpmn:incoming>Flow_ToShipOrder</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToOrderComplete</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_ToOrderComplete" sourceRef="Task_ShipOrder" targetRef="EndEvent_OrderComplete"/>
+    
+    <bpmn:endEvent id="EndEvent_OrderComplete" name="Order Complete">
+      <bpmn:incoming>Flow_ToOrderComplete</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <bpmn:serviceTask id="Task_CreateBackorder" name="Create Backorder" camunda:type="external" camunda:topic="backorder">
+      <bpmn:incoming>Flow_ToBackorder</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToNotifyCustomer</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_ToNotifyCustomer" sourceRef="Task_CreateBackorder" targetRef="Task_NotifyCustomer"/>
+    
+    <bpmn:sendTask id="Task_NotifyCustomer" name="Notify Customer" camunda:type="mail">
+      <bpmn:incoming>Flow_ToNotifyCustomer</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToBackorderComplete</bpmn:outgoing>
+    </bpmn:sendTask>
+    
+    <bpmn:sequenceFlow id="Flow_ToBackorderComplete" sourceRef="Task_NotifyCustomer" targetRef="EndEvent_BackorderCreated"/>
+    
+    <bpmn:endEvent id="EndEvent_BackorderCreated" name="Backorder Created">
+      <bpmn:incoming>Flow_ToBackorderComplete</bpmn:incoming>
+    </bpmn:endEvent>
+    
+  </bpmn:process>
+</bpmn:definitions>

@@ -1,0 +1,11 @@
+kind: uapf.metadata.lifecycle
+status: draft
+created: "2026-01-10T00:00:00Z"
+last_modified: "2026-01-10T00:00:00Z"
+version_history:
+  - version: 0.1.0
+    date: "2026-01-10T00:00:00Z"
+    changes: Initial template creation
+    author: "{{.RepoOwner}}"
+next_review: "2026-04-10T00:00:00Z"
+retirement_date: null

@@ -1,0 +1,27 @@
+kind: uapf.enterprise.index
+level: 0
+enterprise:
+  id: "{{.RepoName}}"
+  name: "{{.RepoName}}"
+  description: Enterprise process architecture (L0-L4) for {{.RepoOwner}}
+levels:
+  L0:
+    name: Enterprise Level
+    description: Strategic enterprise view
+  L1:
+    name: Portfolio Level
+    description: Business capability portfolios
+  L2:
+    name: Business Capability Level
+    description: Individual business capabilities
+  L3:
+    name: Value Stream Level
+    description: End-to-end value streams
+  L4:
+    name: Process Level
+    description: Executable process definitions
+packages:
+  - ref: ../processes/demo-process
+    level: 4
+    domain: operations
+    description: Demo L4 process

@@ -1,0 +1,25 @@
+kind: uapf.package
+id: uapf.integration-ready
+name: Integration Ready Process
+description: Process with API and database connectors
+level: 4
+version: 0.1.0
+includes: []
+cornerstones:
+  bpmn: true
+  dmn: true
+  cmmn: true
+  resources: true
+  integration: true
+paths:
+  bpmn: bpmn
+  dmn: dmn
+  cmmn: cmmn
+  resources: resources
+  metadata: metadata
+  connectors: ../connectors
+owners:
+  - type: team
+    id: "{{.RepoOwner}}"
+    contact: "{{.RepoOwner}}@processgit.local"
+lifecycle: draft

@@ -1,0 +1,9 @@
+version: "1.0"
+mappings:
+  - decisionId: Decision_RiskCategory
+    type: calculation
+    description: Calculates risk category based on credit score
+    
+  - decisionId: Decision_LoanApproval
+    type: business-rule
+    description: Determines loan approval based on risk category

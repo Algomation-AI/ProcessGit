@@ -1,8 +1,0 @@
-{
-  "enterpriseId": "enterprise.placeholder",
-  "name": "Enterprise Placeholder",
-  "sourceRepo": "{{.RepoOwner}}/{{.RepoName}}",
-  "packages": [
-    "uapf.single-process@0.1.0"
-  ]
-}

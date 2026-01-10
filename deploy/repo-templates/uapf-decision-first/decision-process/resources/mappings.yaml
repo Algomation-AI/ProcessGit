@@ -1,0 +1,26 @@
+version: "1.0"
+mappings:
+  - taskId: Task_Validate
+    type: human
+    resource: loan-officer
+    role: Application Reviewer
+    
+  - taskId: Task_CheckCredit
+    type: system
+    resource: credit-bureau-api
+    endpoint: /api/credit-score
+    
+  - taskId: Task_ApprovalDecision
+    type: decision
+    resource: loan-approval-decision
+    reference: ../decisions/loan-approval
+    
+  - taskId: Task_Disburse
+    type: system
+    resource: payment-system
+    endpoint: /api/disburse
+    
+  - taskId: Task_Reject
+    type: agent
+    resource: notification-service
+    channel: email

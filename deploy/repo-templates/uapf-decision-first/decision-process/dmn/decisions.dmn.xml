@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             id="ProcessDecisions"
+             name="Process Decisions"
+             namespace="http://processgit.local/dmn">
+  
+  <!-- This DMN references the primary loan-approval decision -->
+  <decision id="Decision_ProcessApproval" name="Process Approval Decision">
+    <informationRequirement id="InfoReq_1">
+      <requiredInput href="#InputData_ApplicationData"/>
+    </informationRequirement>
+    <decisionTable id="DecisionTable_ProcessApproval">
+      <input id="Input_1" label="Application Complete">
+        <inputExpression id="InputExpression_1" typeRef="boolean">
+          <text>applicationComplete</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="Proceed to Decision" name="proceedToDecision" typeRef="boolean"/>
+      
+      <rule id="Rule_1">
+        <inputEntry id="InputEntry_1_1">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_1_1">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      
+      <rule id="Rule_2">
+        <inputEntry id="InputEntry_2_1">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_2_1">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  
+  <inputData id="InputData_ApplicationData" name="Application Data"/>
+  
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_1">
+      <dmndi:DMNShape id="DMNShape_Decision_1" dmnElementRef="Decision_ProcessApproval">
+        <dc:Bounds x="160" y="80" width="180" height="80"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Input_1" dmnElementRef="InputData_ApplicationData">
+        <dc:Bounds x="187" y="220" width="125" height="45"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_1" dmnElementRef="InfoReq_1">
+        <di:waypoint x="250" y="220"/>
+        <di:waypoint x="250" y="160"/>
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

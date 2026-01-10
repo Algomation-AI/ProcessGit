@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cmmn:definitions xmlns:cmmn="http://www.omg.org/spec/CMMN/20151109/MODEL"
+  xmlns:cmmndi="http://www.omg.org/spec/CMMN/20151109/CMMNDI"
+  xmlns:dc="http://www.omg.org/spec/CMMN/20151109/DC"
+  xmlns:di="http://www.omg.org/spec/CMMN/20151109/DI"
+  id="Definitions_{{.RepoName}}"
+  targetNamespace="https://processgit.org/cmmn">
+
+  <cmmn:case id="Case_ComplaintHandling" name="Customer Complaint Handling">
+    <cmmn:casePlanModel id="CasePlanModel_1" name="Complaint Handling Plan">
+
+      <!-- Required: Log the complaint -->
+      <cmmn:planItem id="PlanItem_LogComplaint" definitionRef="HumanTask_LogComplaint">
+        <cmmn:itemControl>
+          <cmmn:requiredRule/>
+        </cmmn:itemControl>
+      </cmmn:planItem>
+
+      <!-- Required: Investigate the issue -->
+      <cmmn:planItem id="PlanItem_Investigate" definitionRef="HumanTask_Investigate">
+        <cmmn:entryCriterion id="EntryCriterion_1" sentryRef="Sentry_1"/>
+      </cmmn:planItem>
+
+      <!-- Optional: Escalate to manager -->
+      <cmmn:planItem id="PlanItem_Escalate" definitionRef="HumanTask_Escalate">
+        <cmmn:itemControl>
+          <cmmn:manualActivationRule/>
+        </cmmn:itemControl>
+      </cmmn:planItem>
+
+      <!-- Required: Resolve and respond -->
+      <cmmn:planItem id="PlanItem_Resolve" definitionRef="HumanTask_Resolve">
+        <cmmn:entryCriterion id="EntryCriterion_2" sentryRef="Sentry_2"/>
+      </cmmn:planItem>
+
+      <!-- Milestone: Complaint Resolved -->
+      <cmmn:planItem id="PlanItem_Milestone" definitionRef="Milestone_Resolved">
+        <cmmn:entryCriterion id="EntryCriterion_3" sentryRef="Sentry_3"/>
+      </cmmn:planItem>
+
+      <!-- Sentries (entry conditions) -->
+      <cmmn:sentry id="Sentry_1">
+        <cmmn:planItemOnPart id="OnPart_1" sourceRef="PlanItem_LogComplaint">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+
+      <cmmn:sentry id="Sentry_2">
+        <cmmn:planItemOnPart id="OnPart_2" sourceRef="PlanItem_Investigate">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+
+      <cmmn:sentry id="Sentry_3">
+        <cmmn:planItemOnPart id="OnPart_3" sourceRef="PlanItem_Resolve">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+
+      <!-- Task Definitions -->
+      <cmmn:humanTask id="HumanTask_LogComplaint" name="Log Complaint Details"/>
+      <cmmn:humanTask id="HumanTask_Investigate" name="Investigate Issue"/>
+      <cmmn:humanTask id="HumanTask_Escalate" name="Escalate to Manager"/>
+      <cmmn:humanTask id="HumanTask_Resolve" name="Resolve and Respond"/>
+      <cmmn:milestone id="Milestone_Resolved" name="Complaint Resolved"/>
+
+    </cmmn:casePlanModel>
+  </cmmn:case>
+
+  <cmmndi:CMMNDI>
+    <cmmndi:CMMNDiagram id="CMMNDiagram_1">
+      <cmmndi:CMMNShape id="CasePlanModel_1_di" cmmnElementRef="CasePlanModel_1">
+        <dc:Bounds x="100" y="50" width="500" height="350" />
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="PlanItem_LogComplaint_di" cmmnElementRef="PlanItem_LogComplaint">
+        <dc:Bounds x="130" y="100" width="100" height="80" />
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="PlanItem_Investigate_di" cmmnElementRef="PlanItem_Investigate">
+        <dc:Bounds x="280" y="100" width="100" height="80" />
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="PlanItem_Escalate_di" cmmnElementRef="PlanItem_Escalate">
+        <dc:Bounds x="280" y="220" width="100" height="80" />
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="PlanItem_Resolve_di" cmmnElementRef="PlanItem_Resolve">
+        <dc:Bounds x="430" y="100" width="100" height="80" />
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="PlanItem_Milestone_di" cmmnElementRef="PlanItem_Milestone">
+        <dc:Bounds x="450" y="300" width="40" height="40" />
+      </cmmndi:CMMNShape>
+    </cmmndi:CMMNDiagram>
+  </cmmndi:CMMNDI>
+</cmmn:definitions>

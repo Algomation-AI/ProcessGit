@@ -1,0 +1,145 @@
+# Data Synchronization System Mappings
+version: 1.0
+mappings:
+  
+  # REST API Configuration
+  api:
+    type: rest-api
+    connector: ../connectors/rest-api
+    endpoints:
+      fetch:
+        path: /api/v1/data
+        method: GET
+        headers:
+          Accept: application/json
+          Authorization: "Bearer ${API_TOKEN}"
+        timeout: 30s
+        retry:
+          max_attempts: 3
+          backoff: exponential
+      
+      update:
+        path: /api/v1/data/{id}
+        method: PUT
+        headers:
+          Content-Type: application/json
+          Authorization: "Bearer ${API_TOKEN}"
+        timeout: 30s
+    
+    transforms:
+      incoming:
+        - type: json_to_object
+          schema: customer_schema
+        - type: field_mapping
+          fields:
+            external_id: customerId
+            full_name: customerName
+            contact_email: email
+            created_date: createdAt
+      
+      outgoing:
+        - type: object_to_json
+        - type: field_mapping
+          fields:
+            customerId: external_id
+            customerName: full_name
+            email: contact_email
+  
+  # Database Configuration
+  database:
+    type: database
+    connector: ../connectors/database
+    connection:
+      driver: postgresql
+      host: "${DB_HOST}"
+      port: "${DB_PORT}"
+      database: "${DB_NAME}"
+      username: "${DB_USER}"
+      password: "${DB_PASSWORD}"
+      ssl_mode: require
+      pool:
+        min_connections: 2
+        max_connections: 10
+        connection_timeout: 5s
+    
+    tables:
+      customers:
+        name: customers
+        schema: public
+        primary_key: id
+        fields:
+          id: SERIAL PRIMARY KEY
+          customer_id: VARCHAR(100) UNIQUE NOT NULL
+          customer_name: VARCHAR(255)
+          email: VARCHAR(255)
+          quality_score: INTEGER
+          created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        
+        operations:
+          insert:
+            query: |
+              INSERT INTO public.customers (customer_id, customer_name, email, quality_score)
+              VALUES (?, ?, ?, ?)
+              ON CONFLICT (customer_id) DO NOTHING
+          
+          update:
+            query: |
+              UPDATE public.customers
+              SET customer_name = ?, email = ?, quality_score = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE customer_id = ?
+          
+          upsert:
+            query: |
+              INSERT INTO public.customers (customer_id, customer_name, email, quality_score)
+              VALUES (?, ?, ?, ?)
+              ON CONFLICT (customer_id) DO UPDATE
+              SET customer_name = EXCLUDED.customer_name,
+                  email = EXCLUDED.email,
+                  quality_score = EXCLUDED.quality_score,
+                  updated_at = CURRENT_TIMESTAMP
+      
+      sync_log:
+        name: sync_log
+        schema: public
+        primary_key: id
+        fields:
+          id: SERIAL PRIMARY KEY
+          sync_id: UUID NOT NULL
+          status: VARCHAR(50)
+          records_processed: INTEGER
+          records_failed: INTEGER
+          started_at: TIMESTAMP
+          completed_at: TIMESTAMP
+          error_message: TEXT
+
+# Validation Rules
+validation:
+  customer_schema:
+    required_fields:
+      - customerId
+      - customerName
+    field_types:
+      customerId: string
+      customerName: string
+      email: email
+      qualityScore: integer
+    constraints:
+      qualityScore:
+        min: 0
+        max: 100
+
+# Error Handling
+error_handling:
+  on_api_failure:
+    strategy: retry_with_backoff
+    max_retries: 3
+    notification: alert_ops_team
+  
+  on_database_failure:
+    strategy: log_and_continue
+    notification: alert_ops_team
+  
+  on_validation_failure:
+    strategy: reject_record
+    log_level: warning

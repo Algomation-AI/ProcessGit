@@ -1,0 +1,17 @@
+owner:
+  team: "{{.RepoOwner}}"
+  contact: "{{.RepoOwner}}@processgit.local"
+  department: Lending Operations
+
+stakeholders:
+  - name: Credit Team
+    role: Decision Logic Owner
+    contact: credit@processgit.local
+    
+  - name: Operations Team
+    role: Process Owner
+    contact: ops@processgit.local
+    
+  - name: Compliance
+    role: Regulatory Review
+    contact: compliance@processgit.local

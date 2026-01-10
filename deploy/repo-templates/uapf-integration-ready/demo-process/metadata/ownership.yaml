@@ -1,0 +1,60 @@
+# Process Ownership Metadata
+version: 1.0
+
+# Primary Owner
+primary_owner:
+  type: team
+  id: "{{.RepoOwner}}"
+  name: "{{.RepoOwner}}"
+  contact: "{{.RepoOwner}}@processgit.local"
+  responsibilities:
+    - Process definition and maintenance
+    - Integration connector management
+    - Issue resolution and support
+
+# Additional Stakeholders
+stakeholders:
+  - type: team
+    id: integration-team
+    name: Integration Team
+    contact: integration@processgit.local
+    role: technical_support
+    responsibilities:
+      - API and database connector maintenance
+      - Connection troubleshooting
+      - Performance monitoring
+  
+  - type: team
+    id: data-governance
+    name: Data Governance Team
+    contact: data-governance@processgit.local
+    role: compliance
+    responsibilities:
+      - Data quality standards
+      - Validation rule definition
+      - Compliance oversight
+
+# Escalation Path
+escalation:
+  level_1:
+    contact: "{{.RepoOwner}}@processgit.local"
+    response_time: 4h
+  
+  level_2:
+    contact: integration@processgit.local
+    response_time: 2h
+  
+  level_3:
+    contact: ops-manager@processgit.local
+    response_time: 1h
+
+# Support Schedule
+support:
+  business_hours:
+    timezone: UTC
+    monday_friday: "09:00-17:00"
+    saturday_sunday: "on-call"
+  
+  on_call:
+    primary: "{{.RepoOwner}}"
+    backup: integration-team
