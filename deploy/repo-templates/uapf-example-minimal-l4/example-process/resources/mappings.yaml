@@ -1,0 +1,6 @@
+version: "1.0"
+mappings:
+  - taskId: Task_1
+    type: human
+    resource: any-user
+    role: User

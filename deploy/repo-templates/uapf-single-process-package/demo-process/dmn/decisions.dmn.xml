@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/"
+             id="EquipmentAssignment"
+             name="Equipment Assignment Decision"
+             namespace="http://processgit.io/dmn/equipment-assignment">
+  
+  <decision id="Decision_EquipmentAssignment" name="Equipment Assignment">
+    <informationRequirement id="InformationRequirement_1">
+      <requiredInput href="#InputData_Role"/>
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_2">
+      <requiredInput href="#InputData_Level"/>
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_3">
+      <requiredInput href="#InputData_Department"/>
+    </informationRequirement>
+    
+    <decisionTable id="DecisionTable_1" hitPolicy="FIRST">
+      
+      <!-- Input Columns -->
+      <input id="Input_Role" label="Employee Role">
+        <inputExpression id="InputExpression_Role" typeRef="string">
+          <text>role</text>
+        </inputExpression>
+      </input>
+      
+      <input id="Input_Level" label="Employee Level">
+        <inputExpression id="InputExpression_Level" typeRef="string">
+          <text>level</text>
+        </inputExpression>
+      </input>
+      
+      <input id="Input_Department" label="Department">
+        <inputExpression id="InputExpression_Department" typeRef="string">
+          <text>department</text>
+        </inputExpression>
+      </input>
+      
+      <!-- Output Columns -->
+      <output id="Output_Laptop" label="Laptop Model" name="laptop" typeRef="string"/>
+      <output id="Output_Monitor" label="Monitor Setup" name="monitor" typeRef="string"/>
+      <output id="Output_Peripherals" label="Peripherals" name="peripherals" typeRef="string"/>
+      <output id="Output_Software" label="Software Package" name="software" typeRef="string"/>
+      
+      <!-- Decision Rules -->
+      
+      <!-- Executive Level -->
+      <rule id="Rule_1">
+        <inputEntry id="InputEntry_1_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_1_2">
+          <text>"Executive"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_1_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_1_1">
+          <text>"MacBook Pro 16-inch M3 Max"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_1_2">
+          <text>"Dual 32-inch 4K"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_1_3">
+          <text>"Premium Keyboard, Mouse, Webcam, Headset"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_1_4">
+          <text>"Executive Suite"</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Engineering - Senior -->
+      <rule id="Rule_2">
+        <inputEntry id="InputEntry_2_1">
+          <text>"Engineer"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_2_2">
+          <text>"Senior"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_2_3">
+          <text>"Engineering"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_2_1">
+          <text>"MacBook Pro 14-inch M3 Pro"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_2_2">
+          <text>"Dual 27-inch 4K"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_2_3">
+          <text>"Mechanical Keyboard, Mouse, Webcam"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_2_4">
+          <text>"Developer Pro"</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Engineering - Mid-Level -->
+      <rule id="Rule_3">
+        <inputEntry id="InputEntry_3_1">
+          <text>"Engineer"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_3_2">
+          <text>"Mid-Level"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_3_3">
+          <text>"Engineering"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_3_1">
+          <text>"MacBook Air 15-inch M3"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_3_2">
+          <text>"Single 27-inch 4K"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_3_3">
+          <text>"Standard Keyboard, Mouse, Webcam"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_3_4">
+          <text>"Developer Standard"</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Engineering - Junior -->
+      <rule id="Rule_4">
+        <inputEntry id="InputEntry_4_1">
+          <text>"Engineer"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_4_2">
+          <text>"Junior"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_4_3">
+          <text>"Engineering"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_4_1">
+          <text>"MacBook Air 13-inch M3"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_4_2">
+          <text>"Single 24-inch"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_4_3">
+          <text>"Standard Keyboard, Mouse"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_4_4">
+          <text>"Developer Basic"</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Design - Any Level -->
+      <rule id="Rule_5">
+        <inputEntry id="InputEntry_5_1">
+          <text>"Designer"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_5_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_5_3">
+          <text>"Design"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_5_1">
+          <text>"MacBook Pro 16-inch M3 Max"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_5_2">
+          <text>"27-inch 5K Color-Calibrated"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_5_3">
+          <text>"Graphics Tablet, Mouse, Webcam"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_5_4">
+          <text>"Creative Suite"</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Sales - Any Level -->
+      <rule id="Rule_6">
+        <inputEntry id="InputEntry_6_1">
+          <text>"Sales Representative"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_6_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_6_3">
+          <text>"Sales"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_6_1">
+          <text>"MacBook Air 13-inch M3"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_6_2">
+          <text>"Single 24-inch"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_6_3">
+          <text>"Wireless Headset, Mouse"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_6_4">
+          <text>"Sales & CRM"</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Marketing - Any Level -->
+      <rule id="Rule_7">
+        <inputEntry id="InputEntry_7_1">
+          <text>"Marketing Specialist"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_7_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_7_3">
+          <text>"Marketing"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_7_1">
+          <text>"MacBook Pro 14-inch M3"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_7_2">
+          <text>"Single 27-inch"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_7_3">
+          <text>"Standard Keyboard, Mouse, Webcam"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_7_4">
+          <text>"Marketing & Analytics"</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- HR - Any Level -->
+      <rule id="Rule_8">
+        <inputEntry id="InputEntry_8_1">
+          <text>"HR Specialist"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_8_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_8_3">
+          <text>"Human Resources"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_8_1">
+          <text>"Dell Latitude 5540"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_8_2">
+          <text>"Single 24-inch"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_8_3">
+          <text>"Standard Keyboard, Mouse, Headset"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_8_4">
+          <text>"Office & HRIS"</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Finance - Any Level -->
+      <rule id="Rule_9">
+        <inputEntry id="InputEntry_9_1">
+          <text>"Financial Analyst"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_9_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_9_3">
+          <text>"Finance"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_9_1">
+          <text>"Dell Latitude 7540"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_9_2">
+          <text>"Dual 24-inch"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_9_3">
+          <text>"Standard Keyboard, Mouse, Number Pad"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_9_4">
+          <text>"Finance & Accounting"</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Default Rule -->
+      <rule id="Rule_Default">
+        <inputEntry id="InputEntry_Default_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_Default_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_Default_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_Default_1">
+          <text>"Dell Latitude 5540"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_Default_2">
+          <text>"Single 24-inch"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_Default_3">
+          <text>"Standard Keyboard, Mouse"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_Default_4">
+          <text>"Office Standard"</text>
+        </outputEntry>
+      </rule>
+      
+    </decisionTable>
+  </decision>
+  
+  <!-- Input Data -->
+  <inputData id="InputData_Role" name="Employee Role"/>
+  <inputData id="InputData_Level" name="Employee Level"/>
+  <inputData id="InputData_Department" name="Department"/>
+  
+  <!-- Diagram -->
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_1">
+      
+      <dmndi:DMNShape id="DMNShape_Decision" dmnElementRef="Decision_EquipmentAssignment">
+        <dc:Bounds x="300" y="80" width="180" height="80"/>
+      </dmndi:DMNShape>
+      
+      <dmndi:DMNShape id="DMNShape_InputRole" dmnElementRef="InputData_Role">
+        <dc:Bounds x="150" y="230" width="125" height="45"/>
+      </dmndi:DMNShape>
+      
+      <dmndi:DMNShape id="DMNShape_InputLevel" dmnElementRef="InputData_Level">
+        <dc:Bounds x="325" y="230" width="125" height="45"/>
+      </dmndi:DMNShape>
+      
+      <dmndi:DMNShape id="DMNShape_InputDepartment" dmnElementRef="InputData_Department">
+        <dc:Bounds x="500" y="230" width="125" height="45"/>
+      </dmndi:DMNShape>
+      
+      <dmndi:DMNEdge id="DMNEdge_1" dmnElementRef="InformationRequirement_1">
+        <di:waypoint x="212" y="230"/>
+        <di:waypoint x="360" y="160"/>
+      </dmndi:DMNEdge>
+      
+      <dmndi:DMNEdge id="DMNEdge_2" dmnElementRef="InformationRequirement_2">
+        <di:waypoint x="387" y="230"/>
+        <di:waypoint x="390" y="160"/>
+      </dmndi:DMNEdge>
+      
+      <dmndi:DMNEdge id="DMNEdge_3" dmnElementRef="InformationRequirement_3">
+        <di:waypoint x="562" y="230"/>
+        <di:waypoint x="420" y="160"/>
+      </dmndi:DMNEdge>
+      
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+  
+</definitions>

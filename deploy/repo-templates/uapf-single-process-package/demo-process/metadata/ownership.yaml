@@ -1,0 +1,7 @@
+kind: uapf.metadata.ownership
+owners:
+  - type: team
+    id: "{{.RepoOwner}}"
+    name: "{{.RepoOwner}}"
+created: "2025-01-01"
+updated: "2025-01-01"

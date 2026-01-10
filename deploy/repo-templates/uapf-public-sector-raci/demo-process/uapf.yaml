@@ -1,0 +1,25 @@
+kind: uapf.package
+id: uapf.public-sector-raci
+name: Public Sector Process with RACI
+description: Process with governance and RACI matrices
+level: 4
+version: 0.1.0
+includes: []
+cornerstones:
+  bpmn: true
+  dmn: true
+  cmmn: true
+  resources: true
+  governance: true
+paths:
+  bpmn: bpmn
+  dmn: dmn
+  cmmn: cmmn
+  resources: resources
+  metadata: metadata
+  governance: ../governance
+owners:
+  - type: team
+    id: "{{.RepoOwner}}"
+    contact: "{{.RepoOwner}}@processgit.local"
+lifecycle: draft

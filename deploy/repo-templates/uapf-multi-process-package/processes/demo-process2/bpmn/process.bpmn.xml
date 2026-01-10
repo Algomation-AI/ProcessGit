@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+                   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+                   xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
+                   xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                   id="Definitions_ReturnProcessing" 
+                   targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="ReturnProcessingProcess" name="Return Processing Process" isExecutable="true">
+    
+    <bpmn:startEvent id="StartEvent_ReturnRequested" name="Return Requested">
+      <bpmn:outgoing>Flow_ToCheckEligibility</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <bpmn:sequenceFlow id="Flow_ToCheckEligibility" sourceRef="StartEvent_ReturnRequested" targetRef="Task_CheckEligibility"/>
+    
+    <bpmn:businessRuleTask id="Task_CheckEligibility" name="Check Return Eligibility" camunda:resultVariable="eligibilityResult" camunda:decisionRef="Decision_ReturnEligibility">
+      <bpmn:incoming>Flow_ToCheckEligibility</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToEligibilityGateway</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    
+    <bpmn:sequenceFlow id="Flow_ToEligibilityGateway" sourceRef="Task_CheckEligibility" targetRef="Gateway_EligibilityCheck"/>
+    
+    <bpmn:exclusiveGateway id="Gateway_EligibilityCheck" name="Return Eligible?">
+      <bpmn:incoming>Flow_ToEligibilityGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToApproveReturn</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ToRejectReturn</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <bpmn:sequenceFlow id="Flow_ToApproveReturn" name="Yes" sourceRef="Gateway_EligibilityCheck" targetRef="Task_GenerateRMA">
+      <bpmn:conditionExpression>#{eligible == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:sequenceFlow id="Flow_ToRejectReturn" name="No" sourceRef="Gateway_EligibilityCheck" targetRef="Task_NotifyRejection">
+      <bpmn:conditionExpression>#{eligible == false}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:serviceTask id="Task_GenerateRMA" name="Generate RMA Number" camunda:type="external" camunda:topic="rma-generation">
+      <bpmn:incoming>Flow_ToApproveReturn</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToSendLabel</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_ToSendLabel" sourceRef="Task_GenerateRMA" targetRef="Task_SendShippingLabel"/>
+    
+    <bpmn:sendTask id="Task_SendShippingLabel" name="Send Shipping Label" camunda:type="mail">
+      <bpmn:incoming>Flow_ToSendLabel</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToWaitForReturn</bpmn:outgoing>
+    </bpmn:sendTask>
+    
+    <bpmn:sequenceFlow id="Flow_ToWaitForReturn" sourceRef="Task_SendShippingLabel" targetRef="Event_ItemReceived"/>
+    
+    <bpmn:intermediateCatchEvent id="Event_ItemReceived" name="Item Received">
+      <bpmn:incoming>Flow_ToWaitForReturn</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToInspect</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="Message_ItemReceived"/>
+    </bpmn:intermediateCatchEvent>
+    
+    <bpmn:sequenceFlow id="Flow_ToInspect" sourceRef="Event_ItemReceived" targetRef="Task_InspectItem"/>
+    
+    <bpmn:userTask id="Task_InspectItem" name="Inspect Returned Item" camunda:assignee="quality.inspector">
+      <bpmn:incoming>Flow_ToInspect</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToConditionGateway</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:sequenceFlow id="Flow_ToConditionGateway" sourceRef="Task_InspectItem" targetRef="Gateway_ItemCondition"/>
+    
+    <bpmn:exclusiveGateway id="Gateway_ItemCondition" name="Item Acceptable?">
+      <bpmn:incoming>Flow_ToConditionGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToProcessRefund</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ToRejectRefund</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <bpmn:sequenceFlow id="Flow_ToProcessRefund" name="Yes" sourceRef="Gateway_ItemCondition" targetRef="Task_ProcessRefund">
+      <bpmn:conditionExpression>#{itemAcceptable == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:sequenceFlow id="Flow_ToRejectRefund" name="No" sourceRef="Gateway_ItemCondition" targetRef="Task_NotifyRejection">
+      <bpmn:conditionExpression>#{itemAcceptable == false}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:serviceTask id="Task_ProcessRefund" name="Process Refund" camunda:type="external" camunda:topic="refund-processing">
+      <bpmn:incoming>Flow_ToProcessRefund</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToRestockItem</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_ToRestockItem" sourceRef="Task_ProcessRefund" targetRef="Task_RestockItem"/>
+    
+    <bpmn:userTask id="Task_RestockItem" name="Restock Item" camunda:assignee="warehouse.worker">
+      <bpmn:incoming>Flow_ToRestockItem</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToReturnComplete</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:sequenceFlow id="Flow_ToReturnComplete" sourceRef="Task_RestockItem" targetRef="EndEvent_ReturnComplete"/>
+    
+    <bpmn:endEvent id="EndEvent_ReturnComplete" name="Return Complete">
+      <bpmn:incoming>Flow_ToReturnComplete</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <bpmn:sendTask id="Task_NotifyRejection" name="Notify Customer of Rejection" camunda:type="mail">
+      <bpmn:incoming>Flow_ToRejectReturn</bpmn:incoming>
+      <bpmn:incoming>Flow_ToRejectRefund</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToReturnRejected</bpmn:outgoing>
+    </bpmn:sendTask>
+    
+    <bpmn:sequenceFlow id="Flow_ToReturnRejected" sourceRef="Task_NotifyRejection" targetRef="EndEvent_ReturnRejected"/>
+    
+    <bpmn:endEvent id="EndEvent_ReturnRejected" name="Return Rejected">
+      <bpmn:incoming>Flow_ToReturnRejected</bpmn:incoming>
+    </bpmn:endEvent>
+    
+  </bpmn:process>
+  
+  <bpmn:message id="Message_ItemReceived" name="ItemReceivedMessage"/>
+  
+</bpmn:definitions>

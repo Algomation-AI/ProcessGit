@@ -1,0 +1,10 @@
+kind: uapf.enterprise.index
+level: 0
+enterprise:
+  id: "{{.RepoName}}"
+  name: "{{.RepoName}}"
+  description: Public sector process template with governance and RACI matrices
+packages:
+  - ref: ../demo-process
+    level: 4
+    domain: policy-management

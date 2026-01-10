@@ -1,0 +1,18 @@
+kind: uapf.decision
+id: uapf.loan-approval-decision
+name: Loan Approval Decision
+description: Reusable loan approval decision logic
+level: 4
+version: 0.1.0
+cornerstones:
+  dmn: true
+  resources: true
+paths:
+  dmn: dmn
+  resources: resources
+  metadata: metadata
+owners:
+  - type: team
+    id: "{{.RepoOwner}}"
+    contact: "{{.RepoOwner}}@processgit.local"
+lifecycle: draft

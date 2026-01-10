@@ -1,0 +1,24 @@
+kind: uapf.package
+id: uapf.decision-process
+name: Decision-First Loan Process
+description: Loan application process using reusable decision logic
+level: 4
+version: 0.1.0
+includes:
+  - ../decisions/loan-approval
+cornerstones:
+  bpmn: true
+  dmn: true
+  cmmn: true
+  resources: true
+paths:
+  bpmn: bpmn
+  dmn: dmn
+  cmmn: cmmn
+  resources: resources
+  metadata: metadata
+owners:
+  - type: team
+    id: "{{.RepoOwner}}"
+    contact: "{{.RepoOwner}}@processgit.local"
+lifecycle: draft

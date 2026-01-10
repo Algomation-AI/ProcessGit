@@ -1,0 +1,19 @@
+kind: uapf.package
+id: uapf.example-minimal
+name: Minimal Example Process
+description: Minimal Level-4 process example
+level: 4
+version: 0.1.0
+includes: []
+cornerstones:
+  bpmn: true
+  resources: true
+paths:
+  bpmn: bpmn
+  resources: resources
+  metadata: metadata
+owners:
+  - type: team
+    id: "{{.RepoOwner}}"
+    contact: "{{.RepoOwner}}@processgit.local"
+lifecycle: draft

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             id="PolicyApprovalDecisions"
+             name="Policy Approval Decisions"
+             namespace="http://processgit.local/dmn">
+  
+  <decision id="Decision_PolicyApproval" name="Policy Approval Decision">
+    <informationRequirement id="InfoReq_1">
+      <requiredInput href="#InputData_ComplianceScore"/>
+    </informationRequirement>
+    <informationRequirement id="InfoReq_2">
+      <requiredInput href="#InputData_StakeholderFeedback"/>
+    </informationRequirement>
+    <decisionTable id="DecisionTable_1">
+      <input id="Input_1" label="Compliance Score">
+        <inputExpression id="InputExpression_1" typeRef="number">
+          <text>complianceScore</text>
+        </inputExpression>
+      </input>
+      <input id="Input_2" label="Stakeholder Feedback">
+        <inputExpression id="InputExpression_2" typeRef="string">
+          <text>stakeholderFeedback</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="Approval Status" name="approvalStatus" typeRef="string"/>
+      <output id="Output_2" label="Review Required" name="reviewRequired" typeRef="boolean"/>
+      
+      <rule id="Rule_1">
+        <inputEntry id="InputEntry_1_1">
+          <text>&gt;= 90</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_1_2">
+          <text>"Positive"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_1_1">
+          <text>"APPROVED"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_1_2">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      
+      <rule id="Rule_2">
+        <inputEntry id="InputEntry_2_1">
+          <text>[70..90)</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_2_2">
+          <text>"Positive", "Neutral"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_2_1">
+          <text>"CONDITIONAL"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_2_2">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      
+      <rule id="Rule_3">
+        <inputEntry id="InputEntry_3_1">
+          <text>&lt; 70</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_3_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_3_1">
+          <text>"REJECTED"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_3_2">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      
+      <rule id="Rule_4">
+        <inputEntry id="InputEntry_4_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_4_2">
+          <text>"Negative"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_4_1">
+          <text>"REJECTED"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_4_2">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  
+  <inputData id="InputData_ComplianceScore" name="Compliance Score"/>
+  <inputData id="InputData_StakeholderFeedback" name="Stakeholder Feedback"/>
+  
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_1">
+      <dmndi:DMNShape id="DMNShape_Decision_1" dmnElementRef="Decision_PolicyApproval">
+        <dc:Bounds x="160" y="80" width="180" height="80"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Input_1" dmnElementRef="InputData_ComplianceScore">
+        <dc:Bounds x="100" y="220" width="125" height="45"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Input_2" dmnElementRef="InputData_StakeholderFeedback">
+        <dc:Bounds x="275" y="220" width="125" height="45"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_1" dmnElementRef="InfoReq_1">
+        <di:waypoint x="162" y="220"/>
+        <di:waypoint x="200" y="160"/>
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_2" dmnElementRef="InfoReq_2">
+        <di:waypoint x="338" y="220"/>
+        <di:waypoint x="300" y="160"/>
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

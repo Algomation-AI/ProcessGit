@@ -1,0 +1,13 @@
+kind: uapf.resources.mapping
+targets:
+  - id: placeholder.agent
+    type: ai_agent
+    name: Placeholder Agent
+    capabilities: []
+  - id: placeholder.human
+    type: human_role
+    name: Placeholder Human
+  - id: placeholder.system
+    type: system_api
+    name: Placeholder System
+bindings: []

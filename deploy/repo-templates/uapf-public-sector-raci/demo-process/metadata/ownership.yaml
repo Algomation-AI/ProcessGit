@@ -1,0 +1,17 @@
+owner:
+  team: "{{.RepoOwner}}"
+  contact: "{{.RepoOwner}}@processgit.local"
+  department: Policy Management
+
+stakeholders:
+  - name: Legal Department
+    role: Compliance Review
+    contact: legal@processgit.local
+    
+  - name: Communications Team
+    role: Publication
+    contact: comms@processgit.local
+    
+  - name: Executive Office
+    role: Final Approval
+    contact: exec@processgit.local

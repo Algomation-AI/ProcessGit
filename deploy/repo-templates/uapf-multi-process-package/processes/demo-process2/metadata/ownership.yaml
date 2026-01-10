@@ -1,0 +1,16 @@
+kind: uapf.metadata.ownership
+owner:
+  type: team
+  id: "{{.RepoOwner}}"
+  name: "{{.RepoOwner}} Team"
+  contact: "{{.RepoOwner}}@processgit.local"
+stakeholders:
+  - type: team
+    id: operations
+    role: executor
+  - type: team
+    id: business-analysis
+    role: reviewer
+governance:
+  approval_required: true
+  review_cycle: quarterly

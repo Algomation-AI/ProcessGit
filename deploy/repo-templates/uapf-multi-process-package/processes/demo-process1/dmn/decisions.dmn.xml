@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" 
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" 
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
+             xmlns:camunda="http://camunda.org/schema/1.0/dmn"
+             id="Definitions_ShippingMethod" 
+             name="Shipping Method Decisions" 
+             namespace="http://camunda.org/schema/1.0/dmn">
+  
+  <decision id="Decision_ShippingMethod" name="Determine Shipping Method">
+    <decisionTable id="DecisionTable_ShippingMethod" hitPolicy="FIRST">
+      
+      <input id="Input_OrderValue" label="Order Value" camunda:inputVariable="orderValue">
+        <inputExpression id="InputExpression_OrderValue" typeRef="double">
+          <text>orderValue</text>
+        </inputExpression>
+      </input>
+      
+      <input id="Input_CustomerTier" label="Customer Tier" camunda:inputVariable="customerTier">
+        <inputExpression id="InputExpression_CustomerTier" typeRef="string">
+          <text>customerTier</text>
+        </inputExpression>
+      </input>
+      
+      <input id="Input_Destination" label="Destination" camunda:inputVariable="destination">
+        <inputExpression id="InputExpression_Destination" typeRef="string">
+          <text>destination</text>
+        </inputExpression>
+      </input>
+      
+      <output id="Output_ShippingMethod" label="Shipping Method" name="shippingMethod" typeRef="string"/>
+      
+      <output id="Output_ShippingCost" label="Shipping Cost" name="shippingCost" typeRef="double"/>
+      
+      <!-- Rule 1: Premium customers, any value, any destination -> Express Free -->
+      <rule id="Rule_PremiumExpress">
+        <inputEntry id="InputEntry_R1_OrderValue">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R1_CustomerTier">
+          <text>"premium"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R1_Destination">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_R1_Method">
+          <text>"express"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R1_Cost">
+          <text>0</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Rule 2: High value orders (>500), standard customers, domestic -> Express -->
+      <rule id="Rule_HighValueExpress">
+        <inputEntry id="InputEntry_R2_OrderValue">
+          <text>&gt; 500</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R2_CustomerTier">
+          <text>"standard"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R2_Destination">
+          <text>"domestic"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_R2_Method">
+          <text>"express"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R2_Cost">
+          <text>15.00</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Rule 3: Medium value orders (100-500), standard customers, domestic -> Standard -->
+      <rule id="Rule_MediumValueStandard">
+        <inputEntry id="InputEntry_R3_OrderValue">
+          <text>[100..500]</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R3_CustomerTier">
+          <text>"standard"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R3_Destination">
+          <text>"domestic"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_R3_Method">
+          <text>"standard"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R3_Cost">
+          <text>8.00</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Rule 4: Low value orders (<100), any tier, domestic -> Economy -->
+      <rule id="Rule_LowValueEconomy">
+        <inputEntry id="InputEntry_R4_OrderValue">
+          <text>&lt; 100</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R4_CustomerTier">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R4_Destination">
+          <text>"domestic"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_R4_Method">
+          <text>"economy"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R4_Cost">
+          <text>5.00</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Rule 5: International orders -> International -->
+      <rule id="Rule_International">
+        <inputEntry id="InputEntry_R5_OrderValue">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R5_CustomerTier">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R5_Destination">
+          <text>"international"</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_R5_Method">
+          <text>"international"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R5_Cost">
+          <text>25.00</text>
+        </outputEntry>
+      </rule>
+      
+    </decisionTable>
+  </decision>
+  
+</definitions>

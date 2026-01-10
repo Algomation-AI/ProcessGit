@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cmmn:definitions xmlns:cmmn="http://www.omg.org/spec/CMMN/20151109/MODEL"
+                  xmlns:cmmndi="http://www.omg.org/spec/CMMN/20151109/CMMNDI"
+                  xmlns:dc="http://www.omg.org/spec/CMMN/20151109/DC"
+                  xmlns:di="http://www.omg.org/spec/CMMN/20151109/DI"
+                  id="Definitions_SyncIssueCase"
+                  targetNamespace="http://processgit.local/cmmn"
+                  exporter="ProcessGit"
+                  exporterVersion="1.0">
+  
+  <cmmn:case id="SyncIssueCase" name="Data Sync Issue Case">
+    
+    <cmmn:casePlanModel id="CasePlanModel_1" name="Handle Sync Issue">
+      
+      <cmmn:planItem id="PlanItem_InvestigateIssue" definitionRef="HumanTask_Investigate">
+        <cmmn:entryCriterion id="EntryCriterion_1" sentryRef="Sentry_CaseStart" />
+      </cmmn:planItem>
+      
+      <cmmn:planItem id="PlanItem_CheckAPIStatus" definitionRef="Task_CheckAPI">
+        <cmmn:entryCriterion id="EntryCriterion_2" sentryRef="Sentry_InvestigationComplete" />
+      </cmmn:planItem>
+      
+      <cmmn:planItem id="PlanItem_CheckDBStatus" definitionRef="Task_CheckDB">
+        <cmmn:entryCriterion id="EntryCriterion_3" sentryRef="Sentry_InvestigationComplete" />
+      </cmmn:planItem>
+      
+      <cmmn:planItem id="PlanItem_ResolveIssue" definitionRef="HumanTask_Resolve">
+        <cmmn:entryCriterion id="EntryCriterion_4" sentryRef="Sentry_DiagnosisComplete" />
+      </cmmn:planItem>
+      
+      <cmmn:planItem id="PlanItem_RetrySync" definitionRef="Task_Retry">
+        <cmmn:entryCriterion id="EntryCriterion_5" sentryRef="Sentry_IssueResolved" />
+      </cmmn:planItem>
+      
+      <cmmn:sentry id="Sentry_CaseStart">
+        <cmmn:planItemOnPart id="OnPart_1" sourceRef="PlanItem_InvestigateIssue">
+          <cmmn:standardEvent>create</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <cmmn:sentry id="Sentry_InvestigationComplete">
+        <cmmn:planItemOnPart id="OnPart_2" sourceRef="PlanItem_InvestigateIssue">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <cmmn:sentry id="Sentry_DiagnosisComplete">
+        <cmmn:planItemOnPart id="OnPart_3" sourceRef="PlanItem_CheckAPIStatus">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+        <cmmn:planItemOnPart id="OnPart_4" sourceRef="PlanItem_CheckDBStatus">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <cmmn:sentry id="Sentry_IssueResolved">
+        <cmmn:planItemOnPart id="OnPart_5" sourceRef="PlanItem_ResolveIssue">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      
+      <cmmn:humanTask id="HumanTask_Investigate" name="Investigate Issue" />
+      
+      <cmmn:task id="Task_CheckAPI" name="Check API Status" />
+      
+      <cmmn:task id="Task_CheckDB" name="Check Database Status" />
+      
+      <cmmn:humanTask id="HumanTask_Resolve" name="Resolve Issue" />
+      
+      <cmmn:task id="Task_Retry" name="Retry Synchronization" />
+      
+    </cmmn:casePlanModel>
+    
+  </cmmn:case>
+  
+  <cmmndi:CMMNDI>
+    <cmmndi:CMMNDiagram id="CMMNDiagram_1">
+      <cmmndi:CMMNShape id="CMMNShape_CasePlanModel_1" cmmnElementRef="CasePlanModel_1">
+        <dc:Bounds x="50" y="50" width="700" height="400" />
+      </cmmndi:CMMNShape>
+      
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_1" cmmnElementRef="PlanItem_InvestigateIssue">
+        <dc:Bounds x="100" y="100" width="100" height="80" />
+      </cmmndi:CMMNShape>
+      
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_2" cmmnElementRef="PlanItem_CheckAPIStatus">
+        <dc:Bounds x="250" y="100" width="100" height="80" />
+      </cmmndi:CMMNShape>
+      
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_3" cmmnElementRef="PlanItem_CheckDBStatus">
+        <dc:Bounds x="250" y="220" width="100" height="80" />
+      </cmmndi:CMMNShape>
+      
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_4" cmmnElementRef="PlanItem_ResolveIssue">
+        <dc:Bounds x="400" y="160" width="100" height="80" />
+      </cmmndi:CMMNShape>
+      
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_5" cmmnElementRef="PlanItem_RetrySync">
+        <dc:Bounds x="550" y="160" width="100" height="80" />
+      </cmmndi:CMMNShape>
+      
+    </cmmndi:CMMNDiagram>
+  </cmmndi:CMMNDI>
+  
+</cmmn:definitions>

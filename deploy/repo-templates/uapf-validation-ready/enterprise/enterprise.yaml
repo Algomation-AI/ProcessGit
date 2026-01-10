@@ -1,0 +1,10 @@
+kind: uapf.enterprise.index
+level: 0
+enterprise:
+  id: "{{.RepoName}}"
+  name: "{{.RepoName}}"
+  description: Enterprise process collection for {{.RepoOwner}}
+packages:
+  - ref: ../demo-process
+    level: 4
+    domain: operations

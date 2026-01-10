@@ -1,0 +1,21 @@
+version: "1.0"
+mappings:
+  - taskId: Task_Review
+    type: human
+    resource: policy-reviewer
+    role: Reviewer
+    
+  - taskId: Task_Revise
+    type: human
+    resource: policy-author
+    role: Author
+    
+  - taskId: Task_Publish
+    type: system
+    resource: publication-system
+    endpoint: /api/publish
+    
+  - taskId: Task_Notify
+    type: agent
+    resource: notification-service
+    channel: email

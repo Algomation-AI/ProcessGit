@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+  xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
+  xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+  xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/"
+  id="Definitions_{{.RepoName}}"
+  name="Discount Eligibility"
+  namespace="https://processgit.org/dmn">
+
+  <decision id="Decision_DiscountEligibility" name="Discount Eligibility">
+    <decisionTable id="DecisionTable_1" hitPolicy="FIRST">
+      <input id="Input_CustomerType" label="Customer Type">
+        <inputExpression id="InputExpression_1" typeRef="string">
+          <text>customerType</text>
+        </inputExpression>
+        <inputValues id="InputValues_1">
+          <text>"Premium","Standard","New"</text>
+        </inputValues>
+      </input>
+      <input id="Input_OrderAmount" label="Order Amount">
+        <inputExpression id="InputExpression_2" typeRef="number">
+          <text>orderAmount</text>
+        </inputExpression>
+      </input>
+      <output id="Output_Discount" name="discountPercent" typeRef="number" label="Discount %" />
+      <output id="Output_Reason" name="reason" typeRef="string" label="Reason" />
+
+      <!-- Premium customers always get best discount -->
+      <rule id="Rule_1">
+        <inputEntry id="InputEntry_1_1"><text>"Premium"</text></inputEntry>
+        <inputEntry id="InputEntry_1_2"><text>-</text></inputEntry>
+        <outputEntry id="OutputEntry_1_1"><text>20</text></outputEntry>
+        <outputEntry id="OutputEntry_1_2"><text>"Premium loyalty discount"</text></outputEntry>
+      </rule>
+
+      <!-- Standard customers with large orders -->
+      <rule id="Rule_2">
+        <inputEntry id="InputEntry_2_1"><text>"Standard"</text></inputEntry>
+        <inputEntry id="InputEntry_2_2"><text>&gt;= 500</text></inputEntry>
+        <outputEntry id="OutputEntry_2_1"><text>15</text></outputEntry>
+        <outputEntry id="OutputEntry_2_2"><text>"Volume discount"</text></outputEntry>
+      </rule>
+
+      <!-- Standard customers with medium orders -->
+      <rule id="Rule_3">
+        <inputEntry id="InputEntry_3_1"><text>"Standard"</text></inputEntry>
+        <inputEntry id="InputEntry_3_2"><text>[100..500)</text></inputEntry>
+        <outputEntry id="OutputEntry_3_1"><text>10</text></outputEntry>
+        <outputEntry id="OutputEntry_3_2"><text>"Standard discount"</text></outputEntry>
+      </rule>
+
+      <!-- New customer welcome discount -->
+      <rule id="Rule_4">
+        <inputEntry id="InputEntry_4_1"><text>"New"</text></inputEntry>
+        <inputEntry id="InputEntry_4_2"><text>-</text></inputEntry>
+        <outputEntry id="OutputEntry_4_1"><text>5</text></outputEntry>
+        <outputEntry id="OutputEntry_4_2"><text>"Welcome discount"</text></outputEntry>
+      </rule>
+
+      <!-- Default: no discount -->
+      <rule id="Rule_5">
+        <inputEntry id="InputEntry_5_1"><text>-</text></inputEntry>
+        <inputEntry id="InputEntry_5_2"><text>-</text></inputEntry>
+        <outputEntry id="OutputEntry_5_1"><text>0</text></outputEntry>
+        <outputEntry id="OutputEntry_5_2"><text>"No discount applicable"</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_1">
+      <dmndi:DMNShape id="Decision_DiscountEligibility_di" dmnElementRef="Decision_DiscountEligibility">
+        <dc:Bounds x="160" y="80" width="180" height="80" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

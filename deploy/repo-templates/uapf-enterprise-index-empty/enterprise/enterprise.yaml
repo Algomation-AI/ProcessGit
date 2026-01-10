@@ -1,0 +1,7 @@
+kind: uapf.enterprise.index
+level: 0
+enterprise:
+  id: "{{.RepoName}}"
+  name: "{{.RepoName}}"
+  description: Empty enterprise template - add your processes here
+packages: []

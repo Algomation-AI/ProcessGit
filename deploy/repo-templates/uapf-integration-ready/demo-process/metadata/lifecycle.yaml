@@ -1,0 +1,90 @@
+# Process Lifecycle Metadata
+version: 1.0
+
+# Current State
+current_state: draft
+created_date: "{{.CreatedDate}}"
+last_modified: "{{.CreatedDate}}"
+
+# Lifecycle Stages
+stages:
+  draft:
+    description: Initial development and design
+    entry_date: "{{.CreatedDate}}"
+    criteria:
+      - Process model defined
+      - Integration connectors identified
+      - Basic validation rules established
+    next_stage: review
+  
+  review:
+    description: Peer review and validation
+    criteria:
+      - Process flow reviewed by stakeholders
+      - Integration endpoints tested
+      - Security review completed
+      - Documentation complete
+    approvers:
+      - integration-team
+      - data-governance
+    next_stage: testing
+  
+  testing:
+    description: Integration and end-to-end testing
+    criteria:
+      - Unit tests passing
+      - Integration tests with API successful
+      - Database operations validated
+      - Performance benchmarks met
+      - Error handling verified
+    next_stage: staging
+  
+  staging:
+    description: Pre-production validation
+    criteria:
+      - Deployed to staging environment
+      - User acceptance testing complete
+      - Load testing completed
+      - Monitoring configured
+    next_stage: production
+  
+  production:
+    description: Live and operational
+    criteria:
+      - Final approval obtained
+      - Rollback plan documented
+      - Production deployment successful
+      - Monitoring active
+    next_stage: retired
+  
+  retired:
+    description: Decommissioned
+    criteria:
+      - Replacement process operational
+      - Data migration complete
+      - Documentation archived
+
+# Version History
+version_history:
+  - version: 0.1.0
+    date: "{{.CreatedDate}}"
+    stage: draft
+    changes:
+      - Initial process creation
+      - API and database connectors configured
+    author: "{{.RepoOwner}}"
+
+# Compliance and Review Schedule
+compliance:
+  review_frequency: quarterly
+  next_review: "{{.NextReviewDate}}"
+  compliance_frameworks:
+    - SOX
+    - GDPR
+    - ISO27001
+
+# Deprecation Policy
+deprecation:
+  notice_period: 90 days
+  migration_support: 180 days
+  archive_period: 7 years

@@ -1,0 +1,9 @@
+kind: uapf.resources.mapping
+targets:
+  - id: shared.inventory.system
+    type: system_api
+    name: Inventory Management System
+  - id: shared.shipping.system
+    type: system_api
+    name: Shipping Provider API
+bindings: []

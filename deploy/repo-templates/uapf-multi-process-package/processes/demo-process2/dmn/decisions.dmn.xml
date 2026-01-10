@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" 
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" 
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
+             xmlns:camunda="http://camunda.org/schema/1.0/dmn"
+             id="Definitions_ReturnEligibility" 
+             name="Return Eligibility Decisions" 
+             namespace="http://camunda.org/schema/1.0/dmn">
+  
+  <decision id="Decision_ReturnEligibility" name="Determine Return Eligibility">
+    <decisionTable id="DecisionTable_ReturnEligibility" hitPolicy="FIRST">
+      
+      <input id="Input_DaysSincePurchase" label="Days Since Purchase" camunda:inputVariable="daysSincePurchase">
+        <inputExpression id="InputExpression_DaysSincePurchase" typeRef="integer">
+          <text>daysSincePurchase</text>
+        </inputExpression>
+      </input>
+      
+      <input id="Input_ProductCategory" label="Product Category" camunda:inputVariable="productCategory">
+        <inputExpression id="InputExpression_ProductCategory" typeRef="string">
+          <text>productCategory</text>
+        </inputExpression>
+      </input>
+      
+      <input id="Input_ItemCondition" label="Item Condition" camunda:inputVariable="itemCondition">
+        <inputExpression id="InputExpression_ItemCondition" typeRef="string">
+          <text>itemCondition</text>
+        </inputExpression>
+      </input>
+      
+      <input id="Input_HasReceipt" label="Has Receipt" camunda:inputVariable="hasReceipt">
+        <inputExpression id="InputExpression_HasReceipt" typeRef="boolean">
+          <text>hasReceipt</text>
+        </inputExpression>
+      </input>
+      
+      <output id="Output_Eligible" label="Eligible" name="eligible" typeRef="boolean"/>
+      
+      <output id="Output_RefundType" label="Refund Type" name="refundType" typeRef="string"/>
+      
+      <output id="Output_RestockingFee" label="Restocking Fee" name="restockingFee" typeRef="double"/>
+      
+      <!-- Rule 1: Within 30 days, new condition, has receipt -> Full refund -->
+      <rule id="Rule_FullRefund">
+        <inputEntry id="InputEntry_R1_Days">
+          <text>&lt;= 30</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R1_Category">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R1_Condition">
+          <text>"new", "unopened"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R1_Receipt">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_R1_Eligible">
+          <text>true</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R1_RefundType">
+          <text>"full"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R1_Fee">
+          <text>0</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Rule 2: 31-60 days, electronics, opened but good condition -> Partial refund with 15% fee -->
+      <rule id="Rule_ElectronicsPartial">
+        <inputEntry id="InputEntry_R2_Days">
+          <text>[31..60]</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R2_Category">
+          <text>"electronics"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R2_Condition">
+          <text>"opened", "good"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R2_Receipt">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_R2_Eligible">
+          <text>true</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R2_RefundType">
+          <text>"partial"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R2_Fee">
+          <text>15.00</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Rule 3: Within 90 days, clothing, good condition, has receipt -> Full refund -->
+      <rule id="Rule_ClothingFullRefund">
+        <inputEntry id="InputEntry_R3_Days">
+          <text>&lt;= 90</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R3_Category">
+          <text>"clothing", "accessories"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R3_Condition">
+          <text>"new", "unworn"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R3_Receipt">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_R3_Eligible">
+          <text>true</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R3_RefundType">
+          <text>"full"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R3_Fee">
+          <text>0</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Rule 4: Within 60 days, no receipt -> Store credit only -->
+      <rule id="Rule_NoReceiptCredit">
+        <inputEntry id="InputEntry_R4_Days">
+          <text>&lt;= 60</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R4_Category">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R4_Condition">
+          <text>"new", "unopened", "good"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R4_Receipt">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_R4_Eligible">
+          <text>true</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R4_RefundType">
+          <text>"store_credit"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R4_Fee">
+          <text>0</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Rule 5: Over 60 days -> Not eligible -->
+      <rule id="Rule_TooOld">
+        <inputEntry id="InputEntry_R5_Days">
+          <text>&gt; 60</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R5_Category">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R5_Condition">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R5_Receipt">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_R5_Eligible">
+          <text>false</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R5_RefundType">
+          <text>"none"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R5_Fee">
+          <text>0</text>
+        </outputEntry>
+      </rule>
+      
+      <!-- Rule 6: Damaged or used condition -> Not eligible -->
+      <rule id="Rule_DamagedItem">
+        <inputEntry id="InputEntry_R6_Days">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R6_Category">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R6_Condition">
+          <text>"damaged", "worn", "used"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_R6_Receipt">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_R6_Eligible">
+          <text>false</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R6_RefundType">
+          <text>"none"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_R6_Fee">
+          <text>0</text>
+        </outputEntry>
+      </rule>
+      
+    </decisionTable>
+  </decision>
+  
+</definitions>

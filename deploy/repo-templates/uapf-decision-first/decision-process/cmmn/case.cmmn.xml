@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL"
+             xmlns:dc="http://www.omg.org/spec/CMMN/20151109/DC"
+             xmlns:di="http://www.omg.org/spec/CMMN/20151109/DI"
+             xmlns:cmmndi="http://www.omg.org/spec/CMMN/20151109/CMMNDI"
+             id="LoanApplicationCase"
+             targetNamespace="http://processgit.local/cmmn">
+  
+  <case id="Case_LoanApplication" name="Loan Application Case">
+    <casePlanModel id="CasePlanModel_1" name="Loan Application Management">
+      
+      <planItem id="PlanItem_Validate" definitionRef="HumanTask_Validate">
+        <entryCriterion id="EntryCriterion_1" sentryRef="Sentry_Start"/>
+      </planItem>
+      
+      <planItem id="PlanItem_CreditCheck" definitionRef="Task_CreditCheck">
+        <entryCriterion id="EntryCriterion_2" sentryRef="Sentry_AfterValidation"/>
+      </planItem>
+      
+      <planItem id="PlanItem_Decision" definitionRef="Task_Decision">
+        <entryCriterion id="EntryCriterion_3" sentryRef="Sentry_AfterCredit"/>
+      </planItem>
+      
+      <planItem id="PlanItem_Disburse" definitionRef="Task_Disburse">
+        <entryCriterion id="EntryCriterion_4" sentryRef="Sentry_Approved"/>
+      </planItem>
+      
+      <sentry id="Sentry_Start">
+        <planItemOnPart id="OnPart_1" sourceRef="PlanItem_Validate">
+          <standardEvent>create</standardEvent>
+        </planItemOnPart>
+      </sentry>
+      
+      <sentry id="Sentry_AfterValidation">
+        <planItemOnPart id="OnPart_2" sourceRef="PlanItem_Validate">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+      </sentry>
+      
+      <sentry id="Sentry_AfterCredit">
+        <planItemOnPart id="OnPart_3" sourceRef="PlanItem_CreditCheck">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+      </sentry>
+      
+      <sentry id="Sentry_Approved">
+        <planItemOnPart id="OnPart_4" sourceRef="PlanItem_Decision">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <ifPart id="IfPart_1">
+          <condition id="Condition_1">
+            <body>loanApproved == true</body>
+          </condition>
+        </ifPart>
+      </sentry>
+      
+      <humanTask id="HumanTask_Validate" name="Validate Application"/>
+      <task id="Task_CreditCheck" name="Check Credit Score"/>
+      <task id="Task_Decision" name="Loan Approval Decision"/>
+      <task id="Task_Disburse" name="Disburse Loan"/>
+    </casePlanModel>
+  </case>
+  
+  <cmmndi:CMMNDI>
+    <cmmndi:CMMNDiagram id="CMMNDiagram_1">
+      <cmmndi:CMMNShape id="CMMNShape_CasePlan_1" cmmnElementRef="CasePlanModel_1">
+        <dc:Bounds x="50" y="50" width="600" height="300"/>
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_1" cmmnElementRef="PlanItem_Validate">
+        <dc:Bounds x="100" y="100" width="100" height="80"/>
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_2" cmmnElementRef="PlanItem_CreditCheck">
+        <dc:Bounds x="250" y="100" width="100" height="80"/>
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_3" cmmnElementRef="PlanItem_Decision">
+        <dc:Bounds x="400" y="100" width="100" height="80"/>
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="CMMNShape_PlanItem_4" cmmnElementRef="PlanItem_Disburse">
+        <dc:Bounds x="400" y="220" width="100" height="80"/>
+      </cmmndi:CMMNShape>
+    </cmmndi:CMMNDiagram>
+  </cmmndi:CMMNDI>
+</definitions>

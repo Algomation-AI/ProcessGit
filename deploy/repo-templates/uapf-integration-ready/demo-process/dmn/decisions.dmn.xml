@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/"
+             id="Definitions_DataValidation"
+             name="Data Validation Decisions"
+             namespace="http://processgit.local/dmn"
+             exporter="ProcessGit"
+             exporterVersion="1.0">
+  
+  <decision id="Decision_ValidateRecord" name="Validate Record">
+    <decisionTable id="DecisionTable_1">
+      <input id="Input_1" label="Record Type">
+        <inputExpression id="InputExpression_1" typeRef="string">
+          <text>recordType</text>
+        </inputExpression>
+      </input>
+      
+      <input id="Input_2" label="Data Quality Score">
+        <inputExpression id="InputExpression_2" typeRef="number">
+          <text>qualityScore</text>
+        </inputExpression>
+      </input>
+      
+      <input id="Input_3" label="Required Fields Present">
+        <inputExpression id="InputExpression_3" typeRef="boolean">
+          <text>hasRequiredFields</text>
+        </inputExpression>
+      </input>
+      
+      <output id="Output_1" label="Validation Result" name="validationResult" typeRef="string" />
+      
+      <output id="Output_2" label="Action" name="action" typeRef="string" />
+      
+      <rule id="Rule_1">
+        <inputEntry id="InputEntry_1_1">
+          <text>"customer"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_1_2">
+          <text>&gt;= 80</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_1_3">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_1_1">
+          <text>"VALID"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_1_2">
+          <text>"PROCESS"</text>
+        </outputEntry>
+      </rule>
+      
+      <rule id="Rule_2">
+        <inputEntry id="InputEntry_2_1">
+          <text>"customer"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_2_2">
+          <text>&gt;= 50</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_2_3">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_2_1">
+          <text>"WARNING"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_2_2">
+          <text>"REVIEW"</text>
+        </outputEntry>
+      </rule>
+      
+      <rule id="Rule_3">
+        <inputEntry id="InputEntry_3_1">
+          <text>"customer"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_3_2">
+          <text>&lt; 50</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_3_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_3_1">
+          <text>"INVALID"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_3_2">
+          <text>"REJECT"</text>
+        </outputEntry>
+      </rule>
+      
+      <rule id="Rule_4">
+        <inputEntry id="InputEntry_4_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_4_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_4_3">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_4_1">
+          <text>"INVALID"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_4_2">
+          <text>"REJECT"</text>
+        </outputEntry>
+      </rule>
+      
+      <rule id="Rule_5">
+        <inputEntry id="InputEntry_5_1">
+          <text>"transaction"</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_5_2">
+          <text>&gt;= 90</text>
+        </inputEntry>
+        <inputEntry id="InputEntry_5_3">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="OutputEntry_5_1">
+          <text>"VALID"</text>
+        </outputEntry>
+        <outputEntry id="OutputEntry_5_2">
+          <text>"PROCESS"</text>
+        </outputEntry>
+      </rule>
+      
+    </decisionTable>
+  </decision>
+  
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_1">
+      <dmndi:DMNShape id="DMNShape_Decision_1" dmnElementRef="Decision_ValidateRecord">
+        <dc:Bounds x="150" y="150" width="180" height="80" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+  
+</definitions>
