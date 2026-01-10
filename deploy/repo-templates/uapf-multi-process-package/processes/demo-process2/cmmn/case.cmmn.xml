@@ -130,5 +130,65 @@
       
     </cmmn:casePlanModel>
   </cmmn:case>
-  
+
+  <cmmndi:CMMNDI>
+    <cmmndi:CMMNDiagram id="CMMNDiagram_1">
+      <!-- Case Plan Model Container -->
+      <cmmndi:CMMNShape id="CasePlanModel_ReturnDispute_di" cmmnElementRef="CasePlanModel_ReturnDispute">
+        <dc:Bounds x="80" y="40" width="1100" height="550"/>
+      </cmmndi:CMMNShape>
+
+      <!-- Stage: Initial Assessment -->
+      <cmmndi:CMMNShape id="Stage_InitialAssessment_di" cmmnElementRef="Stage_InitialAssessment" isExpanded="true">
+        <dc:Bounds x="120" y="80" width="200" height="150"/>
+      </cmmndi:CMMNShape>
+
+      <!-- Stage: Investigation -->
+      <cmmndi:CMMNShape id="Stage_Investigation_di" cmmnElementRef="Stage_Investigation" isExpanded="true">
+        <dc:Bounds x="360" y="80" width="200" height="150"/>
+      </cmmndi:CMMNShape>
+
+      <!-- Stage: Resolution -->
+      <cmmndi:CMMNShape id="Stage_Resolution_di" cmmnElementRef="Stage_Resolution" isExpanded="true">
+        <dc:Bounds x="600" y="80" width="200" height="150"/>
+      </cmmndi:CMMNShape>
+
+      <!-- Stage: Communication -->
+      <cmmndi:CMMNShape id="Stage_Communication_di" cmmnElementRef="Stage_Communication" isExpanded="true">
+        <dc:Bounds x="840" y="80" width="200" height="150"/>
+      </cmmndi:CMMNShape>
+
+      <!-- Stage: Follow-up -->
+      <cmmndi:CMMNShape id="Stage_Followup_di" cmmnElementRef="Stage_Followup" isExpanded="true">
+        <dc:Bounds x="120" y="280" width="200" height="150"/>
+      </cmmndi:CMMNShape>
+
+      <!-- Milestone -->
+      <cmmndi:CMMNShape id="PlanItem_DisputeResolved_di" cmmnElementRef="PlanItem_DisputeResolved">
+        <dc:Bounds x="940" y="450" width="100" height="80"/>
+      </cmmndi:CMMNShape>
+
+      <!-- Entry Criteria -->
+      <cmmndi:CMMNShape id="EntryCriterion_InvestigationStart_di" cmmnElementRef="EntryCriterion_InvestigationStart">
+        <dc:Bounds x="350" y="141" width="20" height="28"/>
+      </cmmndi:CMMNShape>
+
+      <cmmndi:CMMNShape id="EntryCriterion_ResolutionStart_di" cmmnElementRef="EntryCriterion_ResolutionStart">
+        <dc:Bounds x="590" y="141" width="20" height="28"/>
+      </cmmndi:CMMNShape>
+
+      <cmmndi:CMMNShape id="EntryCriterion_CommunicationStart_di" cmmnElementRef="EntryCriterion_CommunicationStart">
+        <dc:Bounds x="830" y="141" width="20" height="28"/>
+      </cmmndi:CMMNShape>
+
+      <cmmndi:CMMNShape id="EntryCriterion_FollowupStart_di" cmmnElementRef="EntryCriterion_FollowupStart">
+        <dc:Bounds x="110" y="341" width="20" height="28"/>
+      </cmmndi:CMMNShape>
+
+      <cmmndi:CMMNShape id="EntryCriterion_MilestoneReached_di" cmmnElementRef="EntryCriterion_MilestoneReached">
+        <dc:Bounds x="930" y="476" width="20" height="28"/>
+      </cmmndi:CMMNShape>
+    </cmmndi:CMMNDiagram>
+  </cmmndi:CMMNDI>
+
 </cmmn:definitions>
