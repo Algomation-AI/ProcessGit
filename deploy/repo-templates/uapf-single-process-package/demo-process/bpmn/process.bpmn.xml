@@ -275,7 +275,7 @@
       <bpmndi:BPMNEdge id="Flow_Facilities_3_di" bpmnElement="Flow_Facilities_3">
         <di:waypoint x="750" y="360"/>
         <di:waypoint x="800" y="360"/>
-      </bpmndi:BPMEdge>
+      </bpmndi:BPMNEdge>
       
       <bpmndi:BPMNEdge id="Flow_Facilities_Join_di" bpmnElement="Flow_Facilities_Join">
         <di:waypoint x="900" y="360"/>

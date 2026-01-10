@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
              xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
-             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
-             xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
              id="EquipmentAssignment"
              name="Equipment Assignment Decision"
              namespace="http://processgit.io/dmn/equipment-assignment">
@@ -193,7 +193,7 @@
           <text>"Wireless Headset, Mouse"</text>
         </outputEntry>
         <outputEntry id="OutputEntry_6_4">
-          <text>"Sales & CRM"</text>
+          <text>"Sales &amp; CRM"</text>
         </outputEntry>
       </rule>
       
@@ -218,7 +218,7 @@
           <text>"Standard Keyboard, Mouse, Webcam"</text>
         </outputEntry>
         <outputEntry id="OutputEntry_7_4">
-          <text>"Marketing & Analytics"</text>
+          <text>"Marketing &amp; Analytics"</text>
         </outputEntry>
       </rule>
       
@@ -243,7 +243,7 @@
           <text>"Standard Keyboard, Mouse, Headset"</text>
         </outputEntry>
         <outputEntry id="OutputEntry_8_4">
-          <text>"Office & HRIS"</text>
+          <text>"Office &amp; HRIS"</text>
         </outputEntry>
       </rule>
       
@@ -268,7 +268,7 @@
           <text>"Standard Keyboard, Mouse, Number Pad"</text>
         </outputEntry>
         <outputEntry id="OutputEntry_9_4">
-          <text>"Finance & Accounting"</text>
+          <text>"Finance &amp; Accounting"</text>
         </outputEntry>
       </rule>
       

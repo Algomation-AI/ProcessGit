@@ -83,5 +83,47 @@
       
     </cmmn:casePlanModel>
   </cmmn:case>
-  
+
+  <cmmndi:CMMNDI>
+    <cmmndi:CMMNDiagram id="CMMNDiagram_1">
+      <!-- Case Plan Model Container -->
+      <cmmndi:CMMNShape id="CasePlanModel_OrderException_di" cmmnElementRef="CasePlanModel_OrderException">
+        <dc:Bounds x="100" y="50" width="900" height="400"/>
+      </cmmndi:CMMNShape>
+
+      <!-- Stage: Investigation -->
+      <cmmndi:CMMNShape id="Stage_Investigation_di" cmmnElementRef="Stage_Investigation" isExpanded="true">
+        <dc:Bounds x="150" y="100" width="250" height="150"/>
+      </cmmndi:CMMNShape>
+
+      <!-- Stage: Resolution -->
+      <cmmndi:CMMNShape id="Stage_Resolution_di" cmmnElementRef="Stage_Resolution" isExpanded="true">
+        <dc:Bounds x="450" y="100" width="250" height="150"/>
+      </cmmndi:CMMNShape>
+
+      <!-- Stage: Closure -->
+      <cmmndi:CMMNShape id="Stage_Closure_di" cmmnElementRef="Stage_Closure" isExpanded="true">
+        <dc:Bounds x="750" y="100" width="200" height="150"/>
+      </cmmndi:CMMNShape>
+
+      <!-- Milestone -->
+      <cmmndi:CMMNShape id="PlanItem_ExceptionResolved_di" cmmnElementRef="PlanItem_ExceptionResolved">
+        <dc:Bounds x="850" y="320" width="100" height="80"/>
+      </cmmndi:CMMNShape>
+
+      <!-- Entry Criteria -->
+      <cmmndi:CMMNShape id="EntryCriterion_ResolutionStart_di" cmmnElementRef="EntryCriterion_ResolutionStart">
+        <dc:Bounds x="440" y="161" width="20" height="28"/>
+      </cmmndi:CMMNShape>
+
+      <cmmndi:CMMNShape id="EntryCriterion_ClosureStart_di" cmmnElementRef="EntryCriterion_ClosureStart">
+        <dc:Bounds x="740" y="161" width="20" height="28"/>
+      </cmmndi:CMMNShape>
+
+      <cmmndi:CMMNShape id="EntryCriterion_MilestoneReached_di" cmmnElementRef="EntryCriterion_MilestoneReached">
+        <dc:Bounds x="840" y="346" width="20" height="28"/>
+      </cmmndi:CMMNShape>
+    </cmmndi:CMMNDiagram>
+  </cmmndi:CMMNDI>
+
 </cmmn:definitions>
