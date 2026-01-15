@@ -43,15 +43,6 @@ Instead of managing only *source code*, ProcessGit manages **how work is done**.
 - AI-assisted execution engines that require governed inputs
 - Single Source of Truth (SSOT) for operational logic
 
-## Typed DVS XML viewers
-
-ProcessGit detects and previews public-sector DVS registry XML assets without downloading entire files. For `.xml` blobs, the server reads only the first kilobytes to identify the root element + default namespace:
-
-- `<KlasifikacijasShema>` + `https://vdvc.gov.lv/schema/dvs/classification-scheme/v1` → DVS classification scheme viewer
-- `<DvsDokumenti>` + `https://vdvc.gov.lv/schema/dvs/document-metadata/v1` → DVS document metadata viewer
-
-Detected files render with a read-only viewer beside the standard raw view, keeping tree navigation unchanged. Future updates will reuse the existing file editor commit flow to save edited XML back to the repository.
-
 ---
 
 ## Public Demo Instance
