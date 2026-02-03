@@ -1,26 +1,6 @@
 {{if and .IsProcessGitViewer .ProcessGitViewerPayload}}
-  <div class="processgit-viewer"
-       data-global-init="initRepoProcessGitViewer"
-       data-pgv-raw-panel="diagram-raw-view">
-    <div class="ui top attached menu">
-      <div class="item active" data-pgv-action="gui">GUI</div>
-      <div class="item" data-pgv-action="raw">{{ctx.Locale.Tr "repo.file_view_source"}}</div>
-      <div class="right menu">
-        <div class="item">
-          Viewer: {{.ProcessGitViewerPayload.ID}}
-        </div>
-        <div class="item">
-          Primary: {{.ProcessGitViewerPayload.Path}}
-        </div>
-        <div class="item">
-          <button class="ui primary button" data-pgv-action="save" disabled>{{ctx.Locale.Tr "save"}}</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="ui bottom attached segment">
-      <div id="processgit-viewer-mount" class="tw-w-full"></div>
-    </div>
+  <div class="processgit-viewer" data-global-init="initRepoProcessGitViewer">
+    <div id="processgit-viewer-mount"></div>
 
     <script type="application/json" id="processgit-viewer-payload">
       {{JsonUtils.Encode .ProcessGitViewerPayload}}

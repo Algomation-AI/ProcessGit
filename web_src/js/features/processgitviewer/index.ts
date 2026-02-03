@@ -13,32 +13,6 @@ function toMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function parsePayload(script: HTMLScriptElement | null): ProcessGitViewerPayload | null {
-  if (!script?.textContent) return null;
-  try {
-    const raw = JSON.parse(script.textContent) as Partial<ProcessGitViewerPayload>;
-    if (!raw || typeof raw.entryRawUrl !== 'string' || typeof raw.path !== 'string' || typeof raw.apiUrl !== 'string') {
-      return null;
-    }
-    return {
-      id: raw.id ?? '',
-      type: 'html',
-      repoLink: raw.repoLink ?? '',
-      branch: raw.branch ?? '',
-      ref: raw.ref ?? '',
-      path: raw.path,
-      dir: raw.dir ?? '',
-      lastCommit: raw.lastCommit ?? '',
-      entryRawUrl: raw.entryRawUrl,
-      targets: raw.targets ?? {},
-      editAllow: raw.editAllow ?? [],
-      apiUrl: raw.apiUrl,
-    };
-  } catch {
-    return null;
-  }
-}
-
 function extractTargetPath(rawUrl: string, payload: ProcessGitViewerPayload): string | null {
   try {
     const url = new URL(rawUrl, window.location.origin);
@@ -133,16 +107,21 @@ export function initRepoProcessGitViewer(): void {
   registered = true;
 
   registerGlobalInitFunc('initRepoProcessGitViewer', async (container: HTMLElement) => {
-    const mount = container.querySelector<HTMLElement>('#processgit-viewer-mount');
-    const script = container.querySelector<HTMLScriptElement>('#processgit-viewer-payload');
-    const payload = parsePayload(script);
+    const payloadEl = document.getElementById('processgit-viewer-payload');
+    if (!payloadEl) return;
+
+    const payload = JSON.parse(payloadEl.textContent || '{}') as ProcessGitViewerPayload;
+
+    const mount = document.getElementById('processgit-viewer-mount');
+    if (!mount) return;
+
     const rawPanelId = container.getAttribute('data-pgv-raw-panel') ?? 'diagram-raw-view';
     const rawPanel = document.getElementById(rawPanelId);
     const saveButton = container.querySelector<HTMLButtonElement>('[data-pgv-action="save"], [data-pgv-tab="save"]');
     const guiButton = container.querySelector<HTMLElement>('[data-pgv-action="gui"], [data-pgv-tab="gui"]');
     const rawButton = container.querySelector<HTMLElement>('[data-pgv-action="raw"], [data-pgv-tab="raw"]');
 
-    if (!mount || !payload || !rawPanel) return;
+    if (!rawPanel) return;
 
     const readAllow = new Set<string>([payload.path]);
     Object.values(payload.targets).forEach((rawUrl) => {
