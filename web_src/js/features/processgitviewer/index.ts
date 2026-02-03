@@ -138,9 +138,9 @@ export function initRepoProcessGitViewer(): void {
     const payload = parsePayload(script);
     const rawPanelId = container.getAttribute('data-pgv-raw-panel') ?? 'diagram-raw-view';
     const rawPanel = document.getElementById(rawPanelId);
-    const saveButton = container.querySelector<HTMLButtonElement>('[data-pgv-action="save"]');
-    const guiButton = container.querySelector<HTMLButtonElement>('[data-pgv-action="gui"]');
-    const rawButton = container.querySelector<HTMLButtonElement>('[data-pgv-action="raw"]');
+    const saveButton = container.querySelector<HTMLButtonElement>('[data-pgv-action="save"], [data-pgv-tab="save"]');
+    const guiButton = container.querySelector<HTMLElement>('[data-pgv-action="gui"], [data-pgv-tab="gui"]');
+    const rawButton = container.querySelector<HTMLElement>('[data-pgv-action="raw"], [data-pgv-tab="raw"]');
 
     if (!mount || !payload || !rawPanel) return;
 
@@ -150,10 +150,12 @@ export function initRepoProcessGitViewer(): void {
       if (parsed) readAllow.add(parsed);
     });
 
+    mount.innerHTML = '';
     const iframe = document.createElement('iframe');
     iframe.src = payload.entryRawUrl;
     iframe.style.width = '100%';
-    iframe.style.minHeight = '800px';
+    iframe.style.minHeight = '900px';
+    iframe.style.border = '0';
     iframe.classList.add('processgit-viewer-frame');
     mount.append(iframe);
 
