@@ -18,6 +18,7 @@ import {initRepoIssueContentHistory} from './features/repo-issue-content.ts';
 import {initStopwatch} from './features/stopwatch.ts';
 import {initRepoFileSearch} from './features/repo-findfile.ts';
 import {initRepoDVSXML} from './features/dvsxml/index.ts';
+import {initRepoProcessGitViewer} from './features/processgitviewer/index.ts';
 import {initMarkupContent} from './markup/content.ts';
 import {initRepoFileView} from './features/file-view.ts';
 import {initRepoDiagrams} from './features/diagrams/index.ts';
@@ -106,6 +107,7 @@ const initPerformanceTracer = callInitFunctions([
   initTableSort,
   initRepoFileSearch,
   initRepoDVSXML,
+  initRepoProcessGitViewer,
   initCopyContent,
 
   initAdminCommon,
