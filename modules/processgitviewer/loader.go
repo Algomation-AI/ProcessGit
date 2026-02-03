@@ -6,7 +6,6 @@ package processgitviewer
 import (
 	"encoding/json"
 	"fmt"
-	"path"
 
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/setting"
@@ -14,7 +13,7 @@ import (
 
 // LoadManifestFromDir loads processgit.viewer.json from a repo directory.
 func LoadManifestFromDir(commit *git.Commit, dir string) (*Manifest, *git.TreeEntry, error) {
-	manifestPath := path.Join(dir, "processgit.viewer.json")
+	manifestPath := joinFromDir(dir, "processgit.viewer.json")
 	entry, err := commit.GetTreeEntryByPath(manifestPath)
 	if err != nil {
 		if git.IsErrNotExist(err) {
