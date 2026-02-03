@@ -24,6 +24,7 @@ import (
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
+	"code.gitea.io/gitea/modules/processgitviewer"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/typesniffer"
 	"code.gitea.io/gitea/modules/util"
@@ -201,6 +202,8 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 	ctx.Data["DiagramSourcePath"] = ""
 	ctx.Data["IsDVSXML"] = false
 	ctx.Data["DVSXMLPayload"] = nil
+	ctx.Data["IsProcessGitViewer"] = false
+	ctx.Data["ProcessGitViewerPayload"] = nil
 
 	if !prepareLatestCommitInfo(ctx) {
 		return
@@ -294,6 +297,65 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 				Namespace:      meta["namespace"],
 				SchemaLocation: meta["schemaLocation"],
 				Meta:           meta,
+			}
+		}
+	}
+
+	setFileWarning := func(message string) {
+		if existing, ok := ctx.Data["FileWarning"].(string); ok && existing != "" {
+			ctx.Data["FileWarning"] = existing + "\n" + message
+		} else {
+			ctx.Data["FileWarning"] = message
+		}
+	}
+
+	dir := path.Dir(ctx.Repo.TreePath)
+	if dir == "." {
+		dir = ""
+	}
+	commit := ctx.Repo.Commit
+	if commit == nil {
+		var err error
+		commit, err = ctx.Repo.GitRepo.GetCommit(ctx.Repo.CommitID)
+		if err != nil {
+			setFileWarning(fmt.Sprintf("ProcessGit viewer commit lookup failed: %v", err))
+		}
+	}
+	if commit != nil {
+		manifest, _, err := processgitviewer.LoadManifestFromDir(commit, dir)
+		if err != nil {
+			setFileWarning(fmt.Sprintf("ProcessGit viewer manifest error: %v", err))
+		} else if manifest != nil {
+			binding, err := processgitviewer.ResolveBinding(commit, dir, ctx.Repo.TreePath, manifest)
+			if err != nil {
+				setFileWarning(fmt.Sprintf("ProcessGit viewer resolve error: %v", err))
+			} else if binding != nil {
+				entryPath := path.Join(dir, binding.Entry)
+				entryRawURL := ctx.Repo.RepoLink + "/raw/" + ctx.Repo.RefTypeNameSubURL() + "/" + util.PathEscapeSegments(entryPath)
+				targetsRaw := make(map[string]string, len(binding.Targets))
+				for key, target := range binding.Targets {
+					targetPath := path.Join(dir, target)
+					targetsRaw[key] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.RefTypeNameSubURL() + "/" + util.PathEscapeSegments(targetPath)
+				}
+				editAllowRepoPaths := make([]string, 0, len(binding.EditAllow))
+				for _, edit := range binding.EditAllow {
+					editAllowRepoPaths = append(editAllowRepoPaths, path.Join(dir, edit))
+				}
+				ctx.Data["IsProcessGitViewer"] = true
+				ctx.Data["ProcessGitViewerPayload"] = processGitViewerPayload{
+					ID:          binding.ID,
+					Type:        binding.Type,
+					RepoLink:    ctx.Repo.RepoLink,
+					Branch:      ctx.Repo.BranchName,
+					Ref:         ctx.Repo.BranchName,
+					Path:        ctx.Repo.TreePath,
+					Dir:         dir,
+					LastCommit:  ctx.Repo.CommitID,
+					EntryRawURL: entryRawURL,
+					Targets:     targetsRaw,
+					EditAllow:   editAllowRepoPaths,
+					APIURL:      ctx.Repo.RepoLink + "/api/processgitviewer",
+				}
 			}
 		}
 	}

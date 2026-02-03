@@ -1609,6 +1609,7 @@ func registerWebRoutes(m *web.Router) {
 		}, repo.MustBeNotEmpty)
 
 		m.Get("/api/dvsxml", repo.MustBeNotEmpty, repo.DVSXMLContent)
+		m.Get("/api/processgitviewer", repo.MustBeNotEmpty, repo.ProcessGitViewerContent)
 
 		m.Group("/commits", func() {
 			m.Get("/branch/*", context.RepoRefByType(git.RefTypeBranch), repo.RefCommits)
