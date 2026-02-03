@@ -5,7 +5,6 @@ package processgitviewer
 
 import (
 	"fmt"
-	"path"
 
 	"code.gitea.io/gitea/modules/git"
 )
@@ -26,7 +25,7 @@ func ResolveBinding(commit *git.Commit, dir string, repoTreePath string, manifes
 			continue
 		}
 
-		entryPath := path.Join(dir, binding.Entry)
+		entryPath := joinFromDir(dir, binding.Entry)
 		entry, err := commit.GetTreeEntryByPath(entryPath)
 		if err != nil {
 			return nil, err
@@ -36,7 +35,7 @@ func ResolveBinding(commit *git.Commit, dir string, repoTreePath string, manifes
 		}
 
 		for name, targetPath := range binding.Targets {
-			fullPath := path.Join(dir, targetPath)
+			fullPath := joinFromDir(dir, targetPath)
 			targetEntry, err := commit.GetTreeEntryByPath(fullPath)
 			if err != nil {
 				return nil, fmt.Errorf("target %s (%s) missing: %w", name, fullPath, err)
@@ -48,7 +47,7 @@ func ResolveBinding(commit *git.Commit, dir string, repoTreePath string, manifes
 
 		editAllowed := false
 		for _, editPath := range binding.EditAllow {
-			fullPath := path.Join(dir, editPath)
+			fullPath := joinFromDir(dir, editPath)
 			editEntry, err := commit.GetTreeEntryByPath(fullPath)
 			if err != nil {
 				return nil, fmt.Errorf("edit_allow path %s missing: %w", fullPath, err)
