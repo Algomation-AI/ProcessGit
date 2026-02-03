@@ -2,19 +2,25 @@
   <div class="processgit-viewer"
        data-global-init="initRepoProcessGitViewer"
        data-pgv-raw-panel="diagram-raw-view">
-    <div class="tw-flex tw-items-center tw-justify-between tw-mb-3">
-      <div class="ui buttons">
-        <button class="ui button active" data-pgv-action="gui">GUI</button>
-        <button class="ui button" data-pgv-action="raw">{{ctx.Locale.Tr "repo.file_view_source"}}</button>
-      </div>
-      <div class="tw-flex tw-gap-2 tw-items-center">
-        <span class="ui basic label">Viewer: {{.ProcessGitViewerPayload.ID}}</span>
-        <span class="ui basic label">Primary: {{.ProcessGitViewerPayload.Path}}</span>
-        <button class="ui primary button" data-pgv-action="save" disabled>{{ctx.Locale.Tr "save"}}</button>
+    <div class="ui top attached menu">
+      <div class="item active" data-pgv-action="gui">GUI</div>
+      <div class="item" data-pgv-action="raw">{{ctx.Locale.Tr "repo.file_view_source"}}</div>
+      <div class="right menu">
+        <div class="item">
+          Viewer: {{.ProcessGitViewerPayload.ID}}
+        </div>
+        <div class="item">
+          Primary: {{.ProcessGitViewerPayload.Path}}
+        </div>
+        <div class="item">
+          <button class="ui primary button" data-pgv-action="save" disabled>{{ctx.Locale.Tr "save"}}</button>
+        </div>
       </div>
     </div>
 
-    <div id="processgit-viewer-mount" class="tw-w-full"></div>
+    <div class="ui bottom attached segment">
+      <div id="processgit-viewer-mount" class="tw-w-full"></div>
+    </div>
 
     <script type="application/json" id="processgit-viewer-payload">
       {{JsonUtils.Encode .ProcessGitViewerPayload}}
