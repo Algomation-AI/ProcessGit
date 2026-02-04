@@ -165,22 +165,31 @@ export function initRepoProcessGitViewer(): void {
 
     window.addEventListener('message', async (ev) => {
       if (ev.source !== iframe.contentWindow) return;
-      const msg = ev.data as any;
+
+      const msg = ev.data as {type?: string; url?: string; reqId?: string} | null;
       if (!msg || typeof msg !== 'object') return;
 
-      if (msg.type === 'PGV_FETCH' && typeof msg.url === 'string' && typeof msg.reqId === 'string') {
+      if (msg.type === 'PGV_FETCH' && typeof msg.url === 'string') {
         try {
           const u = new URL(msg.url, window.location.origin);
 
-          // Allow ONLY same-origin fetches
+          // Hard allow-list: only allow same-origin and only raw + src paths (tight security)
           if (u.origin !== window.location.origin) throw new Error('cross-origin blocked');
+          if (!/\/(raw|src)\//.test(u.pathname)) throw new Error('path blocked');
 
           const r = await fetch(u.toString(), {credentials: 'same-origin'});
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
           const text = await r.text();
 
-          iframe.contentWindow?.postMessage({type: 'PGV_FETCH_RESULT', reqId: msg.reqId, url: msg.url, ok: true, text}, '*');
+          iframe.contentWindow?.postMessage(
+            {type: 'PGV_FETCH_RESULT', reqId: msg.reqId, url: msg.url, ok: true, text},
+            '*',
+          );
         } catch (e) {
-          iframe.contentWindow?.postMessage({type: 'PGV_FETCH_RESULT', reqId: msg.reqId, url: msg.url, ok: false, error: String(e)}, '*');
+          iframe.contentWindow?.postMessage(
+            {type: 'PGV_FETCH_RESULT', reqId: msg.reqId, url: msg.url, ok: false, error: String(e)},
+            '*',
+          );
         }
       }
     });
