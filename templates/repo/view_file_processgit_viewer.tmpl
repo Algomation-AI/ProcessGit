@@ -1,7 +1,6 @@
 {{if and .IsProcessGitViewer .ProcessGitViewerPayload}}
   <div class="processgit-viewer"
-       data-global-init="initRepoProcessGitViewer"
-       data-pgv-raw-panel="diagram-raw-view">
+       data-global-init="initRepoProcessGitViewer">
     <div class="ui top attached menu">
       <div class="item active" data-pgv-action="gui">GUI</div>
       <div class="item" data-pgv-action="raw">{{ctx.Locale.Tr "repo.file_view_source"}}</div>

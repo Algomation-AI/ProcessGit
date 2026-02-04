@@ -126,17 +126,30 @@ export function initRepoProcessGitViewer(): void {
     const mount = container.querySelector<HTMLElement>('#processgit-viewer-mount');
     const script = container.querySelector<HTMLScriptElement>('#processgit-viewer-payload');
     const payload = parsePayload(script);
-    const rawPanelId = container.getAttribute('data-pgv-raw-panel') ?? 'diagram-raw-view';
-    let rawPanel = document.getElementById(rawPanelId);
+    const rawPanelId = container.getAttribute('data-pgv-raw-panel');
+    let rawPanel: HTMLElement | null = rawPanelId ? document.getElementById(rawPanelId) : null;
     if (!rawPanel) {
+      const fileRoot =
+        container.closest('.repository.file') ||
+        document.querySelector('.repository.file') ||
+        document.body;
       rawPanel =
-        document.getElementById('repo-file-content') ||
-        document.querySelector<HTMLElement>('.file-view .markup') ||
-        document.querySelector<HTMLElement>('.repository.file.list #repo-files-table') ||
-        document.querySelector<HTMLElement>('.file-view') ||
+        fileRoot.querySelector<HTMLElement>('.file-view') ||
+        fileRoot.querySelector<HTMLElement>('.file-view-content') ||
+        fileRoot.querySelector<HTMLElement>('.code-view') ||
+        fileRoot.querySelector<HTMLElement>('.markup') ||
         null;
     }
-    console.log('[PGV] rawPanel resolved', {rawPanelId, found: Boolean(rawPanel)});
+    if (!rawPanel) {
+      const pres = Array.from(document.querySelectorAll('pre')) as HTMLElement[];
+      rawPanel = pres.sort((a, b) => (b.innerText?.length ?? 0) - (a.innerText?.length ?? 0))[0] ?? null;
+    }
+    console.log('[PGV] rawPanel resolved', {
+      rawPanelId,
+      found: Boolean(rawPanel),
+      tag: rawPanel?.tagName,
+      class: rawPanel?.className,
+    });
     const saveButton = container.querySelector<HTMLButtonElement>('[data-pgv-action="save"], [data-pgv-tab="save"]');
     const guiButton = container.querySelector<HTMLElement>('[data-pgv-action="gui"], [data-pgv-tab="gui"]');
     const rawButton = container.querySelector<HTMLElement>('[data-pgv-action="raw"], [data-pgv-tab="raw"]');
@@ -205,11 +218,15 @@ export function initRepoProcessGitViewer(): void {
     const showGui = () => {
       if (rawPanel) rawPanel.style.display = 'none';
       mount.style.display = '';
+      guiButton?.classList.add('active');
+      rawButton?.classList.remove('active');
     };
 
     const showRaw = () => {
       if (rawPanel) rawPanel.style.display = '';
       mount.style.display = 'none';
+      rawButton?.classList.add('active');
+      guiButton?.classList.remove('active');
     };
 
     showGui();
@@ -219,11 +236,10 @@ export function initRepoProcessGitViewer(): void {
       rawButton.classList.add('disabled');
       rawButton.setAttribute('aria-disabled', 'true');
     }
-    if (rawPanel) {
-      rawButton?.addEventListener('click', () => {
-        showRaw();
-      });
-    }
+    rawButton?.addEventListener('click', () => {
+      if (!rawPanel) return;
+      showRaw();
+    });
 
     const postToIframe = (message: Record<string, unknown> | string) => {
       iframe.contentWindow?.postMessage(message, '*');
