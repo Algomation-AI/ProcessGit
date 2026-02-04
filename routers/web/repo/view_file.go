@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"net/url"
 	"path"
 	"strings"
 
@@ -338,13 +339,17 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 					targetsRaw[key] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.RefTypeNameSubURL() + "/" + util.PathEscapeSegments(targetPath)
 				}
 				primaryRawURL := ctx.Repo.RepoLink + "/raw/" + ctx.Repo.RefTypeNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
-				if _, ok := targetsRaw["xml"]; !ok {
-					targetsRaw["xml"] = primaryRawURL
-				}
+				targetsRaw["xml"] = primaryRawURL
 				editAllowRepoPaths := make([]string, 0, len(binding.EditAllow))
 				for _, edit := range binding.EditAllow {
 					editAllowRepoPaths = append(editAllowRepoPaths, path.Join(dir, edit))
 				}
+				apiParams := url.Values{}
+				apiParams.Set("path", ctx.Repo.TreePath)
+				if ctx.Repo.BranchName != "" {
+					apiParams.Set("ref", ctx.Repo.BranchName)
+				}
+				apiURL := ctx.Repo.RepoLink + "/api/processgitviewer?" + apiParams.Encode()
 				ctx.Data["IsProcessGitViewer"] = true
 				ctx.Data["ProcessGitViewerPayload"] = processGitViewerPayload{
 					ID:          binding.ID,
@@ -358,7 +363,7 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 					EntryRawURL: entryRawURL,
 					Targets:     targetsRaw,
 					EditAllow:   editAllowRepoPaths,
-					APIURL:      ctx.Repo.RepoLink + "/api/processgitviewer",
+					APIURL:      apiURL,
 				}
 			}
 		}
