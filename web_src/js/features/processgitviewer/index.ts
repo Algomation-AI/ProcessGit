@@ -163,9 +163,10 @@ export function initRepoProcessGitViewer(): void {
     });
 
     mount.innerHTML = '';
+    mount.style.height = 'calc(100vh - 260px)';
     const iframe = document.createElement('iframe');
     iframe.style.width = '100%';
-    iframe.style.height = 'calc(100vh - 260px)';
+    iframe.style.height = '100%';
     iframe.style.display = 'block';
     iframe.style.border = '0';
     iframe.classList.add('processgit-viewer-frame');
