@@ -13,6 +13,18 @@ function toMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function injectBaseTag(html: string, baseHref: string): string {
+  if (/<base\s/i.test(html)) {
+    return html.replace(/<base\b[^>]*>/i, `<base href="${baseHref}">`);
+  }
+
+  if (/<head\b[^>]*>/i.test(html)) {
+    return html.replace(/<head\b[^>]*>/i, (match) => `${match}\n<base href="${baseHref}">`);
+  }
+
+  return `<!doctype html><html><head><base href="${baseHref}"></head><body>${html}</body></html>`;
+}
+
 function parsePayload(script: HTMLScriptElement | null): ProcessGitViewerPayload | null {
   if (!script?.textContent) return null;
   try {
@@ -153,33 +165,49 @@ export function initRepoProcessGitViewer(): void {
     mount.innerHTML = '';
     const iframe = document.createElement('iframe');
     iframe.style.width = '100%';
-    iframe.style.height = 'calc(100vh - 220px)';
+    iframe.style.height = 'calc(100vh - 260px)';
+    iframe.style.display = 'block';
     iframe.style.border = '0';
     iframe.classList.add('processgit-viewer-frame');
     iframe.setAttribute('sandbox', 'allow-scripts allow-forms');
     mount.append(iframe);
 
+    const entryUrl = new URL(payload.entryRawUrl, window.location.origin);
+    const baseHref = entryUrl.toString().replace(/[^/]*$/, '');
+
+    iframe.addEventListener('load', () => {
+      console.log('[PGV] iframe loaded', {entry: payload.entryRawUrl, baseHref});
+    });
+
     try {
-      const res = await fetch(payload.entryRawUrl, {credentials: 'same-origin'});
-      const htmlText = await res.text();
+      const res = await fetch(entryUrl.toString(), {credentials: 'same-origin'});
+      let htmlText = await res.text();
+      htmlText = injectBaseTag(htmlText, baseHref);
       iframe.srcdoc = htmlText;
     } catch (error) {
       showErrorToast(toMessage(error));
     }
 
-    const toggleRawView = (showRaw: boolean) => {
-      if (rawPanel) rawPanel.classList.toggle('tw-hidden', !showRaw);
-      mount.classList.toggle('tw-hidden', showRaw);
-      if (guiButton) guiButton.classList.toggle('active', !showRaw);
-      if (rawButton) rawButton.classList.toggle('active', showRaw);
+    const showGui = () => {
+      if (rawPanel) rawPanel.style.display = 'none';
+      mount.style.display = '';
+      guiButton?.classList.add('active');
+      rawButton?.classList.remove('active');
     };
 
-    toggleRawView(false);
+    const showRaw = () => {
+      if (rawPanel) rawPanel.style.display = '';
+      mount.style.display = 'none';
+      rawButton?.classList.add('active');
+      guiButton?.classList.remove('active');
+    };
 
-    guiButton?.addEventListener('click', () => toggleRawView(false));
+    showGui();
+
+    guiButton?.addEventListener('click', showGui);
     if (!rawPanel && rawButton) rawButton.classList.add('disabled');
     rawButton?.addEventListener('click', () => {
-      if (rawPanel) toggleRawView(true);
+      if (rawPanel) showRaw();
     });
 
     const postToIframe = (message: Record<string, unknown> | string) => {
