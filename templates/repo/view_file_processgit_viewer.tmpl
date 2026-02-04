@@ -19,6 +19,11 @@
 
     <div class="ui bottom attached segment">
       <div id="processgit-viewer-mount" class="tw-w-full"></div>
+
+      <!-- Dedicated RAW panel (we control it; don’t rely on Gitea DOM) -->
+      <div id="processgit-raw-mount" class="tw-w-full" style="display:none;">
+        <pre id="processgit-raw-pre" style="margin:0; white-space:pre-wrap; word-break:break-word; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; line-height:1.35;"></pre>
+      </div>
     </div>
 
     <script type="application/json" id="processgit-viewer-payload">

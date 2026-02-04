@@ -124,37 +124,15 @@ export function initRepoProcessGitViewer(): void {
 
   registerGlobalInitFunc('initRepoProcessGitViewer', async (container: HTMLElement) => {
     const mount = container.querySelector<HTMLElement>('#processgit-viewer-mount');
+    const rawMount = container.querySelector<HTMLElement>('#processgit-raw-mount');
+    const rawPre = container.querySelector<HTMLElement>('#processgit-raw-pre');
     const script = container.querySelector<HTMLScriptElement>('#processgit-viewer-payload');
     const payload = parsePayload(script);
-    const rawPanelId = container.getAttribute('data-pgv-raw-panel');
-    let rawPanel: HTMLElement | null = rawPanelId ? document.getElementById(rawPanelId) : null;
-    if (!rawPanel) {
-      const fileRoot =
-        container.closest('.repository.file') ||
-        document.querySelector('.repository.file') ||
-        document.body;
-      rawPanel =
-        fileRoot.querySelector<HTMLElement>('.file-view') ||
-        fileRoot.querySelector<HTMLElement>('.file-view-content') ||
-        fileRoot.querySelector<HTMLElement>('.code-view') ||
-        fileRoot.querySelector<HTMLElement>('.markup') ||
-        null;
-    }
-    if (!rawPanel) {
-      const pres = Array.from(document.querySelectorAll('pre')) as HTMLElement[];
-      rawPanel = pres.sort((a, b) => (b.innerText?.length ?? 0) - (a.innerText?.length ?? 0))[0] ?? null;
-    }
-    console.log('[PGV] rawPanel resolved', {
-      rawPanelId,
-      found: Boolean(rawPanel),
-      tag: rawPanel?.tagName,
-      class: rawPanel?.className,
-    });
     const saveButton = container.querySelector<HTMLButtonElement>('[data-pgv-action="save"], [data-pgv-tab="save"]');
     const guiButton = container.querySelector<HTMLElement>('[data-pgv-action="gui"], [data-pgv-tab="gui"]');
     const rawButton = container.querySelector<HTMLElement>('[data-pgv-action="raw"], [data-pgv-tab="raw"]');
 
-    if (!mount || !payload) return;
+    if (!mount || !rawMount || !rawPre || !payload) return;
 
     const readAllow = new Set<string>([payload.path]);
     const rawByPath = new Map<string, string>();
@@ -179,6 +157,7 @@ export function initRepoProcessGitViewer(): void {
 
     const entryUrl = new URL(payload.entryRawUrl, window.location.origin);
     const baseHref = entryUrl.toString().replace(/[^/]*$/, '');
+    const primaryRawUrl = new URL(`${baseHref}${payload.path}`, window.location.origin).toString();
 
     iframe.addEventListener('load', () => {
       console.log('[PGV] iframe loaded', {entry: payload.entryRawUrl, baseHref});
@@ -215,30 +194,37 @@ export function initRepoProcessGitViewer(): void {
       showErrorToast(toMessage(error));
     }
 
+    const loadRawSource = async (): Promise<void> => {
+      rawPre.textContent = 'Loading...';
+      try {
+        const response = await fetch(primaryRawUrl, {credentials: 'same-origin'});
+        const text = await response.text();
+        rawPre.textContent = text;
+      } catch (error) {
+        rawPre.textContent = `Failed to load raw source: ${toMessage(error)}`;
+      }
+    };
+
     const showGui = () => {
-      if (rawPanel) rawPanel.style.display = 'none';
+      rawMount.style.display = 'none';
       mount.style.display = '';
       guiButton?.classList.add('active');
       rawButton?.classList.remove('active');
     };
 
-    const showRaw = () => {
-      if (rawPanel) rawPanel.style.display = '';
+    const showRaw = async (): Promise<void> => {
       mount.style.display = 'none';
+      rawMount.style.display = '';
       rawButton?.classList.add('active');
       guiButton?.classList.remove('active');
+      await loadRawSource();
     };
 
     showGui();
 
     guiButton?.addEventListener('click', showGui);
-    if (!rawPanel && rawButton) {
-      rawButton.classList.add('disabled');
-      rawButton.setAttribute('aria-disabled', 'true');
-    }
     rawButton?.addEventListener('click', () => {
-      if (!rawPanel) return;
-      showRaw();
+      void showRaw();
     });
 
     const postToIframe = (message: Record<string, unknown> | string) => {
