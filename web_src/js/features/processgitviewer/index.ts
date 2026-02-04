@@ -70,37 +70,6 @@ function buildSaveUrl(payload: ProcessGitViewerPayload, treePath: string): strin
   return `${payload.repoLink}/_edit/${encodePath(payload.branch)}/${encodePath(treePath)}`;
 }
 
-async function fetchContent(payload: ProcessGitViewerPayload, treePath: string): Promise<string> {
-  const apiUrl = new URL(payload.apiUrl, window.location.origin);
-  apiUrl.searchParams.set('path', treePath);
-  if (payload.ref) apiUrl.searchParams.set('ref', payload.ref);
-
-  const response = await fetch(apiUrl.toString(), {
-    headers: {
-      'X-Requested-With': 'XMLHttpRequest',
-      Accept: 'application/json',
-    },
-    method: 'GET',
-  });
-
-  if (!response.ok) {
-    let detail = '';
-    try {
-      const errJson = await response.json();
-      if (errJson?.error) detail = ` (${errJson.error})`;
-    } catch {
-      // ignore
-    }
-    throw new Error(`Neizdevās ielādēt saturu${detail}`);
-  }
-
-  const data = (await response.json()) as {content?: string; error?: string};
-  if (!data?.content) {
-    throw new Error(data?.error || 'Trūkst faila satura');
-  }
-  return data.content;
-}
-
 async function fetchRawContent(rawUrl: string): Promise<string> {
   const resolvedUrl = new URL(rawUrl, window.location.origin);
   const response = await fetch(resolvedUrl.toString(), {credentials: 'same-origin'});
@@ -158,7 +127,16 @@ export function initRepoProcessGitViewer(): void {
     const script = container.querySelector<HTMLScriptElement>('#processgit-viewer-payload');
     const payload = parsePayload(script);
     const rawPanelId = container.getAttribute('data-pgv-raw-panel') ?? 'diagram-raw-view';
-    const rawPanel = document.getElementById(rawPanelId);
+    let rawPanel = document.getElementById(rawPanelId);
+    if (!rawPanel) {
+      rawPanel =
+        document.getElementById('repo-file-content') ||
+        document.querySelector<HTMLElement>('.file-view .markup') ||
+        document.querySelector<HTMLElement>('.repository.file.list #repo-files-table') ||
+        document.querySelector<HTMLElement>('.file-view') ||
+        null;
+    }
+    console.log('[PGV] rawPanel resolved', {rawPanelId, found: Boolean(rawPanel)});
     const saveButton = container.querySelector<HTMLButtonElement>('[data-pgv-action="save"], [data-pgv-tab="save"]');
     const guiButton = container.querySelector<HTMLElement>('[data-pgv-action="gui"], [data-pgv-tab="gui"]');
     const rawButton = container.querySelector<HTMLElement>('[data-pgv-action="raw"], [data-pgv-tab="raw"]');
@@ -227,24 +205,25 @@ export function initRepoProcessGitViewer(): void {
     const showGui = () => {
       if (rawPanel) rawPanel.style.display = 'none';
       mount.style.display = '';
-      guiButton?.classList.add('active');
-      rawButton?.classList.remove('active');
     };
 
     const showRaw = () => {
       if (rawPanel) rawPanel.style.display = '';
       mount.style.display = 'none';
-      rawButton?.classList.add('active');
-      guiButton?.classList.remove('active');
     };
 
     showGui();
 
     guiButton?.addEventListener('click', showGui);
-    if (!rawPanel && rawButton) rawButton.classList.add('disabled');
-    rawButton?.addEventListener('click', () => {
-      if (rawPanel) showRaw();
-    });
+    if (!rawPanel && rawButton) {
+      rawButton.classList.add('disabled');
+      rawButton.setAttribute('aria-disabled', 'true');
+    }
+    if (rawPanel) {
+      rawButton?.addEventListener('click', () => {
+        showRaw();
+      });
+    }
 
     const postToIframe = (message: Record<string, unknown> | string) => {
       iframe.contentWindow?.postMessage(message, '*');
@@ -279,7 +258,10 @@ export function initRepoProcessGitViewer(): void {
           }
           try {
             const rawUrl = rawByPath.get(requestedPath);
-            const content = rawUrl ? await fetchRawContent(rawUrl) : await fetchContent(payload, requestedPath);
+            if (!rawUrl) {
+              throw new Error('Nav pieejams neapstrādāts URL šim failam.');
+            }
+            const content = await fetchRawContent(rawUrl);
             postToIframe({type: 'PGV_LOAD_RESULT', path: requestedPath, content});
           } catch (error) {
             showErrorToast(toMessage(error));
