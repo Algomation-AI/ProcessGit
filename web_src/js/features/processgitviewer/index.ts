@@ -13,6 +13,32 @@ function toMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function parsePayload(script: HTMLScriptElement | null): ProcessGitViewerPayload | null {
+  if (!script?.textContent) return null;
+  try {
+    const raw = JSON.parse(script.textContent) as Partial<ProcessGitViewerPayload>;
+    if (!raw || typeof raw.entryRawUrl !== 'string' || typeof raw.path !== 'string' || typeof raw.apiUrl !== 'string') {
+      return null;
+    }
+    return {
+      id: raw.id ?? '',
+      type: 'html',
+      repoLink: raw.repoLink ?? '',
+      branch: raw.branch ?? '',
+      ref: raw.ref ?? '',
+      path: raw.path,
+      dir: raw.dir ?? '',
+      lastCommit: raw.lastCommit ?? '',
+      entryRawUrl: raw.entryRawUrl,
+      targets: raw.targets ?? {},
+      editAllow: raw.editAllow ?? [],
+      apiUrl: raw.apiUrl,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function extractTargetPath(rawUrl: string, payload: ProcessGitViewerPayload): string | null {
   try {
     const url = new URL(rawUrl, window.location.origin);
@@ -107,21 +133,16 @@ export function initRepoProcessGitViewer(): void {
   registered = true;
 
   registerGlobalInitFunc('initRepoProcessGitViewer', async (container: HTMLElement) => {
-    const payloadEl = document.getElementById('processgit-viewer-payload');
-    if (!payloadEl) return;
-
-    const payload = JSON.parse(payloadEl.textContent || '{}') as ProcessGitViewerPayload;
-
-    const mount = document.getElementById('processgit-viewer-mount');
-    if (!mount) return;
-
+    const mount = container.querySelector<HTMLElement>('#processgit-viewer-mount');
+    const script = container.querySelector<HTMLScriptElement>('#processgit-viewer-payload');
+    const payload = parsePayload(script);
     const rawPanelId = container.getAttribute('data-pgv-raw-panel') ?? 'diagram-raw-view';
     const rawPanel = document.getElementById(rawPanelId);
     const saveButton = container.querySelector<HTMLButtonElement>('[data-pgv-action="save"], [data-pgv-tab="save"]');
     const guiButton = container.querySelector<HTMLElement>('[data-pgv-action="gui"], [data-pgv-tab="gui"]');
     const rawButton = container.querySelector<HTMLElement>('[data-pgv-action="raw"], [data-pgv-tab="raw"]');
 
-    if (!rawPanel) return;
+    if (!mount || !payload) return;
 
     const readAllow = new Set<string>([payload.path]);
     Object.values(payload.targets).forEach((rawUrl) => {
@@ -131,15 +152,23 @@ export function initRepoProcessGitViewer(): void {
 
     mount.innerHTML = '';
     const iframe = document.createElement('iframe');
-    iframe.src = payload.entryRawUrl;
     iframe.style.width = '100%';
-    iframe.style.minHeight = '900px';
+    iframe.style.height = 'calc(100vh - 220px)';
     iframe.style.border = '0';
     iframe.classList.add('processgit-viewer-frame');
+    iframe.setAttribute('sandbox', 'allow-scripts allow-forms');
     mount.append(iframe);
 
+    try {
+      const res = await fetch(payload.entryRawUrl, {credentials: 'same-origin'});
+      const htmlText = await res.text();
+      iframe.srcdoc = htmlText;
+    } catch (error) {
+      showErrorToast(toMessage(error));
+    }
+
     const toggleRawView = (showRaw: boolean) => {
-      rawPanel.classList.toggle('tw-hidden', !showRaw);
+      if (rawPanel) rawPanel.classList.toggle('tw-hidden', !showRaw);
       mount.classList.toggle('tw-hidden', showRaw);
       if (guiButton) guiButton.classList.toggle('active', !showRaw);
       if (rawButton) rawButton.classList.toggle('active', showRaw);
@@ -148,7 +177,10 @@ export function initRepoProcessGitViewer(): void {
     toggleRawView(false);
 
     guiButton?.addEventListener('click', () => toggleRawView(false));
-    rawButton?.addEventListener('click', () => toggleRawView(true));
+    if (!rawPanel && rawButton) rawButton.classList.add('disabled');
+    rawButton?.addEventListener('click', () => {
+      if (rawPanel) toggleRawView(true);
+    });
 
     const postToIframe = (message: Record<string, unknown> | string) => {
       iframe.contentWindow?.postMessage(message, '*');
