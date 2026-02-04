@@ -70,6 +70,85 @@ function buildSaveUrl(payload: ProcessGitViewerPayload, treePath: string): strin
   return `${payload.repoLink}/_edit/${encodePath(payload.branch)}/${encodePath(treePath)}`;
 }
 
+function formatXml(xmlText: string): string {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
+  if (xmlDoc.getElementsByTagName('parsererror').length) {
+    return xmlText;
+  }
+
+  const indentUnit = '  ';
+  const output: string[] = [];
+
+  const serializeNode = (node: Node, depth: number) => {
+    const indent = indentUnit.repeat(depth);
+
+    switch (node.nodeType) {
+      case Node.DOCUMENT_NODE: {
+        const doc = node as Document;
+        if (doc.doctype) {
+          output.push(`<!DOCTYPE ${doc.doctype.name}>`);
+        }
+        doc.childNodes.forEach((child) => serializeNode(child, depth));
+        break;
+      }
+      case Node.ELEMENT_NODE: {
+        const element = node as Element;
+        const attrs = Array.from(element.attributes)
+          .map((attr) => ` ${attr.name}="${attr.value}"`)
+          .join('');
+        const children = Array.from(element.childNodes);
+        const textChildren = children.filter(
+          (child) => child.nodeType === Node.TEXT_NODE && child.textContent?.trim(),
+        );
+        const hasElementChildren = children.some((child) => child.nodeType === Node.ELEMENT_NODE);
+
+        if (!children.length) {
+          output.push(`${indent}<${element.tagName}${attrs}/>`);
+          break;
+        }
+
+        if (!hasElementChildren && textChildren.length === 1 && children.length === 1) {
+          const text = textChildren[0].textContent?.trim() ?? '';
+          output.push(`${indent}<${element.tagName}${attrs}>${text}</${element.tagName}>`);
+          break;
+        }
+
+        output.push(`${indent}<${element.tagName}${attrs}>`);
+        children.forEach((child) => {
+          if (child.nodeType === Node.TEXT_NODE) {
+            const text = child.textContent?.trim();
+            if (text) {
+              output.push(`${indent}${indentUnit}${text}`);
+            }
+            return;
+          }
+          if (child.nodeType === Node.CDATA_SECTION_NODE) {
+            output.push(`${indent}${indentUnit}<![CDATA[${child.textContent ?? ''}]]>`);
+            return;
+          }
+          if (child.nodeType === Node.COMMENT_NODE) {
+            output.push(`${indent}${indentUnit}<!--${child.textContent ?? ''}-->`);
+            return;
+          }
+          serializeNode(child, depth + 1);
+        });
+        output.push(`${indent}</${element.tagName}>`);
+        break;
+      }
+      case Node.PROCESSING_INSTRUCTION_NODE: {
+        output.push(`${indent}<?${node.nodeName} ${node.nodeValue ?? ''}?>`);
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
+  serializeNode(xmlDoc, 0);
+  return `${output.join('\n')}\n`;
+}
+
 async function fetchRawContent(rawUrl: string): Promise<string> {
   const resolvedUrl = new URL(rawUrl, window.location.origin);
   const response = await fetch(resolvedUrl.toString(), {credentials: 'same-origin'});
@@ -145,10 +224,9 @@ export function initRepoProcessGitViewer(): void {
     });
 
     mount.innerHTML = '';
-    mount.style.height = 'calc(100vh - 260px)';
     const iframe = document.createElement('iframe');
     iframe.style.width = '100%';
-    iframe.style.height = '100%';
+    iframe.style.height = 'calc(100vh - 240px)';
     iframe.style.display = 'block';
     iframe.style.border = '0';
     iframe.classList.add('processgit-viewer-frame');
@@ -203,14 +281,26 @@ export function initRepoProcessGitViewer(): void {
       showErrorToast(toMessage(error));
     }
 
+    const setRawContent = (content: string) => {
+      const maybeCodeMirror = (rawPre as unknown as {CodeMirror?: {setValue: (value: string) => void}}).CodeMirror;
+      if (maybeCodeMirror?.setValue) {
+        maybeCodeMirror.setValue(content);
+        return;
+      }
+      rawPre.textContent = content;
+    };
+
     const loadRawSource = async (): Promise<void> => {
-      rawPre.textContent = 'Loading...';
+      setRawContent('Loading...');
       try {
         const response = await fetch(primaryRawUrl, {credentials: 'same-origin'});
-        const text = await response.text();
-        rawPre.textContent = text;
+        let text = await response.text();
+        if (payload.path.toLowerCase().endsWith('.xml')) {
+          text = formatXml(text);
+        }
+        setRawContent(text);
       } catch (error) {
-        rawPre.textContent = `Failed to load raw source: ${toMessage(error)}`;
+        setRawContent(`Failed to load raw source: ${toMessage(error)}`);
       }
     };
 
