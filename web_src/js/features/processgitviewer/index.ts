@@ -101,6 +101,15 @@ async function fetchContent(payload: ProcessGitViewerPayload, treePath: string):
   return data.content;
 }
 
+async function fetchRawContent(rawUrl: string): Promise<string> {
+  const resolvedUrl = new URL(rawUrl, window.location.origin);
+  const response = await fetch(resolvedUrl.toString(), {credentials: 'same-origin'});
+  if (!response.ok) {
+    throw new Error(`Neizdevās ielādēt saturu (${response.status})`);
+  }
+  return response.text();
+}
+
 async function saveContent(payload: ProcessGitViewerPayload, treePath: string, content: string, summary: string) {
   if (!payload.branch || !payload.lastCommit) {
     throw new Error('Trūkst informācijas saglabāšanai (branch/commit).');
@@ -157,9 +166,13 @@ export function initRepoProcessGitViewer(): void {
     if (!mount || !payload) return;
 
     const readAllow = new Set<string>([payload.path]);
+    const rawByPath = new Map<string, string>();
     Object.values(payload.targets).forEach((rawUrl) => {
       const parsed = extractTargetPath(rawUrl, payload);
-      if (parsed) readAllow.add(parsed);
+      if (parsed) {
+        readAllow.add(parsed);
+        rawByPath.set(parsed, rawUrl);
+      }
     });
 
     mount.innerHTML = '';
@@ -178,6 +191,28 @@ export function initRepoProcessGitViewer(): void {
 
     iframe.addEventListener('load', () => {
       console.log('[PGV] iframe loaded', {entry: payload.entryRawUrl, baseHref});
+    });
+
+    window.addEventListener('message', async (ev) => {
+      if (ev.source !== iframe.contentWindow) return;
+      const msg = ev.data as any;
+      if (!msg || typeof msg !== 'object') return;
+
+      if (msg.type === 'PGV_FETCH' && typeof msg.url === 'string' && typeof msg.reqId === 'string') {
+        try {
+          const u = new URL(msg.url, window.location.origin);
+
+          // Allow ONLY same-origin fetches
+          if (u.origin !== window.location.origin) throw new Error('cross-origin blocked');
+
+          const r = await fetch(u.toString(), {credentials: 'same-origin'});
+          const text = await r.text();
+
+          iframe.contentWindow?.postMessage({type: 'PGV_FETCH_RESULT', reqId: msg.reqId, url: msg.url, ok: true, text}, '*');
+        } catch (e) {
+          iframe.contentWindow?.postMessage({type: 'PGV_FETCH_RESULT', reqId: msg.reqId, url: msg.url, ok: false, error: String(e)}, '*');
+        }
+      }
     });
 
     try {
@@ -243,7 +278,8 @@ export function initRepoProcessGitViewer(): void {
             return;
           }
           try {
-            const content = await fetchContent(payload, requestedPath);
+            const rawUrl = rawByPath.get(requestedPath);
+            const content = rawUrl ? await fetchRawContent(rawUrl) : await fetchContent(payload, requestedPath);
             postToIframe({type: 'PGV_LOAD_RESULT', path: requestedPath, content});
           } catch (error) {
             showErrorToast(toMessage(error));

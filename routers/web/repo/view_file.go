@@ -337,6 +337,10 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 					targetPath := path.Join(dir, target)
 					targetsRaw[key] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.RefTypeNameSubURL() + "/" + util.PathEscapeSegments(targetPath)
 				}
+				primaryRawURL := ctx.Repo.RepoLink + "/raw/" + ctx.Repo.RefTypeNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
+				if _, ok := targetsRaw["xml"]; !ok {
+					targetsRaw["xml"] = primaryRawURL
+				}
 				editAllowRepoPaths := make([]string, 0, len(binding.EditAllow))
 				for _, edit := range binding.EditAllow {
 					editAllowRepoPaths = append(editAllowRepoPaths, path.Join(dir, edit))
