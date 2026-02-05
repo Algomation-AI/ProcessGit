@@ -139,7 +139,11 @@ export function buildGraph(doc: SchemaDoc): GraphModel {
     }
   }
 
-  const g = new dagre.graphlib.Graph();
+  const g = new dagre.graphlib.Graph({
+    directed: true,
+    compound: true,
+    multigraph: true,
+  });
   g.setGraph({
     rankdir: 'LR',
     nodesep: 60,
