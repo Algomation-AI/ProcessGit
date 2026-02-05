@@ -1,0 +1,6 @@
+{{if and .IsXSDVisual .XSDVisualPayload}}
+  <div class="xsd-visual-viewer" data-global-init="initRepoXsdVisual" data-xsd-raw-panel="diagram-raw-view">
+    <div id="xsd-visual-mount"></div>
+    <script type="application/json" id="xsd-visual-payload">{{JsonUtils.Encode .XSDVisualPayload}}</script>
+  </div>
+{{end}}
