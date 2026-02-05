@@ -15,15 +15,6 @@ function getNodeCenter(node: GraphNode): {x: number; y: number} {
   return {x: bbox.x + bbox.w / 2, y: bbox.y + bbox.h / 2};
 }
 
-function buildMetaLine(node: GraphNode): string {
-  const parts: string[] = [];
-  if (node.meta.type) parts.push(`type ${node.meta.type}`);
-  if (node.meta.base) parts.push(`base ${node.meta.base}`);
-  if (node.meta.occurs) parts.push(node.meta.occurs);
-  if (node.meta.targetNamespace) parts.push(node.meta.targetNamespace);
-  return parts.join(' • ');
-}
-
 function renderEdge(edge: GraphEdge, nodes: Map<string, GraphNode>): SVGElement {
   const group = createSvgElement('g');
   const fromNode = nodes.get(edge.from);
@@ -34,22 +25,27 @@ function renderEdge(edge: GraphEdge, nodes: Map<string, GraphNode>): SVGElement 
   const to = getNodeCenter(toNode);
 
   const path = createSvgElement('path');
-  const midX = (from.x + to.x) / 2;
-  const d = `M ${from.x} ${from.y} L ${midX} ${from.y} L ${midX} ${to.y} L ${to.x} ${to.y}`;
+  const pts = edge.points?.length ? edge.points : [from, to];
+  const d = pts
+    .map((point, idx) => `${idx === 0 ? 'M' : 'L'} ${point.x} ${point.y}`)
+    .join(' ');
   path.setAttribute('d', d);
   path.setAttribute('fill', 'none');
-  path.setAttribute('stroke', 'currentColor');
-  path.setAttribute('stroke-width', '1');
+  path.setAttribute('stroke', 'var(--xsd-edge-color)');
+  path.setAttribute('stroke-width', '1.25');
+  path.setAttribute('stroke-linejoin', 'round');
+  path.setAttribute('stroke-linecap', 'round');
   path.setAttribute('marker-end', 'url(#xsd-visual-arrow)');
   group.append(path);
 
-  if (edge.label) {
+  if (edge.label && pts.length >= 2) {
+    const mid = pts[Math.floor(pts.length / 2)];
     const label = createSvgElement('text');
     label.textContent = edge.label;
-    label.setAttribute('x', String(midX + 4));
-    label.setAttribute('y', String((from.y + to.y) / 2 - 4));
+    label.setAttribute('x', String(mid.x + 6));
+    label.setAttribute('y', String(mid.y - 6));
     label.setAttribute('font-size', '10');
-    label.setAttribute('fill', 'currentColor');
+    label.setAttribute('fill', 'var(--xsd-label-color)');
     group.append(label);
   }
 
@@ -60,37 +56,71 @@ function renderNode(node: GraphNode, onSelect: (id: string) => void): SVGGElemen
   const group = createSvgElement('g');
   group.setAttribute('data-node-id', node.id);
   group.setAttribute('cursor', 'pointer');
+  group.classList.add('xsd-node', `xsd-node-${node.kind}`);
 
-  const bbox = node.bbox ?? {x: 0, y: 0, w: 180, h: 60};
+  const bbox = node.bbox ?? {x: 0, y: 0, w: 180, h: 96};
   const rect = createSvgElement('rect');
   rect.setAttribute('x', String(bbox.x));
   rect.setAttribute('y', String(bbox.y));
   rect.setAttribute('width', String(bbox.w));
   rect.setAttribute('height', String(bbox.h));
   rect.setAttribute('rx', '8');
-  rect.setAttribute('fill', 'none');
-  rect.setAttribute('stroke', 'currentColor');
-  rect.setAttribute('stroke-width', '1');
+  rect.setAttribute('filter', 'url(#xsd-card-shadow)');
+
+  const header = createSvgElement('rect');
+  header.setAttribute('x', String(bbox.x));
+  header.setAttribute('y', String(bbox.y));
+  header.setAttribute('width', String(bbox.w));
+  header.setAttribute('height', '26');
+  header.setAttribute('rx', '8');
+  header.setAttribute('ry', '8');
+  header.classList.add('xsd-node-header');
+
+  const divider = createSvgElement('line');
+  divider.setAttribute('x1', String(bbox.x));
+  divider.setAttribute('y1', String(bbox.y + 26));
+  divider.setAttribute('x2', String(bbox.x + bbox.w));
+  divider.setAttribute('y2', String(bbox.y + 26));
+  divider.classList.add('xsd-node-divider');
+
+  const icon = createSvgElement('text');
+  icon.textContent = node.kind === 'schema' ? '⎈' : node.kind === 'type' ? '⌗' : '▦';
+  icon.setAttribute('x', String(bbox.x + 10));
+  icon.setAttribute('y', String(bbox.y + 18));
+  icon.classList.add('xsd-node-icon');
 
   const title = createSvgElement('text');
   title.textContent = node.label;
-  title.setAttribute('x', String(bbox.x + 12));
-  title.setAttribute('y', String(bbox.y + 22));
-  title.setAttribute('font-size', '12');
-  title.setAttribute('fill', 'currentColor');
+  title.setAttribute('x', String(bbox.x + 28));
+  title.setAttribute('y', String(bbox.y + 18));
+  title.classList.add('xsd-node-title');
 
-  const metaLine = buildMetaLine(node);
-  if (metaLine) {
-    const meta = createSvgElement('text');
-    meta.textContent = metaLine;
-    meta.setAttribute('x', String(bbox.x + 12));
-    meta.setAttribute('y', String(bbox.y + 40));
-    meta.setAttribute('font-size', '10');
-    meta.setAttribute('fill', 'currentColor');
-    group.append(meta);
+  const rows: string[] = [];
+  if (node.meta.type) rows.push(`type: ${node.meta.type}`);
+  if (node.meta.base) rows.push(`base: ${node.meta.base}`);
+  if (node.meta.occurs) rows.push(`occurs: ${node.meta.occurs}`);
+  if (node.meta.attributes) {
+    const attrs = node.meta.attributes
+      .split('|')
+      .map((value) => value.trim())
+      .filter(Boolean);
+    if (attrs.length) {
+      rows.push(`attributes: ${attrs.slice(0, 3).join(', ')}${attrs.length > 3 ? ', …' : ''}`);
+    }
   }
 
-  group.append(rect, title);
+  group.append(rect, header, divider, icon, title);
+
+  let rowY = bbox.y + 42;
+  for (const row of rows.slice(0, 4)) {
+    const text = createSvgElement('text');
+    text.textContent = row;
+    text.setAttribute('x', String(bbox.x + 12));
+    text.setAttribute('y', String(rowY));
+    text.classList.add('xsd-node-row');
+    group.append(text);
+    rowY += 14;
+  }
 
   group.addEventListener('click', (event) => {
     event.stopPropagation();
@@ -132,9 +162,23 @@ export function renderGraph(
   marker.setAttribute('orient', 'auto');
   const markerPath = createSvgElement('path');
   markerPath.setAttribute('d', 'M0,0 L0,6 L6,3 z');
-  markerPath.setAttribute('fill', 'currentColor');
+  markerPath.setAttribute('fill', 'var(--xsd-edge-color)');
   marker.append(markerPath);
   defs.append(marker);
+
+  const filter = createSvgElement('filter');
+  filter.setAttribute('id', 'xsd-card-shadow');
+  filter.setAttribute('x', '-20%');
+  filter.setAttribute('y', '-20%');
+  filter.setAttribute('width', '140%');
+  filter.setAttribute('height', '140%');
+  const feDrop = createSvgElement('feDropShadow');
+  feDrop.setAttribute('dx', '0');
+  feDrop.setAttribute('dy', '1');
+  feDrop.setAttribute('stdDeviation', '1.2');
+  feDrop.setAttribute('flood-opacity', '0.18');
+  filter.append(feDrop);
+  defs.append(filter);
   svg.append(defs);
 
   const viewport = createSvgElement('g');

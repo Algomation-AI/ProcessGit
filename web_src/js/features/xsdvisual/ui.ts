@@ -126,7 +126,8 @@ export function buildXsdVisualUI(mount: HTMLElement, handlers: UIHandlers): XsdV
 
   const canvas = document.createElement('div');
   canvas.className = 'xsd-visual-canvas-panel ui segment tw-flex-1';
-  canvas.style.minHeight = '520px';
+  canvas.style.minHeight = '70vh';
+  canvas.style.height = '70vh';
 
   const {panel, content} = createPropertiesPanel();
 

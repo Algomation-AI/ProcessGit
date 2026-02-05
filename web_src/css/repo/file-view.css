@@ -91,3 +91,62 @@
 .file-view-render-container :last-child {
   border-radius: 0 0 var(--border-radius) var(--border-radius); /* to match the "ui segment" bottom radius */
 }
+
+/* XSD Visual Viewer */
+.xsd-visual-viewer {
+  --xsd-edge-color: rgba(60, 60, 70, 0.55);
+  --xsd-label-color: rgba(60, 60, 70, 0.8);
+  --xsd-card-bg: #ffffff;
+  --xsd-card-border: rgba(34, 36, 38, 0.18);
+  --xsd-header-bg: rgba(248, 249, 250, 1);
+  --xsd-row-color: rgba(60, 60, 70, 0.9);
+}
+
+.xsd-visual-viewer svg {
+  background: linear-gradient(180deg, rgba(250, 250, 252, 1) 0%, rgba(245, 246, 248, 1) 100%);
+}
+
+.xsd-node rect {
+  fill: var(--xsd-card-bg);
+  stroke: var(--xsd-card-border);
+  stroke-width: 1;
+}
+
+.xsd-node .xsd-node-header {
+  fill: var(--xsd-header-bg);
+  stroke: none;
+}
+
+.xsd-node .xsd-node-divider {
+  stroke: rgba(34, 36, 38, 0.1);
+  stroke-width: 1;
+}
+
+.xsd-node .xsd-node-title {
+  font-size: 12px;
+  font-weight: 600;
+  fill: rgba(35, 35, 45, 0.95);
+}
+
+.xsd-node .xsd-node-icon {
+  font-size: 12px;
+  fill: rgba(35, 35, 45, 0.75);
+}
+
+.xsd-node .xsd-node-row {
+  font-size: 10px;
+  fill: var(--xsd-row-color);
+}
+
+/* Kind accents */
+.xsd-node-element .xsd-node-header {
+  fill: rgba(232, 245, 233, 1);
+}
+
+.xsd-node-type .xsd-node-header {
+  fill: rgba(227, 242, 253, 1);
+}
+
+.xsd-node-schema .xsd-node-header {
+  fill: rgba(255, 248, 225, 1);
+}

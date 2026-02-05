@@ -2,7 +2,7 @@ import dagre from 'dagre';
 import type {ComplexType, ElementDecl, GraphEdge, GraphModel, GraphNode, Occurs, Particle, SchemaDoc} from './types.ts';
 
 const NODE_WIDTH = 200;
-const NODE_HEIGHT = 64;
+const NODE_HEIGHT = 96;
 
 export function elementNodeId(name: string, parent?: string): string {
   return parent ? `element:${parent}/${name}` : `element:${name}`;
@@ -25,6 +25,12 @@ function addElementNode(nodes: GraphNode[], nodeById: Map<string, GraphNode>, el
   const occurs = formatOccurs(element.minOccurs, element.maxOccurs);
   meta.occurs = occurs;
   if (element.annotation) meta.documentation = element.annotation;
+  if (element.attributes?.length) {
+    meta.attributes = element.attributes
+      .map((attr) => attr.name ?? attr.ref ?? '')
+      .filter(Boolean)
+      .join('|');
+  }
   const node: GraphNode = {
     id,
     kind: 'element',
@@ -41,6 +47,12 @@ function addTypeNode(nodes: GraphNode[], nodeById: Map<string, GraphNode>, type:
   const meta: Record<string, string> = {};
   if (type.base) meta.base = type.base;
   if (type.annotation) meta.documentation = type.annotation;
+  if (type.attributes?.length) {
+    meta.attributes = type.attributes
+      .map((attr) => attr.name ?? attr.ref ?? '')
+      .filter(Boolean)
+      .join('|');
+  }
   const node: GraphNode = {
     id,
     kind: 'type',
@@ -128,17 +140,38 @@ export function buildGraph(doc: SchemaDoc): GraphModel {
   }
 
   const g = new dagre.graphlib.Graph();
-  g.setGraph({rankdir: 'TB', nodesep: 40, ranksep: 70});
+  g.setGraph({
+    rankdir: 'LR',
+    nodesep: 60,
+    ranksep: 140,
+    marginx: 20,
+    marginy: 20,
+  });
   g.setDefaultEdgeLabel(() => ({}));
 
   nodes.forEach((node) => {
     g.setNode(node.id, {width: NODE_WIDTH, height: NODE_HEIGHT});
   });
+
+  function edgeKey(from: string, to: string) {
+    return `${from}=>${to}`;
+  }
+
+  const edgeByKey = new Map<string, GraphEdge>();
+
   edges.forEach((edge) => {
-    g.setEdge(edge.from, edge.to);
+    const key = edgeKey(edge.from, edge.to);
+    edgeByKey.set(key, edge);
+    g.setEdge(edge.from, edge.to, {}, key);
   });
 
   dagre.layout(g);
+
+  edgeByKey.forEach((edge, key) => {
+    const layoutEdge = g.edge(edge.from, edge.to, key) as {points?: Array<{x: number; y: number}>} | undefined;
+    if (!layoutEdge?.points?.length) return;
+    edge.points = layoutEdge.points.map((point) => ({x: point.x, y: point.y}));
+  });
 
   nodes.forEach((node) => {
     const layout = g.node(node.id) as {x: number; y: number; width: number; height: number} | undefined;

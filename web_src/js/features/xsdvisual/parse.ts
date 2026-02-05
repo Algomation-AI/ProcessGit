@@ -1,4 +1,4 @@
-import type {ComplexType, ElementDecl, ParsedXsd, Particle, SchemaDoc} from './types.ts';
+import type {AttributeDecl, ComplexType, ElementDecl, ParsedXsd, Particle, SchemaDoc} from './types.ts';
 
 const SCHEMA_NS = 'http://www.w3.org/2001/XMLSchema';
 
@@ -28,6 +28,25 @@ function parseAnnotationText(element: Element): string | undefined {
   return undefined;
 }
 
+function getAttr(element: Element, name: string): string | undefined {
+  const value = element.getAttribute(name);
+  return value ? value : undefined;
+}
+
+function parseAttributes(container: Element): AttributeDecl[] {
+  const attrs: AttributeDecl[] = [];
+  for (const child of Array.from(container.children)) {
+    if (!isSchemaNode(child, 'attribute')) continue;
+    attrs.push({
+      name: getAttr(child, 'name'),
+      ref: getAttr(child, 'ref'),
+      type: getAttr(child, 'type'),
+      use: getAttr(child, 'use'),
+    });
+  }
+  return attrs;
+}
+
 function parseElementDecl(element: Element, warnings: string[]): ElementDecl {
   const name = element.getAttribute('name') ?? element.getAttribute('ref') ?? 'unnamed';
   const type = element.getAttribute('type') ?? undefined;
@@ -36,10 +55,12 @@ function parseElementDecl(element: Element, warnings: string[]): ElementDecl {
   const annotation = parseAnnotationText(element);
 
   let children: Particle[] | undefined;
+  let attributes: AttributeDecl[] | undefined;
   for (const child of Array.from(element.children)) {
     if (isSchemaNode(child, 'complexType')) {
       const inlineType = parseComplexType(child, warnings, true);
       children = inlineType.sequence ?? inlineType.choice;
+      attributes = inlineType.attributes;
       break;
     }
   }
@@ -51,6 +72,7 @@ function parseElementDecl(element: Element, warnings: string[]): ElementDecl {
     maxOccurs,
     annotation,
     children,
+    attributes,
   };
 }
 
@@ -98,6 +120,7 @@ function parseParticles(container: Element, warnings: string[]): Particle[] {
 function parseComplexType(element: Element, warnings: string[], inline = false): ComplexType {
   const name = element.getAttribute('name') ?? (inline ? 'inline' : 'unnamed');
   const annotation = parseAnnotationText(element);
+  const attributes = parseAttributes(element);
 
   let base: string | undefined;
   let sequence: Particle[] | undefined;
@@ -136,6 +159,7 @@ function parseComplexType(element: Element, warnings: string[], inline = false):
     sequence,
     choice,
     annotation,
+    attributes,
   };
 }
 
