@@ -62,6 +62,19 @@ type dvsXMLPayload struct {
 	Meta           map[string]string `json:"meta,omitempty"`
 }
 
+type xsdVisualPayload struct {
+	ID          string            `json:"id"`
+	Path        string            `json:"path"`
+	Ref         string            `json:"ref"`
+	Branch      string            `json:"branch"`
+	LastCommit  string            `json:"lastCommit"`
+	RepoLink    string            `json:"repoLink"`
+	EntryRawURL string            `json:"entryRawUrl"`
+	APIURL      string            `json:"apiUrl"`
+	Targets     map[string]string `json:"targets"`
+	Editable    bool              `json:"editable"`
+}
+
 func prepareLatestCommitInfo(ctx *context.Context) bool {
 	commit, err := ctx.Repo.Commit.GetCommitByPath(ctx.Repo.TreePath)
 	if err != nil {
@@ -299,6 +312,38 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 				SchemaLocation: meta["schemaLocation"],
 				Meta:           meta,
 			}
+		}
+	}
+
+	if strings.HasSuffix(strings.ToLower(ctx.Repo.TreePath), ".xsd") &&
+		fInfo.st.IsRepresentableAsText() &&
+		fInfo.blobOrLfsSize < setting.UI.MaxDisplayFileSize {
+		primaryRawURL := ctx.Repo.RepoLink + "/raw/" + ctx.Repo.RefTypeNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
+		targetsRaw := map[string]string{
+			"xsd": primaryRawURL,
+		}
+		canEditXsd := ctx.Repo.Repository.CanEnableEditor() &&
+			ctx.Repo.RefFullName.IsBranch() &&
+			ctx.Repo.CanWriteToBranch(ctx, ctx.Doer, ctx.Repo.BranchName) &&
+			!fInfo.isLFSFile() &&
+			fInfo.blobOrLfsSize < setting.UI.MaxDisplayFileSize
+		apiParams := url.Values{}
+		apiParams.Set("path", ctx.Repo.TreePath)
+		if ctx.Repo.BranchName != "" {
+			apiParams.Set("ref", ctx.Repo.BranchName)
+		}
+		ctx.Data["IsXSDVisual"] = true
+		ctx.Data["XSDVisualPayload"] = xsdVisualPayload{
+			ID:          "xsd-visual",
+			Path:        ctx.Repo.TreePath,
+			Ref:         ctx.Repo.BranchName,
+			Branch:      ctx.Repo.BranchName,
+			LastCommit:  ctx.Repo.CommitID,
+			RepoLink:    ctx.Repo.RepoLink,
+			EntryRawURL: primaryRawURL,
+			APIURL:      ctx.Repo.RepoLink + "/api/processgitviewer?" + apiParams.Encode(),
+			Targets:     targetsRaw,
+			Editable:    canEditXsd,
 		}
 	}
 

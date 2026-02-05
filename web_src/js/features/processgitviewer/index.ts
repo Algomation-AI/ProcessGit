@@ -215,6 +215,7 @@ export function initRepoProcessGitViewer(): void {
 
     const readAllow = new Set<string>([payload.path]);
     const rawByPath = new Map<string, string>();
+    const pendingContent = new Map<string, string>();
     Object.values(payload.targets).forEach((rawUrl) => {
       const parsed = extractTargetPath(rawUrl, payload);
       if (parsed) {
@@ -377,17 +378,26 @@ export function initRepoProcessGitViewer(): void {
             postToIframe({type: 'PGV_SAVE_RESULT', ok: false, error: 'Nav atļauts saglabāt šo failu.'});
             return;
           }
-          if (typeof request.content !== 'string') {
+          const content = typeof request.content === 'string' ? request.content : pendingContent.get(requestedPath);
+          if (typeof content !== 'string') {
             postToIframe({type: 'PGV_SAVE_RESULT', ok: false, error: 'Trūkst saglabājamā satura.'});
             return;
           }
           try {
             const summary = request.summary ?? `Update ${payload.path.split('/').pop()}`;
-            await saveContent(payload, requestedPath, request.content, summary);
+            await saveContent(payload, requestedPath, content, summary);
             postToIframe({type: 'PGV_SAVE_RESULT', ok: true});
           } catch (error) {
             postToIframe({type: 'PGV_SAVE_RESULT', ok: false, error: toMessage(error)});
             showErrorToast(toMessage(error));
+          }
+          break;
+        }
+        case 'PGV_SET_CONTENT': {
+          const request = typeof data === 'object' && data ? (data as {path?: string; content?: string}) : {};
+          const requestedPath = request.path ?? payload.path;
+          if (typeof request.content === 'string') {
+            pendingContent.set(requestedPath, request.content);
           }
           break;
         }
