@@ -1,9 +1,8 @@
+import dagre from 'dagre';
 import type {ComplexType, ElementDecl, GraphEdge, GraphModel, GraphNode, Occurs, Particle, SchemaDoc} from './types.ts';
 
 const NODE_WIDTH = 200;
 const NODE_HEIGHT = 64;
-const COLUMN_GAP = 260;
-const ROW_GAP = 110;
 
 export function elementNodeId(name: string, parent?: string): string {
   return parent ? `element:${parent}/${name}` : `element:${name}`;
@@ -128,27 +127,27 @@ export function buildGraph(doc: SchemaDoc): GraphModel {
     }
   }
 
-  const columnByKind: Record<GraphNode['kind'], number> = {
-    schema: 0,
-    element: 1,
-    type: 2,
-    group: 3,
-  };
-  const rowOffsets = new Map<number, number>();
-  const nextRow = (col: number) => {
-    const current = rowOffsets.get(col) ?? 0;
-    rowOffsets.set(col, current + 1);
-    return current;
-  };
+  const g = new dagre.graphlib.Graph();
+  g.setGraph({rankdir: 'TB', nodesep: 40, ranksep: 70});
+  g.setDefaultEdgeLabel(() => ({}));
 
   nodes.forEach((node) => {
-    const col = columnByKind[node.kind] ?? 0;
-    const row = nextRow(col);
+    g.setNode(node.id, {width: NODE_WIDTH, height: NODE_HEIGHT});
+  });
+  edges.forEach((edge) => {
+    g.setEdge(edge.from, edge.to);
+  });
+
+  dagre.layout(g);
+
+  nodes.forEach((node) => {
+    const layout = g.node(node.id) as {x: number; y: number; width: number; height: number} | undefined;
+    if (!layout) return;
     node.bbox = {
-      x: col * COLUMN_GAP,
-      y: row * ROW_GAP,
-      w: NODE_WIDTH,
-      h: NODE_HEIGHT,
+      x: layout.x - layout.width / 2,
+      y: layout.y - layout.height / 2,
+      w: layout.width,
+      h: layout.height,
     };
   });
 

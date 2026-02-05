@@ -22,3 +22,7 @@ declare module '@eslint-community/eslint-plugin-eslint-comments' {
   const plugin: Eslint.Plugin;
   export = plugin;
 }
+declare module 'dagre' {
+  const dagre: any;
+  export default dagre;
+}
