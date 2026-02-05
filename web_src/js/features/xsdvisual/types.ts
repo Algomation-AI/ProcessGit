@@ -11,6 +11,7 @@ export interface ElementDecl {
   maxOccurs?: Occurs;
   annotation?: string;
   children?: Particle[];
+  attributes?: AttributeDecl[];
 }
 
 export interface ComplexType {
@@ -19,6 +20,7 @@ export interface ComplexType {
   sequence?: Particle[];
   choice?: Particle[];
   annotation?: string;
+  attributes?: AttributeDecl[];
 }
 
 export interface SimpleType {
@@ -52,11 +54,17 @@ export interface GraphNode {
   bbox?: {x: number; y: number; w: number; h: number};
 }
 
+export interface GraphPoint {
+  x: number;
+  y: number;
+}
+
 export interface GraphEdge {
   from: string;
   to: string;
   label?: string;
   kind: 'contains' | 'extends' | 'ref';
+  points?: GraphPoint[];
 }
 
 export interface GraphModel {
@@ -68,4 +76,11 @@ export interface GraphModel {
 export interface ParsedXsd {
   doc: SchemaDoc;
   warnings: string[];
+}
+
+export interface AttributeDecl {
+  name?: string;
+  ref?: string;
+  type?: string;
+  use?: string;
 }
