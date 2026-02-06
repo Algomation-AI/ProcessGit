@@ -22,15 +22,21 @@ type ToolContext struct {
 type ToolHandler func(ctx *ToolContext, args map[string]interface{}) (*ToolCallResult, error)
 
 // toolRegistry maps tool names to handlers.
-var toolRegistry = map[string]ToolHandler{
-	"help":              toolHelp,
-	"identify":          toolIdentify,
-	"describe_model":    toolDescribeModel,
-	"search":            toolSearch,
-	"get_entity":        toolGetEntity,
-	"list_entities":     toolListEntities,
-	"validate":          toolValidate,
-	"generate_document": toolGenerateDocument,
+// Populated in init() to avoid circular initialization with tool functions
+// that reference toolRegistry (e.g. toolIdentify uses len(toolRegistry)).
+var toolRegistry map[string]ToolHandler
+
+func init() {
+	toolRegistry = map[string]ToolHandler{
+		"help":              toolHelp,
+		"identify":          toolIdentify,
+		"describe_model":    toolDescribeModel,
+		"search":            toolSearch,
+		"get_entity":        toolGetEntity,
+		"list_entities":     toolListEntities,
+		"validate":          toolValidate,
+		"generate_document": toolGenerateDocument,
+	}
 }
 
 // GetToolDefinitions returns the MCP tool definitions for tools/list.
