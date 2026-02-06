@@ -1192,6 +1192,12 @@ func registerWebRoutes(m *web.Router) {
 		m.Get("/export", repo.UAPFExportGet)
 	}, optSignIn, context.RepoAssignment, context.RepoMustNotBeArchived(), reqUnitCodeReader)
 
+	// MCP endpoint — Model Context Protocol server for repository
+	m.Group("/{username}/{reponame}/mcp", func() {
+		m.Post("", repo.MCPEndpoint)
+		m.Get("", repo.MCPEndpoint)
+	}, reqSignIn, context.RepoAssignment, reqUnitCodeReader)
+
 	m.Group("/{username}/{reponame}", func() {
 		m.Group("/tree-list", func() {
 			m.Get("/branch/*", context.RepoRefByType(git.RefTypeBranch), repo.TreeList)
