@@ -1196,7 +1196,7 @@ func registerWebRoutes(m *web.Router) {
 	m.Group("/{username}/{reponame}/mcp", func() {
 		m.Post("", repo.MCPEndpoint)
 		m.Get("", repo.MCPEndpoint)
-	}, optSignInIgnoreCsrf, context.RepoAssignment, reqUnitCodeReader)
+	}, optSignInIgnoreCsrf, context.RepoAssignment)
 
 	m.Group("/{username}/{reponame}", func() {
 		m.Group("/tree-list", func() {
