@@ -16,11 +16,24 @@ import (
 const MaxRequestBodySize = 1024 * 1024 // 1 MB
 
 // ServeHTTP handles an MCP HTTP request.
-// It is called from the router handler with a pre-built ToolContext.
+// Supports both POST (single JSON-RPC request) and GET (SSE streaming).
 func ServeHTTP(w http.ResponseWriter, r *http.Request, toolCtx *ToolContext) {
-	// Only POST is supported for MVP (no SSE GET streaming)
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed. Use POST.", http.StatusMethodNotAllowed)
+	switch r.Method {
+	case http.MethodGet:
+		serveSSE(w, r, toolCtx)
+	case http.MethodPost:
+		handlePost(w, r, toolCtx)
+	default:
+		http.Error(w, "Method not allowed. Use GET for SSE or POST for single requests.", http.StatusMethodNotAllowed)
+	}
+}
+
+// handlePost processes a single POST JSON-RPC request.
+func handlePost(w http.ResponseWriter, r *http.Request, toolCtx *ToolContext) {
+	// Check if this is a message to an SSE session
+	sessionID := r.Header.Get("Mcp-Session-Id")
+	if sessionID != "" {
+		handleSessionMessage(w, r, sessionID)
 		return
 	}
 
@@ -66,6 +79,49 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request, toolCtx *ToolContext) {
 	}
 
 	writeJSONResponse(w, resp)
+}
+
+// handleSessionMessage routes a POST with Mcp-Session-Id to the correct SSE session.
+func handleSessionMessage(w http.ResponseWriter, r *http.Request, sessionID string) {
+	session := sessionManager.Get(sessionID)
+	if session == nil {
+		http.Error(w, "Session not found", http.StatusNotFound)
+		return
+	}
+
+	// Validate Content-Type
+	ct := r.Header.Get("Content-Type")
+	if !strings.HasPrefix(ct, "application/json") {
+		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
+		return
+	}
+
+	// Read body
+	body, err := io.ReadAll(io.LimitReader(r.Body, MaxRequestBodySize))
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	// Parse JSON-RPC request
+	var req JSONRPCRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		writeJSONResponse(w, jsonRPCError(nil, -32700, "Parse error: "+err.Error()))
+		return
+	}
+
+	if req.JSONRPC != "2.0" {
+		writeJSONResponse(w, jsonRPCError(req.ID, -32600, "Invalid JSON-RPC version"))
+		return
+	}
+
+	// Send to session for processing
+	if !session.SendRequest(&req) {
+		http.Error(w, "Session closed", http.StatusGone)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func writeJSONResponse(w http.ResponseWriter, resp *JSONRPCResponse) {
