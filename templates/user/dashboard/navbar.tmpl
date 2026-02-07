@@ -79,7 +79,7 @@
 	{{if .ContextUser.IsOrganization}}
 		<div class="right menu tw-flex-wrap tw-justify-end">
 			<a class="{{if .PageIsNews}}active {{end}}item tw-ml-auto" href="{{.ContextUser.DashboardLink}}{{if .Team}}/{{PathEscape .Team.Name}}{{end}}">
-				{{svg "octicon-rss"}}&nbsp;{{ctx.Locale.Tr "activities"}}
+				{{svg "octicon-pulse"}}&nbsp;{{ctx.Locale.Tr "activities"}}
 			</a>
 			{{if not ctx.Consts.RepoUnitTypeIssues.UnitGlobalDisabled}}
 			<a class="{{if .PageIsIssues}}active {{end}}item" href="{{.ContextUser.OrganisationLink}}/issues{{if .Team}}/{{PathEscape .Team.Name}}{{end}}">

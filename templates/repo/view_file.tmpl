@@ -62,11 +62,6 @@
 					{{if not .IsDisplayingSource}}data-raw-file-link="{{$.RawFileLink}}"{{end}}
 					data-tooltip-content="{{if .CanCopyContent}}{{ctx.Locale.Tr "copy_content"}}{{else}}{{ctx.Locale.Tr "copy_type_unsupported"}}{{end}}"
 				>{{svg "octicon-copy"}}</a>
-				{{if and .EnableFeed .RefFullName.IsBranch}}
-				<a class="btn-octicon" href="{{$.RepoLink}}/atom/{{$.RefTypeNameSubURL}}/{{PathEscapeSegments .TreePath}}" data-tooltip-content="{{ctx.Locale.Tr "rss_feed"}}">
-					{{svg "octicon-rss"}}
-				</a>
-				{{end}}
 				{{if .Repository.CanEnableEditor}}
 					{{if .CanEditFile}}
 						<a class="btn-octicon" data-tooltip-content="{{.EditFileTooltip}}" href="{{.RepoLink}}/_edit/{{PathEscapeSegments .BranchName}}/{{PathEscapeSegments .TreePath}}">{{svg "octicon-pencil"}}</a>

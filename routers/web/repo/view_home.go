@@ -5,7 +5,6 @@ package repo
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -25,7 +24,6 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/svg"
 	"code.gitea.io/gitea/modules/util"
-	"code.gitea.io/gitea/routers/web/feed"
 	"code.gitea.io/gitea/services/context"
 	repo_service "code.gitea.io/gitea/services/repository"
 )
@@ -307,21 +305,7 @@ func prepareToRenderDirOrFile(entry *git.TreeEntry) func(ctx *context.Context) {
 }
 
 func handleRepoHomeFeed(ctx *context.Context) bool {
-	if !setting.Other.EnableFeed {
-		return false
-	}
-	isFeed, showFeedType := feed.GetFeedType(ctx.PathParam("reponame"), ctx.Req)
-	if !isFeed {
-		return false
-	}
-	if ctx.Link == fmt.Sprintf("%s.%s", ctx.Repo.RepoLink, showFeedType) {
-		feed.ShowRepoFeed(ctx, ctx.Repo.Repository, showFeedType)
-	} else if ctx.Repo.TreePath == "" {
-		feed.ShowBranchFeed(ctx, ctx.Repo.Repository, showFeedType)
-	} else {
-		feed.ShowFileFeed(ctx, ctx.Repo.Repository, showFeedType)
-	}
-	return true
+	return false
 }
 
 func prepareHomeTreeSideBarSwitch(ctx *context.Context) {

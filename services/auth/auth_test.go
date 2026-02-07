@@ -131,26 +131,3 @@ func Test_isGitRawOrLFSPath(t *testing.T) {
 	}
 }
 
-func Test_isFeedRequest(t *testing.T) {
-	tests := []struct {
-		want bool
-		path string
-	}{
-		{false, "/user.rss"},
-		{true, "/user.atom"},
-		{true, "/user/repo.atom"},
-		{false, "/user/repo"},
-		{false, "/use/repo/file.rss"},
-
-		{false, "/org/repo/rss/branch/xxx"},
-		{true, "/org/repo/atom/tag/xxx"},
-		{false, "/org/repo/branch/main/rss/any"},
-		{false, "/org/atom/any"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.path, func(t *testing.T) {
-			req, _ := http.NewRequest(http.MethodGet, "http://localhost"+tt.path, nil)
-			assert.Equal(t, tt.want, newAuthPathDetector(req).isFeedRequest(req))
-		})
-	}
-}

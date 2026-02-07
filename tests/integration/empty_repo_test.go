@@ -75,11 +75,6 @@ func TestEmptyRepoAddFile(t *testing.T) {
 	req = NewRequest(t, "GET", "/api/v1/repos/user30/empty/raw/main/README.md").AddTokenAuth(token)
 	session.MakeRequest(t, req, http.StatusNotFound)
 
-	// test feed
-	req = NewRequest(t, "GET", "/user30/empty/atom/branch/main/README.md").AddTokenAuth(token).SetHeader("Accept", "application/atom+xml")
-	resp = session.MakeRequest(t, req, http.StatusOK)
-	assert.Contains(t, resp.Body.String(), "</feed>")
-
 	// create a new file
 	req = NewRequest(t, "GET", "/user30/empty/_new/"+setting.Repository.DefaultBranch)
 	resp = session.MakeRequest(t, req, http.StatusOK)

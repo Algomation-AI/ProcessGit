@@ -8,20 +8,16 @@ import (
 	"testing"
 
 	"code.gitea.io/gitea/tests"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestFeedUser(t *testing.T) {
 	t.Run("User", func(t *testing.T) {
-		t.Run("Atom", func(t *testing.T) {
+		t.Run("AtomDisabled", func(t *testing.T) {
 			defer tests.PrepareTestEnv(t)()
 
+			// Feed support has been removed; .atom URLs should return 404
 			req := NewRequest(t, "GET", "/user2.atom")
-			resp := MakeRequest(t, req, http.StatusOK)
-
-			data := resp.Body.String()
-			assert.Contains(t, data, `<feed xmlns="http://www.w3.org/2005/Atom"`)
+			MakeRequest(t, req, http.StatusNotFound)
 		})
 	})
 }

@@ -69,7 +69,7 @@ func NodeInfo(ctx *context.APIContext) {
 		Protocols: []string{"activitypub"},
 		Services: structs.NodeInfoServices{
 			Inbound:  []string{},
-			Outbound: []string{"atom1.0"},
+			Outbound: []string{},
 		},
 		OpenRegistrations: setting.Service.ShowRegistrationButton,
 		Usage:             nodeInfoUsage,

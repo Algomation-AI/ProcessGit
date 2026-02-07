@@ -29,7 +29,6 @@ import (
 	"code.gitea.io/gitea/routers/web/devtest"
 	"code.gitea.io/gitea/routers/web/events"
 	"code.gitea.io/gitea/routers/web/explore"
-	"code.gitea.io/gitea/routers/web/feed"
 	"code.gitea.io/gitea/routers/web/healthcheck"
 	"code.gitea.io/gitea/routers/web/misc"
 	"code.gitea.io/gitea/routers/web/org"
@@ -379,13 +378,6 @@ func registerWebRoutes(m *web.Router) {
 	packagesEnabled := func(ctx *context.Context) {
 		if !setting.Packages.Enabled {
 			ctx.HTTPError(http.StatusForbidden)
-			return
-		}
-	}
-
-	feedEnabled := func(ctx *context.Context) {
-		if !setting.Other.EnableFeed {
-			ctx.HTTPError(http.StatusNotFound)
 			return
 		}
 	}
@@ -1180,7 +1172,7 @@ func registerWebRoutes(m *web.Router) {
 	)
 	// end "/{username}/{reponame}/settings"
 
-	// user/org home, including atom feeds like "/{username}/{reponame}.atom"
+	// user/org home
 	m.Get("/{username}/{reponame}", optSignIn, context.RepoAssignment, context.RepoRefByType(git.RefTypeBranch), repo.SetEditorconfigIfExists, repo.Home)
 
 	m.Post("/{username}/{reponame}/markup", optSignIn, context.RepoAssignment, reqUnitsWithMarkdown, web.Bind(structs.MarkupOption{}), misc.Markup)
@@ -1394,9 +1386,8 @@ func registerWebRoutes(m *web.Router) {
 	m.Group("/{username}/{reponame}", func() { // repo tags
 		m.Group("/tags", func() {
 			m.Get("", context.RepoRefByDefaultBranch() /* for the "commits" tab */, repo.TagsList)
-			m.Get(".atom", feedEnabled, repo.TagsListFeedAtom)
 			m.Get("/list", repo.GetTagList)
-		}, ctxDataSet("EnableFeed", setting.Other.EnableFeed))
+		})
 		m.Post("/tags/delete", reqSignIn, reqRepoCodeWriter, context.RepoMustNotBeArchived(), repo.DeleteTag)
 	}, optSignIn, context.RepoAssignment, repo.MustBeNotEmpty, reqUnitCodeReader)
 	// end "/{username}/{reponame}": repo tags
@@ -1404,10 +1395,9 @@ func registerWebRoutes(m *web.Router) {
 	m.Group("/{username}/{reponame}", func() { // repo releases
 		m.Group("/releases", func() {
 			m.Get("", repo.Releases)
-			m.Get(".atom", feedEnabled, repo.ReleasesFeedAtom)
 			m.Get("/tag/*", repo.SingleRelease)
 			m.Get("/latest", repo.LatestRelease)
-		}, ctxDataSet("EnableFeed", setting.Other.EnableFeed))
+		})
 		m.Get("/releases/attachments/{uuid}", repo.GetAttachment)
 		m.Get("/releases/download/{vTag}/{fileName}", repo.RedirectDownload)
 		m.Group("/releases", func() {
@@ -1637,8 +1627,6 @@ func registerWebRoutes(m *web.Router) {
 			// FIXME: this route `/cherry-pick/{sha}` doesn't seem useful or right, the new code always uses `/_cherrypick/` which could handle branch name correctly
 			m.Get("/cherry-pick/{sha:([a-f0-9]{7,64})$}", repo.SetEditorconfigIfExists, context.RepoRefByDefaultBranch(), repo.CherryPick)
 		}, repo.MustBeNotEmpty)
-
-		m.Get("/atom/branch/*", context.RepoRefByType(git.RefTypeBranch), feedEnabled, feed.RenderBranchFeedAtom)
 
 		m.Group("/src", func() {
 			m.Get("", func(ctx *context.Context) { ctx.Redirect(ctx.Repo.RepoLink) }) // there is no "{owner}/{repo}/src" page, so redirect to "{owner}/{repo}" to avoid 404

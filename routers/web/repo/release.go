@@ -26,7 +26,6 @@ import (
 	"code.gitea.io/gitea/modules/templates"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
-	"code.gitea.io/gitea/routers/web/feed"
 	shared_user "code.gitea.io/gitea/routers/web/shared/user"
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/context/upload"
@@ -244,20 +243,6 @@ func TagsList(ctx *context.Context) {
 	ctx.Data["Page"] = pager
 	ctx.Data["PageIsViewCode"] = !ctx.Repo.Repository.UnitEnabled(ctx, unit.TypeReleases)
 	ctx.HTML(http.StatusOK, tplTagsList)
-}
-
-// ReleasesFeedAtom get feeds for releases in Atom format
-func ReleasesFeedAtom(ctx *context.Context) {
-	releasesOrTagsFeed(ctx, true, "atom")
-}
-
-// TagsListFeedAtom get feeds for tags in Atom format
-func TagsListFeedAtom(ctx *context.Context) {
-	releasesOrTagsFeed(ctx, false, "atom")
-}
-
-func releasesOrTagsFeed(ctx *context.Context, isReleasesOnly bool, formatType string) {
-	feed.ShowReleaseFeed(ctx, ctx.Repo.Repository, isReleasesOnly, formatType)
 }
 
 // SingleRelease renders a single release's page

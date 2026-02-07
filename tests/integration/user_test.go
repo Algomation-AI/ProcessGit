@@ -283,20 +283,13 @@ func testExportUserGPGKeys(t *testing.T, user, expected string) {
 	assert.Equal(t, expected, resp.Body.String())
 }
 
-func TestGetUserAtom(t *testing.T) {
+func TestGetUserAtomDisabled(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
+	// Feed support has been removed; .atom URLs should return 404
 	user34 := "the_34-user.with.all.allowedChars"
 	req := NewRequestf(t, "GET", "/%s.atom", user34)
-	resp := MakeRequest(t, req, http.StatusOK)
-	assert.Equal(t, "application/atom+xml;charset=utf-8", resp.Header().Get("Content-Type"))
-
-	req = NewRequestf(t, "GET", "/non-existent-user.atom")
 	MakeRequest(t, req, http.StatusNotFound)
-
-	session := loginUser(t, "user2")
-	req = NewRequestf(t, "GET", "/non-existent-user.atom")
-	session.MakeRequest(t, req, http.StatusNotFound)
 }
 
 func TestListStopWatches(t *testing.T) {

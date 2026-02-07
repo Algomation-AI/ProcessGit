@@ -34,7 +34,6 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/templates"
 	"code.gitea.io/gitea/modules/util"
-	"code.gitea.io/gitea/routers/web/feed"
 	"code.gitea.io/gitea/routers/web/shared/issue"
 	"code.gitea.io/gitea/routers/web/shared/user"
 	"code.gitea.io/gitea/services/context"
@@ -743,18 +742,9 @@ func UsernameSubRoute(ctx *context.Context) {
 		if reloadParam(".gpg") {
 			ShowGPGKeys(ctx)
 		}
-	case strings.HasSuffix(username, ".atom"):
-		if !setting.Other.EnableFeed {
-			ctx.HTTPError(http.StatusNotFound)
-			return
-		}
-		if reloadParam(".atom") {
-			feed.ShowUserFeedAtom(ctx)
-		}
 	default:
 		context.UserAssignmentWeb()(ctx)
 		if !ctx.Written() {
-			ctx.Data["EnableFeed"] = setting.Other.EnableFeed
 			OwnerProfile(ctx)
 		}
 	}
