@@ -18,6 +18,15 @@ const MaxRequestBodySize = 1024 * 1024 // 1 MB
 // ServeHTTP handles an MCP HTTP request.
 // Supports both POST (single JSON-RPC request) and GET (SSE streaming).
 func ServeHTTP(w http.ResponseWriter, r *http.Request, toolCtx *ToolContext) {
+	// Handle CORS preflight
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		serveSSE(w, r, toolCtx)
@@ -30,6 +39,17 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request, toolCtx *ToolContext) {
 
 // handlePost processes a single POST JSON-RPC request.
 func handlePost(w http.ResponseWriter, r *http.Request, toolCtx *ToolContext) {
+	// Set CORS headers for browser clients
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	// Handle preflight OPTIONS request
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	// Check if this is a message to an SSE session
 	sessionID := r.Header.Get("Mcp-Session-Id")
 	if sessionID != "" {
