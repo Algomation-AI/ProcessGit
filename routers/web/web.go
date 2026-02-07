@@ -1194,6 +1194,7 @@ func registerWebRoutes(m *web.Router) {
 
 	// MCP endpoint — Model Context Protocol server for repository
 	m.Group("/{username}/{reponame}/mcp", func() {
+		m.Options("", repo.MCPEndpoint)
 		m.Post("", repo.MCPEndpoint)
 		m.Get("", repo.MCPEndpoint)
 	}, optSignInIgnoreCsrf, context.RepoAssignment)
