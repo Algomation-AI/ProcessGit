@@ -428,11 +428,6 @@ func RepoAssignment(ctx *Context) {
 	userName := ctx.PathParam("username")
 	repoName := ctx.PathParam("reponame")
 	repoName = strings.TrimSuffix(repoName, ".git")
-	if setting.Other.EnableFeed {
-		ctx.Data["EnableFeed"] = true
-		repoName = strings.TrimSuffix(repoName, ".rss")
-		repoName = strings.TrimSuffix(repoName, ".atom")
-	}
 
 	// Check if the user is the same as the repository owner
 	if ctx.IsSigned && strings.EqualFold(ctx.Doer.LowerName, userName) {
@@ -514,7 +509,6 @@ func RepoAssignment(ctx *Context) {
 
 	ctx.Repo.RepoLink = repo.Link()
 	ctx.Data["RepoLink"] = ctx.Repo.RepoLink
-	ctx.Data["FeedURL"] = ctx.Repo.RepoLink
 
 	unit, err := ctx.Repo.Repository.GetUnit(ctx, unit_model.TypeExternalTracker)
 	if err == nil {

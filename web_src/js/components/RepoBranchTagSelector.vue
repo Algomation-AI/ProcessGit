@@ -10,7 +10,6 @@ type ListItem = {
   selected: boolean;
   refShortName: string;
   refType: GitRefType;
-  rssFeedLink: string;
 };
 
 type SelectedTab = 'branches' | 'tags';
@@ -62,7 +61,6 @@ export default defineComponent({
       showTabTags: this.elRoot.getAttribute('data-show-tab-tags') === 'true',
       allowCreateNewRef: this.elRoot.getAttribute('data-allow-create-new-ref') === 'true',
       showViewAllRefsEntry: this.elRoot.getAttribute('data-show-view-all-refs-entry') === 'true',
-      enableFeed: this.elRoot.getAttribute('data-enable-feed') === 'true',
     };
   },
   computed: {
@@ -116,7 +114,7 @@ export default defineComponent({
     if (this.refFormActionTemplate) {
       // if the selector is used in a form and needs to change the form action,
       // make a mock item and select it to update the form action
-      const item: ListItem = {selected: true, refType: this.currentRefType, refShortName: this.currentRefShortName, rssFeedLink: ''};
+      const item: ListItem = {selected: true, refType: this.currentRefType, refShortName: this.currentRefShortName};
       this.selectItem(item);
     }
   },
@@ -204,7 +202,6 @@ export default defineComponent({
             refType,
             refShortName,
             selected: refType === this.currentRefType && refShortName === this.currentRefShortName,
-            rssFeedLink: `${this.currentRepoLink}/rss/${refType}/${pathEscapeSegments(refShortName)}`,
           };
           this.allItems.push(item);
         }
@@ -247,17 +244,12 @@ export default defineComponent({
       </div>
       <div class="branch-tag-divider"/>
       <div class="scrolling menu" ref="scrollContainer">
-        <svg-icon name="octicon-rss" symbol-id="svg-symbol-octicon-rss"/>
         <div class="loading-indicator is-loading" v-if="tabLoadingStates[selectedTab] === 'loading'"/>
         <div v-for="(item, index) in filteredItems" :key="item.refShortName" class="item" :class="{selected: item.selected, active: activeItemIndex === index}" @click="selectItem(item)" :ref="'listItem' + index">
           {{ item.refShortName }}
           <div class="ui label" v-if="item.refType === 'branch' && item.refShortName === currentRepoDefaultBranch">
             {{ textDefaultBranchLabel }}
           </div>
-          <a v-if="enableFeed && selectedTab === 'branches'" role="button" class="rss-icon" target="_blank" @click.stop :href="item.rssFeedLink">
-            <!-- creating a lot of Vue component is pretty slow, so we use a static SVG here -->
-            <svg width="14" height="14" class="svg octicon-rss"><use href="#svg-symbol-octicon-rss"/></svg>
-          </a>
         </div>
         <div class="item" v-if="showCreateNewRef" :class="{active: activeItemIndex === filteredItems.length}" :ref="'listItem' + filteredItems.length" @click="createNewRef()">
           <div v-if="selectedTab === 'tags'">

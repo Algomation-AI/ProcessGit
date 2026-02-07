@@ -2044,16 +2044,6 @@ tbody.commit-list {
   border-top: none !important;
 }
 
-.branch-selector-dropdown .menu .item .rss-icon {
-  position: absolute;
-  right: 4px;
-  visibility: hidden; /* only show RSS icon on hover */
-}
-
-.branch-selector-dropdown .menu .item:hover .rss-icon {
-  visibility: visible;
-}
-
 .branch-selector-dropdown .scrolling.menu .loading-indicator {
   height: 4em;
 }

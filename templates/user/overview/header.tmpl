@@ -31,7 +31,7 @@
 		{{end}}
 		{{if .ContextUser.IsIndividual}}
 			<a class="{{if eq .TabName "activity"}}active {{end}}item" href="{{.ContextUser.HomeLink}}?tab=activity">
-				{{svg "octicon-rss"}} {{ctx.Locale.Tr "user.activity"}}
+				{{svg "octicon-pulse"}} {{ctx.Locale.Tr "user.activity"}}
 			</a>
 			{{if not .DisableStars}}
 			<a class="{{if eq .TabName "stars"}}active {{end}}item" href="{{.ContextUser.HomeLink}}?tab=stars">

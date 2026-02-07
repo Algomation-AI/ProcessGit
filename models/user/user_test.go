@@ -37,7 +37,7 @@ func TestIsUsableUsername(t *testing.T) {
 	assert.Error(t, user_model.IsUsableUsername("-"))
 	assert.Error(t, user_model.IsUsableUsername("🌞"))
 	assert.Error(t, user_model.IsUsableUsername("the..repo"))
-	assert.Error(t, user_model.IsUsableUsername("foo.RSS"))
+	assert.NoError(t, user_model.IsUsableUsername("foo.RSS"))
 	assert.Error(t, user_model.IsUsableUsername("foo.PnG"))
 }
 

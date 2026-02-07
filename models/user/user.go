@@ -619,9 +619,9 @@ var (
 		"gitea-actions", // gitea builtin user (id: -2)
 	}
 
-	// These names are reserved for user accounts: user's keys, user's rss feed, user's avatar, etc.
+	// These names are reserved for user accounts: user's keys, user's avatar, etc.
 	// DO NOT add any new stuff! The paths with these names are processed by `/{username}` handler (UsernameSubRoute) manually.
-	reservedUserPatterns = []string{"*.keys", "*.gpg", "*.rss", "*.atom", "*.png"}
+	reservedUserPatterns = []string{"*.keys", "*.gpg", "*.png"}
 )
 
 // IsUsableUsername returns an error when a username is reserved

@@ -142,8 +142,6 @@ const (
 func RenderUserOrgHeader(ctx *context.Context) (result *PrepareOwnerHeaderResult, err error) {
 	ctx.Data["IsPackageEnabled"] = setting.Packages.Enabled
 	ctx.Data["IsRepoIndexerEnabled"] = setting.Indexer.RepoIndexerEnabled
-	ctx.Data["EnableFeed"] = setting.Other.EnableFeed
-	ctx.Data["FeedURL"] = ctx.ContextUser.HomeLink()
 
 	if err := loadHeaderCount(ctx); err != nil {
 		return nil, err

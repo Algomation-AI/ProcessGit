@@ -946,11 +946,6 @@ tr.top-line-blame:first-of-type {
   width: 14px;
 }
 
-.rss-icon {
-  display: inline-flex;
-  color: var(--color-text-light-1);
-}
-
 table th[data-sortt-asc]:hover,
 table th[data-sortt-desc]:hover {
   background: var(--color-hover) !important;

@@ -9,7 +9,6 @@ type OtherConfig struct {
 	ShowFooterVersion          bool
 	ShowFooterTemplateLoadTime bool
 	ShowFooterPoweredBy        bool
-	EnableFeed                 bool
 	EnableSitemap              bool
 }
 
@@ -18,7 +17,6 @@ var Other = OtherConfig{
 	ShowFooterTemplateLoadTime: true,
 	ShowFooterPoweredBy:        true,
 	EnableSitemap:              true,
-	EnableFeed:                 true,
 }
 
 func loadOtherFrom(rootCfg ConfigProvider) {
