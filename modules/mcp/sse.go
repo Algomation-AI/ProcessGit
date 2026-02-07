@@ -148,8 +148,10 @@ func serveSSE(w http.ResponseWriter, r *http.Request, toolCtx *ToolContext) {
 	log.Info("MCP SSE: session %s started for repo %d from %s", sessionID, toolCtx.RepoID, r.RemoteAddr)
 
 	// Send the endpoint event so the client knows where to POST messages
-	endpointURI := r.URL.Path
-	if err := writeSSEEvent(w, flusher, "endpoint", endpointURI); err != nil {
+	endpointEvent := map[string]string{
+		"uri": r.URL.Path,
+	}
+	if err := writeSSEEvent(w, flusher, "endpoint", endpointEvent); err != nil {
 		log.Error("MCP SSE: failed to send endpoint event: %v", err)
 		return
 	}
