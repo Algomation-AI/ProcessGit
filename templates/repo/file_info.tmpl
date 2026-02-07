@@ -46,20 +46,16 @@
 		</div>
 	{{end}}
 	{{if and .BlobName (or (eq .BlobName "processgit.mcp.yaml") (StringUtils.HasSuffix .BlobName ".mcp.yaml"))}}
-		<span class="ui label mcp-badge" style="margin-left: 8px; background: #4CAF50; color: white;">
+		<span class="ui label mcp-badge"
+			data-tooltip-content="MCP Server Configuration"
+			data-position="bottom center">
 			{{svg "octicon-plug" 14}} MCP Server
 		</span>
-		<div class="ui popup mcp-popup">
-			<div class="header">MCP Server Configuration</div>
-			<div class="content">
-				<p><strong>Endpoint:</strong> <code>{{.MCPEndpoint}}</code></p>
-				<button class="ui mini button" onclick="copyMCPUrl('{{.MCPEndpoint}}')">
-					{{svg "octicon-copy" 14}} Copy URL
-				</button>
-				<button class="ui mini button" onclick="testMCPConnection('{{.MCPEndpoint}}')">
-					{{svg "octicon-check" 14}} Test Connection
-				</button>
-			</div>
-		</div>
+		<button class="ui mini icon button"
+			onclick="navigator.clipboard.writeText('{{.MCPEndpoint}}');this.setAttribute('data-tooltip-content','Copied!')"
+			data-tooltip-content="Copy MCP URL"
+			style="margin-left: 4px;">
+			{{svg "octicon-copy" 14}}
+		</button>
 	{{end}}
 </div>

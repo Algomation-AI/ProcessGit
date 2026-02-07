@@ -179,47 +179,4 @@
 			</div>
 		</div>
 	</div>
-
-	{{if and .BlobName (or (eq .BlobName "processgit.mcp.yaml") (StringUtils.HasSuffix .BlobName ".mcp.yaml"))}}
-	<script>
-	function copyMCPUrl(url) {
-		navigator.clipboard.writeText(url);
-		alert('MCP URL copied to clipboard!');
-	}
-
-	function testMCPConnection(url) {
-		fetch(url, {
-			method: 'POST',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({
-				jsonrpc: '2.0',
-				id: 1,
-				method: 'initialize',
-				params: {
-					protocolVersion: '2025-03-26',
-					capabilities: {},
-					clientInfo: {name: 'processgit-ui', version: '1.0'}
-				}
-			})
-		})
-		.then(function(r) { return r.json(); })
-		.then(function(data) {
-			if (data.result && data.result.serverInfo) {
-				alert('MCP Server Active: ' + data.result.serverInfo.name);
-			} else {
-				alert('Invalid response from MCP server');
-			}
-		})
-		.catch(function(err) { alert('Connection failed: ' + err.message); });
-	}
-
-	$(document).ready(function() {
-		$('.mcp-badge').popup({
-			on: 'click',
-			position: 'bottom center',
-			popup: '.mcp-popup'
-		});
-	});
-	</script>
-	{{end}}
 </div>
