@@ -1,0 +1,62 @@
+/* MCP Badge Styles */
+.mcp-badge {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mcp-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.mcp-popup {
+  min-width: 300px;
+}
+
+.mcp-popup .header {
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #2185d0;
+}
+
+.mcp-popup code {
+  background: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-family: Monaco, Consolas, monospace;
+  font-size: 12px;
+}
+
+/* MCP Header Indicator Styles */
+.mcp-header-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mcp-header-indicator:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.mcp-header-indicator .detail {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.mcp-header-popup {
+  max-width: 400px;
+}
+
+.mcp-header-popup .ui.list .item {
+  padding: 8px 0;
+}
+
+.mcp-header-popup .header {
+  font-weight: 600;
+  margin-bottom: 4px;
+}

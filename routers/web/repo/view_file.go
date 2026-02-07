@@ -219,6 +219,15 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 	ctx.Data["IsProcessGitViewer"] = false
 	ctx.Data["ProcessGitViewerPayload"] = nil
 
+	// MCP badge: expose the file base name so the template can detect .mcp.yaml files
+	ctx.Data["BlobName"] = path.Base(ctx.Repo.TreePath)
+
+	// Build MCP endpoint URL for the badge popup
+	mcpEndpoint := fmt.Sprintf("%s%s/mcp",
+		setting.AppURL,
+		strings.TrimPrefix(ctx.Repo.RepoLink, "/"))
+	ctx.Data["MCPEndpoint"] = mcpEndpoint
+
 	if !prepareLatestCommitInfo(ctx) {
 		return
 	}
