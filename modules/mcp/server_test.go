@@ -6,6 +6,8 @@ package mcp
 import (
 	"testing"
 
+	"code.gitea.io/gitea/modules/json"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -57,6 +59,35 @@ func TestHandleJSONRPC_Initialize(t *testing.T) {
 	assert.Equal(t, MCPProtocolVersion, result.ProtocolVersion)
 	assert.Equal(t, "Test Server", result.ServerInfo.Name)
 	assert.NotNil(t, result.Capabilities.Tools)
+}
+
+func TestHandleJSONRPC_InitializeCapabilitiesJSON(t *testing.T) {
+	ctx := newTestToolContext()
+	req := &JSONRPCRequest{
+		JSONRPC: "2.0",
+		ID:      float64(1),
+		Method:  "initialize",
+	}
+
+	resp := HandleJSONRPC(req, ctx)
+	require.NotNil(t, resp)
+
+	// Marshal and verify the JSON output includes "tools" in capabilities
+	data, err := json.Marshal(resp)
+	require.NoError(t, err)
+
+	var raw map[string]interface{}
+	err = json.Unmarshal(data, &raw)
+	require.NoError(t, err)
+
+	result, ok := raw["result"].(map[string]interface{})
+	require.True(t, ok, "result should be a JSON object")
+
+	capabilities, ok := result["capabilities"].(map[string]interface{})
+	require.True(t, ok, "capabilities should be a JSON object")
+
+	_, hasTools := capabilities["tools"]
+	assert.True(t, hasTools, "capabilities must contain 'tools' key for MCP clients to discover tool support")
 }
 
 func TestHandleJSONRPC_ToolsList(t *testing.T) {
