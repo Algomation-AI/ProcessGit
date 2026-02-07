@@ -430,7 +430,6 @@ func RepoAssignment(ctx *Context) {
 	repoName = strings.TrimSuffix(repoName, ".git")
 	if setting.Other.EnableFeed {
 		ctx.Data["EnableFeed"] = true
-		repoName = strings.TrimSuffix(repoName, ".rss")
 		repoName = strings.TrimSuffix(repoName, ".atom")
 	}
 

@@ -136,12 +136,13 @@ func Test_isFeedRequest(t *testing.T) {
 		want bool
 		path string
 	}{
-		{true, "/user.rss"},
+		{false, "/user.rss"},
+		{true, "/user.atom"},
 		{true, "/user/repo.atom"},
 		{false, "/user/repo"},
 		{false, "/use/repo/file.rss"},
 
-		{true, "/org/repo/rss/branch/xxx"},
+		{false, "/org/repo/rss/branch/xxx"},
 		{true, "/org/repo/atom/tag/xxx"},
 		{false, "/org/repo/branch/main/rss/any"},
 		{false, "/org/atom/any"},

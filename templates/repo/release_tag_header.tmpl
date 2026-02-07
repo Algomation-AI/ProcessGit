@@ -12,7 +12,7 @@
 			</h2>
 		</div>
 		{{if .EnableFeed}}
-			<a class="ui small button" href="{{.RepoLink}}/{{if .PageIsTagList}}tags{{else}}releases{{end}}.rss">
+			<a class="ui small button" href="{{.RepoLink}}/{{if .PageIsTagList}}tags{{else}}releases{{end}}.atom">
 				{{svg "octicon-rss" 16}} {{ctx.Locale.Tr "rss_feed"}}
 			</a>
 		{{end}}

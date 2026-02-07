@@ -1180,7 +1180,7 @@ func registerWebRoutes(m *web.Router) {
 	)
 	// end "/{username}/{reponame}/settings"
 
-	// user/org home, including rss feeds like "/{username}/{reponame}.rss"
+	// user/org home, including atom feeds like "/{username}/{reponame}.atom"
 	m.Get("/{username}/{reponame}", optSignIn, context.RepoAssignment, context.RepoRefByType(git.RefTypeBranch), repo.SetEditorconfigIfExists, repo.Home)
 
 	m.Post("/{username}/{reponame}/markup", optSignIn, context.RepoAssignment, reqUnitsWithMarkdown, web.Bind(structs.MarkupOption{}), misc.Markup)
@@ -1394,7 +1394,6 @@ func registerWebRoutes(m *web.Router) {
 	m.Group("/{username}/{reponame}", func() { // repo tags
 		m.Group("/tags", func() {
 			m.Get("", context.RepoRefByDefaultBranch() /* for the "commits" tab */, repo.TagsList)
-			m.Get(".rss", feedEnabled, repo.TagsListFeedRSS)
 			m.Get(".atom", feedEnabled, repo.TagsListFeedAtom)
 			m.Get("/list", repo.GetTagList)
 		}, ctxDataSet("EnableFeed", setting.Other.EnableFeed))
@@ -1405,7 +1404,6 @@ func registerWebRoutes(m *web.Router) {
 	m.Group("/{username}/{reponame}", func() { // repo releases
 		m.Group("/releases", func() {
 			m.Get("", repo.Releases)
-			m.Get(".rss", feedEnabled, repo.ReleasesFeedRSS)
 			m.Get(".atom", feedEnabled, repo.ReleasesFeedAtom)
 			m.Get("/tag/*", repo.SingleRelease)
 			m.Get("/latest", repo.LatestRelease)
@@ -1640,7 +1638,6 @@ func registerWebRoutes(m *web.Router) {
 			m.Get("/cherry-pick/{sha:([a-f0-9]{7,64})$}", repo.SetEditorconfigIfExists, context.RepoRefByDefaultBranch(), repo.CherryPick)
 		}, repo.MustBeNotEmpty)
 
-		m.Get("/rss/branch/*", context.RepoRefByType(git.RefTypeBranch), feedEnabled, feed.RenderBranchFeedRSS)
 		m.Get("/atom/branch/*", context.RepoRefByType(git.RefTypeBranch), feedEnabled, feed.RenderBranchFeedAtom)
 
 		m.Group("/src", func() {

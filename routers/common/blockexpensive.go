@@ -48,7 +48,7 @@ func isRoutePathExpensive(routePattern string) bool {
 		"/{username}/{reponame}/graph",
 		"/{username}/{reponame}/media/",
 		"/{username}/{reponame}/raw/",
-		"/{username}/{reponame}/rss/branch/",
+		"/{username}/{reponame}/atom/branch/",
 		"/{username}/{reponame}/src/",
 
 		// issue & PR related (no trailing slash)

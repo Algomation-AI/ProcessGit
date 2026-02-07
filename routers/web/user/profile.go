@@ -37,10 +37,6 @@ const (
 
 // OwnerProfile render profile page for a user or a organization (aka, repo owner)
 func OwnerProfile(ctx *context.Context) {
-	if strings.Contains(ctx.Req.Header.Get("Accept"), "application/rss+xml") {
-		feed.ShowUserFeedRSS(ctx)
-		return
-	}
 	if strings.Contains(ctx.Req.Header.Get("Accept"), "application/atom+xml") {
 		feed.ShowUserFeedAtom(ctx)
 		return

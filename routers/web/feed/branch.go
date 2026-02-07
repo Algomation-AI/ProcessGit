@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/feeds"
 )
 
-// ShowBranchFeed shows tags and/or releases on the repo as RSS / Atom feed
+// ShowBranchFeed shows tags and/or releases on the repo as Atom feed
 func ShowBranchFeed(ctx *context.Context, repo *repo.Repository, formatType string) {
 	var commits []*git.Commit
 	var err error

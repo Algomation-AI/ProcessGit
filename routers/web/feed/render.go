@@ -16,10 +16,6 @@ func RenderBranchFeed(ctx *context.Context, feedType string) {
 	}
 }
 
-func RenderBranchFeedRSS(ctx *context.Context) {
-	RenderBranchFeed(ctx, "rss")
-}
-
 func RenderBranchFeedAtom(ctx *context.Context) {
 	RenderBranchFeed(ctx, "atom")
 }

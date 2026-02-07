@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/feeds"
 )
 
-// shows tags and/or releases on the repo as RSS / Atom feed
+// shows tags and/or releases on the repo as Atom feed
 func ShowReleaseFeed(ctx *context.Context, repo *repo_model.Repository, isReleasesOnly bool, formatType string) {
 	releases, err := db.Find[repo_model.Release](ctx, repo_model.FindReleasesOptions{
 		IncludeTags: !isReleasesOnly,

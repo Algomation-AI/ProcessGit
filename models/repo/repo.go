@@ -75,7 +75,7 @@ var globalVars = sync.OnceValue(func() *globalVarsStruct {
 		validRepoNamePattern:     regexp.MustCompile(`^[-.\w]+$`),
 		invalidRepoNamePattern:   regexp.MustCompile(`[.]{2,}`),
 		reservedRepoNames:        []string{".", "..", "-"},
-		reservedRepoNamePatterns: []string{"*.wiki", "*.git", "*.rss", "*.atom"},
+		reservedRepoNamePatterns: []string{"*.wiki", "*.git", "*.atom"},
 	}
 })
 

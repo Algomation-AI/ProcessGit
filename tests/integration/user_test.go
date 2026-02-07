@@ -283,25 +283,19 @@ func testExportUserGPGKeys(t *testing.T, user, expected string) {
 	assert.Equal(t, expected, resp.Body.String())
 }
 
-func TestGetUserRss(t *testing.T) {
+func TestGetUserAtom(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	user34 := "the_34-user.with.all.allowedChars"
-	req := NewRequestf(t, "GET", "/%s.rss", user34)
+	req := NewRequestf(t, "GET", "/%s.atom", user34)
 	resp := MakeRequest(t, req, http.StatusOK)
-	if assert.Equal(t, "application/rss+xml;charset=utf-8", resp.Header().Get("Content-Type")) {
-		rssDoc := NewHTMLParser(t, resp.Body).Find("channel")
-		title, _ := rssDoc.ChildrenFiltered("title").Html()
-		assert.Equal(t, "Feed of &#34;the_1-user.with.all.allowedChars&#34;", title)
-		description, _ := rssDoc.ChildrenFiltered("description").Html()
-		assert.Equal(t, "&lt;p dir=&#34;auto&#34;&gt;some &lt;a href=&#34;https://commonmark.org/&#34; rel=&#34;nofollow&#34;&gt;commonmark&lt;/a&gt;!&lt;/p&gt;\n", description)
-	}
+	assert.Equal(t, "application/atom+xml;charset=utf-8", resp.Header().Get("Content-Type"))
 
-	req = NewRequestf(t, "GET", "/non-existent-user.rss")
+	req = NewRequestf(t, "GET", "/non-existent-user.atom")
 	MakeRequest(t, req, http.StatusNotFound)
 
 	session := loginUser(t, "user2")
-	req = NewRequestf(t, "GET", "/non-existent-user.rss")
+	req = NewRequestf(t, "GET", "/non-existent-user.atom")
 	session.MakeRequest(t, req, http.StatusNotFound)
 }
 

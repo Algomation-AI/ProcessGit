@@ -246,22 +246,12 @@ func TagsList(ctx *context.Context) {
 	ctx.HTML(http.StatusOK, tplTagsList)
 }
 
-// ReleasesFeedRSS get feeds for releases in RSS format
-func ReleasesFeedRSS(ctx *context.Context) {
-	releasesOrTagsFeed(ctx, true, "rss")
-}
-
-// TagsListFeedRSS get feeds for tags in RSS format
-func TagsListFeedRSS(ctx *context.Context) {
-	releasesOrTagsFeed(ctx, false, "rss")
-}
-
 // ReleasesFeedAtom get feeds for releases in Atom format
 func ReleasesFeedAtom(ctx *context.Context) {
 	releasesOrTagsFeed(ctx, true, "atom")
 }
 
-// TagsListFeedAtom get feeds for tags in RSS format
+// TagsListFeedAtom get feeds for tags in Atom format
 func TagsListFeedAtom(ctx *context.Context) {
 	releasesOrTagsFeed(ctx, false, "atom")
 }

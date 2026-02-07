@@ -219,7 +219,7 @@ func TestIsUsableRepoName(t *testing.T) {
 	assert.Error(t, IsUsableRepoName("the..repo"))
 	assert.Error(t, IsUsableRepoName("foo.wiki"))
 	assert.Error(t, IsUsableRepoName("foo.git"))
-	assert.Error(t, IsUsableRepoName("foo.RSS"))
+	assert.NoError(t, IsUsableRepoName("foo.RSS"))
 }
 
 func TestIsValidSSHAccessRepoName(t *testing.T) {
@@ -233,5 +233,5 @@ func TestIsValidSSHAccessRepoName(t *testing.T) {
 	assert.False(t, IsValidSSHAccessRepoName("the/repo"))
 	assert.False(t, IsValidSSHAccessRepoName("the..repo"))
 	assert.False(t, IsValidSSHAccessRepoName("foo.git"))
-	assert.False(t, IsValidSSHAccessRepoName("foo.RSS"))
+	assert.True(t, IsValidSSHAccessRepoName("foo.RSS"))
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/feeds"
 )
 
-// ShowRepoFeed shows user activity on the repo as RSS / Atom feed
+// ShowRepoFeed shows user activity on the repo as Atom feed
 func ShowRepoFeed(ctx *context.Context, repo *repo_model.Repository, formatType string) {
 	actions, _, err := feed_service.GetFeeds(ctx, activities_model.GetFeedsOptions{
 		RequestedRepo:  repo,

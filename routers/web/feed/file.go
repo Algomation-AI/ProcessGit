@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/feeds"
 )
 
-// ShowFileFeed shows tags and/or releases on the repo as RSS / Atom feed
+// ShowFileFeed shows tags and/or releases on the repo as Atom feed
 func ShowFileFeed(ctx *context.Context, repo *repo.Repository, formatType string) {
 	fileName := ctx.Repo.TreePath
 	if len(fileName) == 0 {
