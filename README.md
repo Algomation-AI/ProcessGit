@@ -406,4 +406,13 @@ Contributions are welcome. Please open an issue to discuss significant changes b
 
 ## License
 
-[MIT](LICENSE) — forked from [Gitea](https://github.com/go-gitea/gitea) (MIT).
+ProcessGit is dual-licensed.
+
+### Open Use (MIT)
+Free for personal, academic, internal, and non-commercial use.
+
+### Commercial Use
+A commercial license is required for organizational, SaaS,
+redistribution, or rebranded use.
+
+Contact licensing@algomation.ai
