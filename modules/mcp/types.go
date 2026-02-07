@@ -75,7 +75,7 @@ type InitializeResult struct {
 
 // ServerCapabilities declares what the server supports.
 type ServerCapabilities struct {
-	Tools *ToolCapability `json:"tools,omitempty"`
+	Tools *ToolCapability `json:"tools"`
 }
 
 // ToolCapability declares tool support.
