@@ -36,6 +36,10 @@ func (su *StringUtils) HasPrefix(s, prefix string) bool {
 	return strings.HasPrefix(s, prefix)
 }
 
+func (su *StringUtils) HasSuffix(s, suffix string) bool {
+	return strings.HasSuffix(s, suffix)
+}
+
 func (su *StringUtils) Contains(s, substr string) bool {
 	return strings.Contains(s, substr)
 }

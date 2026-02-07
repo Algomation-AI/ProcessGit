@@ -701,6 +701,19 @@ func RepoAssignment(ctx *Context) {
 		}
 	}
 
+	// MCP header indicator: check if processgit.mcp.yaml exists in repo root
+	ctx.Data["MCPEnabled"] = false
+	if ctx.Repo.GitRepo != nil && !ctx.Repo.Repository.IsEmpty {
+		if defaultCommit, err := ctx.Repo.GitRepo.GetBranchCommit(ctx.Repo.Repository.DefaultBranch); err == nil {
+			if _, err := defaultCommit.GetBlobByPath("processgit.mcp.yaml"); err == nil {
+				ctx.Data["MCPEnabled"] = true
+				ctx.Data["MCPEndpoint"] = fmt.Sprintf("%s%s/mcp",
+					setting.AppURL,
+					strings.TrimPrefix(ctx.Repo.RepoLink, "/"))
+			}
+		}
+	}
+
 	if ctx.FormString("go-get") == "1" {
 		ctx.Data["GoGetImport"] = ComposeGoGetImport(ctx, repo.Owner.Name, repo.Name)
 		fullURLPrefix := repo.HTMLURL() + "/src/branch/" + util.PathEscapeSegments(ctx.Repo.BranchName)
