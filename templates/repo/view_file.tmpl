@@ -88,6 +88,7 @@
 		{{template "repo/view_file_dvsxml" .}}
 		{{template "repo/view_file_processgit_viewer" .}}
 		{{template "repo/view_file_xsd_visual" .}}
+		{{template "repo/view_file_mermaid" .}}
 		{{if and (ne .DiagramType "none") .DiagramPayload}}
 			<div class="diagram-viewer" data-global-init="initRepoDiagrams" data-diagram-type="{{.DiagramType}}" data-diagram-format="{{.DiagramFormat}}" data-diagram-raw-panel="diagram-raw-view">
 				<div class="diagram-toolbar tw-flex tw-items-center tw-justify-between tw-gap-2 tw-mb-3">

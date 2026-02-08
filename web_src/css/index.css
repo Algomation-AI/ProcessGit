@@ -74,6 +74,7 @@
 @import "./repo/commit-sign.css";
 @import "./repo/packages.css";
 @import "./repo/mcp.css";
+@import "./repo/mermaid-viewer.css";
 
 @import "./editor/fileeditor.css";
 @import "./editor/combomarkdowneditor.css";

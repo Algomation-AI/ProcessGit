@@ -62,6 +62,12 @@ type dvsXMLPayload struct {
 	Meta           map[string]string `json:"meta,omitempty"`
 }
 
+type mermaidViewerPayload struct {
+	Source   string `json:"source"`
+	CanEdit  bool   `json:"canEdit"`
+	FileName string `json:"fileName"`
+}
+
 type xsdVisualPayload struct {
 	ID          string            `json:"id"`
 	Path        string            `json:"path"`
@@ -218,6 +224,8 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 	ctx.Data["DVSXMLPayload"] = nil
 	ctx.Data["IsProcessGitViewer"] = false
 	ctx.Data["ProcessGitViewerPayload"] = nil
+	ctx.Data["IsMermaidViewer"] = false
+	ctx.Data["MermaidViewerPayload"] = nil
 
 	// MCP badge: expose the file base name so the template can detect .mcp.yaml files
 	ctx.Data["BlobName"] = path.Base(ctx.Repo.TreePath)
@@ -356,6 +364,11 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 		}
 	}
 
+	// Detect Mermaid diagram files (.mmd) — payload is set later after full content is read.
+	isMermaidFile := strings.HasSuffix(strings.ToLower(ctx.Repo.TreePath), ".mmd") &&
+		fInfo.st.IsRepresentableAsText() &&
+		fInfo.blobOrLfsSize < setting.UI.MaxDisplayFileSize
+
 	setFileWarning := func(message string) {
 		if existing, ok := ctx.Data["FileWarning"].(string); ok && existing != "" {
 			ctx.Data["FileWarning"] = existing + "\n" + message
@@ -480,6 +493,21 @@ func prepareFileView(ctx *context.Context, entry *git.TreeEntry) {
 			SourcePath: diagramSourcePath,
 		}
 		ctx.Data["DiagramPayload"] = payload
+	}
+
+	// Populate Mermaid viewer payload now that full content is available
+	if isMermaidFile && len(fullContent) > 0 {
+		canEditMermaid := ctx.Repo.Repository.CanEnableEditor() &&
+			ctx.Repo.RefFullName.IsBranch() &&
+			ctx.Repo.CanWriteToBranch(ctx, ctx.Doer, ctx.Repo.BranchName) &&
+			!fInfo.isLFSFile() &&
+			fInfo.blobOrLfsSize < setting.UI.MaxDisplayFileSize
+		ctx.Data["IsMermaidViewer"] = true
+		ctx.Data["MermaidViewerPayload"] = mermaidViewerPayload{
+			Source:   string(fullContent),
+			CanEdit:  canEditMermaid,
+			FileName: path.Base(ctx.Repo.TreePath),
+		}
 	}
 
 	// TODO: in the future maybe we need more accurate flags, for example:
