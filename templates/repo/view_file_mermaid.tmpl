@@ -1,0 +1,64 @@
+{{if and .IsMermaidViewer .MermaidViewerPayload}}
+  <div class="mermaid-viewer" data-global-init="initRepoMermaidViewer">
+    <div class="mermaid-toolbar tw-flex tw-items-center tw-justify-between tw-gap-2 tw-mb-3">
+      <div class="ui buttons mermaid-mode-buttons">
+        <button class="ui button active" data-mermaid-action="preview">{{svg "octicon-eye" 14}} Preview</button>
+        {{if .MermaidViewerPayload.CanEdit}}
+          <button class="ui button" data-mermaid-action="edit">{{svg "octicon-pencil" 14}} Edit</button>
+        {{end}}
+        <button class="ui button" data-mermaid-action="source">{{svg "octicon-code" 14}} Source</button>
+      </div>
+      <div class="tw-flex tw-gap-2 tw-items-center">
+        <button class="ui basic mini button" data-mermaid-action="zoom-in" data-tooltip-content="Zoom In">{{svg "octicon-zoom-in" 14}}</button>
+        <button class="ui basic mini button" data-mermaid-action="zoom-out" data-tooltip-content="Zoom Out">{{svg "octicon-zoom-out" 14}}</button>
+        <button class="ui basic mini button" data-mermaid-action="zoom-reset" data-tooltip-content="Reset Zoom">{{svg "octicon-sync" 14}}</button>
+        <button class="ui basic mini button" data-mermaid-action="export-svg" data-tooltip-content="Export as SVG">{{svg "octicon-download" 14}} SVG</button>
+        <button class="ui basic mini button" data-mermaid-action="export-png" data-tooltip-content="Export as PNG">{{svg "octicon-download" 14}} PNG</button>
+      </div>
+    </div>
+
+    <!-- Preview panel -->
+    <div id="mermaid-preview-panel" class="mermaid-panel">
+      <div class="mermaid-preview-wrapper">
+        <div id="mermaid-preview-container" class="mermaid-diagram-container">
+          <div class="ui active centered inline loader"></div>
+        </div>
+        <div class="ui error message tw-hidden" id="mermaid-error">
+          <div class="header">Diagram Rendering Error</div>
+          <p id="mermaid-error-message"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Source panel -->
+    <div id="mermaid-source-panel" class="mermaid-panel tw-hidden">
+      <div id="mermaid-source-view" class="file-view code-view"></div>
+    </div>
+
+    {{if .MermaidViewerPayload.CanEdit}}
+    <!-- Edit panel -->
+    <div id="mermaid-edit-panel" class="mermaid-panel tw-hidden">
+      <div class="tw-flex tw-gap-4" style="min-height: 500px;">
+        <div class="tw-flex-1 tw-flex tw-flex-col">
+          <label class="tw-font-bold tw-mb-2">Mermaid Source Code</label>
+          <textarea id="mermaid-editor" style="font-family: var(--fonts-monospace); font-size: 13px; line-height: 1.6; resize: vertical; flex: 1; width: 100%; border: 1px solid var(--color-secondary); border-radius: 4px; padding: 10px; background: var(--color-box-body); color: var(--color-text);"></textarea>
+          <div class="tw-mt-2 tw-flex tw-gap-2">
+            <button class="ui primary button" data-mermaid-action="apply">{{svg "octicon-check" 14}} Apply to Preview</button>
+            <button class="ui button" data-mermaid-action="reset">{{svg "octicon-x" 14}} Reset</button>
+          </div>
+        </div>
+        <div class="tw-flex-1 tw-flex tw-flex-col">
+          <label class="tw-font-bold tw-mb-2">Live Preview</label>
+          <div class="mermaid-live-preview-wrapper">
+            <div id="mermaid-live-preview" class="mermaid-diagram-container">
+              <div class="ui active centered inline loader"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{end}}
+
+    <script type="application/json" id="mermaid-viewer-payload">{{JsonUtils.Encode .MermaidViewerPayload}}</script>
+  </div>
+{{end}}

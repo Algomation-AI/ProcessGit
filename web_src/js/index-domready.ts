@@ -20,6 +20,7 @@ import {initRepoFileSearch} from './features/repo-findfile.ts';
 import {initRepoDVSXML} from './features/dvsxml/index.ts';
 import {initRepoProcessGitViewer} from './features/processgitviewer/index.ts';
 import {initRepoXsdVisual} from './features/xsdvisual/index.ts';
+import {initRepoMermaidViewer} from './features/repo-mermaid-viewer.ts';
 import {initMarkupContent} from './markup/content.ts';
 import {initRepoFileView} from './features/file-view.ts';
 import {initRepoDiagrams} from './features/diagrams/index.ts';
@@ -110,6 +111,7 @@ const initPerformanceTracer = callInitFunctions([
   initRepoDVSXML,
   initRepoProcessGitViewer,
   initRepoXsdVisual,
+  initRepoMermaidViewer,
   initCopyContent,
 
   initAdminCommon,
