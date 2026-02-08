@@ -36,10 +36,7 @@
 						<span class="ui basic label">{{ctx.Locale.Tr "repo.desc.sha256"}}</span>
 					{{end}}
 					{{if $.MCPEnabled}}
-						<div class="ui label mcp-header-indicator"
-							data-tooltip-content="MCP Server Active - {{$.MCPEndpoint}}"
-							data-position="bottom left"
-							data-variation="wide">
+						<div class="ui label mcp-header-indicator" id="mcp-header-badge">
 							{{svg "octicon-plug" 14}}
 							<span class="text">MCP Server</span>
 							<div class="detail">Active</div>
@@ -249,4 +246,40 @@
 	</div>
 	{{template "repo/uapf_import_modal" .}}
 	<div class="ui tabs divider"></div>
+{{if $.MCPEnabled}}
+	<div class="ui flowing popup" id="mcp-header-popup">
+		<div class="ui relaxed list">
+			<div class="item">
+				<i class="link icon"></i>
+				<div class="content">
+					<div class="header">Endpoint URL</div>
+					<div class="description">
+						<code style="background: #f5f5f5; padding: 4px 8px; border-radius: 3px; font-size: 11px; word-break: break-all; display: inline-block;">{{$.MCPEndpoint}}</code>
+					</div>
+				</div>
+			</div>
+			<div class="item">
+				<i class="book icon"></i>
+				<div class="content">
+					<div class="header">Configuration</div>
+					<div class="description">
+						<a href="{{.RepoLink}}/src/branch/{{.BranchName}}/processgit.mcp.yaml">
+							View processgit.mcp.yaml
+						</a>
+					</div>
+				</div>
+			</div>
+			<div class="item">
+				<div class="ui mini buttons">
+					<button class="ui button" onclick="copyMCPUrl('{{$.MCPEndpoint}}', this)">
+						{{svg "octicon-copy" 14}} Copy URL
+					</button>
+					<button class="ui button" onclick="window.open('{{$.MCPEndpoint}}', '_blank')">
+						{{svg "octicon-link-external" 14}} Open
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+{{end}}
 </div>

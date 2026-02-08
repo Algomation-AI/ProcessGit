@@ -46,16 +46,31 @@
 		</div>
 	{{end}}
 	{{if and .BlobName (or (eq .BlobName "processgit.mcp.yaml") (StringUtils.HasSuffix .BlobName ".mcp.yaml"))}}
-		<span class="ui label mcp-badge"
-			data-tooltip-content="MCP Server Configuration"
-			data-position="bottom center">
+		<span class="ui label mcp-badge" id="mcp-file-badge">
 			{{svg "octicon-plug" 14}} MCP Server
 		</span>
-		<button class="ui mini icon button"
-			onclick="navigator.clipboard.writeText('{{.MCPEndpoint}}');this.setAttribute('data-tooltip-content','Copied!')"
-			data-tooltip-content="Copy MCP URL"
-			style="margin-left: 4px;">
-			{{svg "octicon-copy" 14}}
-		</button>
+		<div class="ui flowing popup" id="mcp-file-popup">
+			<div class="ui relaxed list">
+				<div class="item">
+					<div class="header">MCP Server Configuration</div>
+					<div class="description" style="margin-top: 8px;">
+						<strong>Endpoint URL:</strong>
+						<div style="background: #f5f5f5; padding: 8px; border-radius: 4px; margin: 6px 0; font-family: monospace; font-size: 12px; word-break: break-all;">
+							{{.MCPEndpoint}}
+						</div>
+					</div>
+				</div>
+				<div class="item">
+					<div class="ui mini buttons" style="margin-top: 8px;">
+						<button class="ui button" onclick="copyMCPUrl('{{.MCPEndpoint}}', this)">
+							{{svg "octicon-copy" 14}} Copy URL
+						</button>
+						<button class="ui button" onclick="testMCPConnection('{{.MCPEndpoint}}', this)">
+							{{svg "octicon-check" 14}} Test Connection
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
 	{{end}}
 </div>
