@@ -246,33 +246,67 @@ function testMCPConnection(url, button) {
 	});
 }
 
-// Initialize Fomantic popups
+// Position popup relative to badge
+function positionPopup(badge, popup) {
+	var rect = badge.getBoundingClientRect();
+	popup.style.position = 'fixed';
+	popup.style.top = (rect.bottom + 6) + 'px';
+	popup.style.left = rect.left + 'px';
+	// Prevent right overflow
+	requestAnimationFrame(function() {
+		var popupRect = popup.getBoundingClientRect();
+		if (popupRect.right > window.innerWidth - 10) {
+			popup.style.left = (window.innerWidth - popupRect.width - 10) + 'px';
+		}
+	});
+}
+
+// Initialize MCP popups with vanilla JS
 document.addEventListener('DOMContentLoaded', function() {
-	if (!window.$) return;
-
-	const fileBadge = document.getElementById('mcp-file-badge');
-	const filePopup = document.getElementById('mcp-file-popup');
+	// File badge: toggle on click
+	var fileBadge = document.getElementById('mcp-file-badge');
+	var filePopup = document.getElementById('mcp-file-popup');
 	if (fileBadge && filePopup) {
-		$(fileBadge).popup({
-			popup: $(filePopup),
-			on: 'click',
-			position: 'bottom center',
-			hoverable: true,
-			delay: {show: 100, hide: 300}
+		fileBadge.addEventListener('click', function(e) {
+			e.stopPropagation();
+			var isVisible = filePopup.style.display !== 'none';
+			// Hide all MCP popups first
+			document.querySelectorAll('#mcp-file-popup, #mcp-header-popup').forEach(function(p) { p.style.display = 'none'; });
+			if (!isVisible) {
+				filePopup.style.display = 'block';
+				positionPopup(fileBadge, filePopup);
+			}
 		});
+		filePopup.addEventListener('click', function(e) { e.stopPropagation(); });
 	}
 
-	const headerBadge = document.getElementById('mcp-header-badge');
-	const headerPopup = document.getElementById('mcp-header-popup');
+	// Header badge: show on hover
+	var headerBadge = document.getElementById('mcp-header-badge');
+	var headerPopup = document.getElementById('mcp-header-popup');
 	if (headerBadge && headerPopup) {
-		$(headerBadge).popup({
-			popup: $(headerPopup),
-			on: 'hover',
-			position: 'bottom left',
-			hoverable: true,
-			delay: {show: 200, hide: 100}
+		var hideTimer = null;
+		function showHeaderPopup() {
+			if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+			document.querySelectorAll('#mcp-file-popup').forEach(function(p) { p.style.display = 'none'; });
+			headerPopup.style.display = 'block';
+			positionPopup(headerBadge, headerPopup);
+		}
+		function scheduleHideHeaderPopup() {
+			hideTimer = setTimeout(function() { headerPopup.style.display = 'none'; }, 200);
+		}
+		headerBadge.addEventListener('mouseenter', showHeaderPopup);
+		headerBadge.addEventListener('mouseleave', scheduleHideHeaderPopup);
+		headerPopup.addEventListener('mouseenter', function() {
+			if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
 		});
+		headerPopup.addEventListener('mouseleave', scheduleHideHeaderPopup);
 	}
+
+	// Close popups when clicking outside
+	document.addEventListener('click', function() {
+		if (filePopup) filePopup.style.display = 'none';
+		if (headerPopup) headerPopup.style.display = 'none';
+	});
 });
 </script>
 {{end}}
