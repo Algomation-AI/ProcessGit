@@ -38,6 +38,7 @@ func ParseXMLSource(commit *git.Commit, source MCPSource) (*EntityIndex, error) 
 
 // parseXMLEntities walks the XML tree and extracts entities.
 // Heuristic: any element that has a "code" attribute is treated as an entity.
+// Child element text is stored as entity attributes (e.g., <description>, <departmentRef>).
 func parseXMLEntities(data []byte, index *EntityIndex) error {
 	decoder := xml.NewDecoder(bytes.NewReader(data))
 
@@ -129,11 +130,24 @@ func parseXMLEntities(data []byte, index *EntityIndex) error {
 					}
 				}
 
-				// Check if this was a <n> (name) element inside an entity
-				if frame.name == "n" && frame.text != "" && frame.parentID != "" {
+				// Store child element text content in parent entity
+				if frame.text != "" && frame.parentID != "" {
 					if parentEntity, ok := index.Entities[frame.parentID]; ok {
-						if parentEntity.Name == "" {
+						// Set Name from <n> or <name> child element
+						// (Go's encoding/xml strips namespace prefixes, so vdvc:name → "name")
+						if (frame.name == "n" || frame.name == "name") && parentEntity.Name == "" {
 							parentEntity.Name = frame.text
+						}
+
+						// Store all child element text as attributes
+						// This captures <description>, <departmentRef>, <programmeRef>, etc.
+						// Only store if not already set by an XML attribute on the entity
+						if _, exists := parentEntity.Attributes[frame.name]; !exists {
+							parentEntity.Attributes[frame.name] = frame.text
+						} else {
+							// Append with separator for multi-value elements
+							// (e.g., multiple <departmentRef> under one category)
+							parentEntity.Attributes[frame.name] += ", " + frame.text
 						}
 					}
 				}
