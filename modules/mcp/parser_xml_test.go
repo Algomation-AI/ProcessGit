@@ -132,3 +132,173 @@ func TestParseXMLEntities_NameFromAttribute(t *testing.T) {
 	require.NotNil(t, item)
 	assert.Equal(t, "Item Name From Attr", item.Name)
 }
+
+// --- NEW TESTS for child element text extraction ---
+
+func TestParseXMLEntities_NameFromNameElement(t *testing.T) {
+	// Tests that <name> child element works in addition to <n>
+	xmlData := []byte(`<?xml version="1.0"?>
+<root>
+  <item code="C1">
+    <name>Item Name From Name Element</name>
+  </item>
+</root>`)
+
+	index := &EntityIndex{
+		Entities: make(map[string]*Entity),
+		ByType:   make(map[string][]string),
+		ByParent: make(map[string][]string),
+		Stats:    IndexStats{TypeCounts: make(map[string]int)},
+	}
+
+	err := parseXMLEntities(xmlData, index)
+	require.NoError(t, err)
+
+	item := index.Entities["item:C1"]
+	require.NotNil(t, item)
+	assert.Equal(t, "Item Name From Name Element", item.Name)
+}
+
+func TestParseXMLEntities_ChildElementsAsAttributes(t *testing.T) {
+	// Tests that child element text is stored in Attributes map
+	xmlData := []byte(`<?xml version="1.0"?>
+<root>
+  <category code="P-1-1">
+    <n>Test Category</n>
+    <description>This is a test description with IETVER and NEIETVER content.</description>
+    <departmentRef>LN</departmentRef>
+  </category>
+</root>`)
+
+	index := &EntityIndex{
+		Entities: make(map[string]*Entity),
+		ByType:   make(map[string][]string),
+		ByParent: make(map[string][]string),
+		Stats:    IndexStats{TypeCounts: make(map[string]int)},
+	}
+
+	err := parseXMLEntities(xmlData, index)
+	require.NoError(t, err)
+
+	cat := index.Entities["category:P-1-1"]
+	require.NotNil(t, cat)
+	assert.Equal(t, "Test Category", cat.Name)
+	assert.Equal(t, "This is a test description with IETVER and NEIETVER content.", cat.Attributes["description"])
+	assert.Equal(t, "LN", cat.Attributes["departmentRef"])
+}
+
+func TestParseXMLEntities_MultiValueChildElements(t *testing.T) {
+	// Tests that multiple child elements with same name are concatenated
+	xmlData := []byte(`<?xml version="1.0"?>
+<root>
+  <category code="P-1-1">
+    <n>Multi Dept Category</n>
+    <departmentRef>LN</departmentRef>
+    <departmentRef>IPD</departmentRef>
+    <departmentRef>DTD</departmentRef>
+  </category>
+</root>`)
+
+	index := &EntityIndex{
+		Entities: make(map[string]*Entity),
+		ByType:   make(map[string][]string),
+		ByParent: make(map[string][]string),
+		Stats:    IndexStats{TypeCounts: make(map[string]int)},
+	}
+
+	err := parseXMLEntities(xmlData, index)
+	require.NoError(t, err)
+
+	cat := index.Entities["category:P-1-1"]
+	require.NotNil(t, cat)
+	assert.Equal(t, "LN, IPD, DTD", cat.Attributes["departmentRef"])
+}
+
+func TestParseXMLEntities_NamespacedElements(t *testing.T) {
+	// Go's encoding/xml strips namespace prefixes: vdvc:name → name
+	xmlData := []byte(`<?xml version="1.0"?>
+<vdvc:classification xmlns:vdvc="urn:vdvc:classification:2026" version="1.0.0">
+  <vdvc:domain code="P">
+    <vdvc:name>Pārvalde</vdvc:name>
+    <vdvc:group code="P-1">
+      <vdvc:name>Iestādes vadība</vdvc:name>
+      <vdvc:category code="P-1-1">
+        <vdvc:name>Test Category</vdvc:name>
+        <vdvc:description>Test description with NEIETVER cross-references.</vdvc:description>
+        <vdvc:departmentRef>LN</vdvc:departmentRef>
+      </vdvc:category>
+    </vdvc:group>
+  </vdvc:domain>
+</vdvc:classification>`)
+
+	index := &EntityIndex{
+		Entities: make(map[string]*Entity),
+		ByType:   make(map[string][]string),
+		ByParent: make(map[string][]string),
+		Stats:    IndexStats{TypeCounts: make(map[string]int)},
+	}
+
+	err := parseXMLEntities(xmlData, index)
+	require.NoError(t, err)
+
+	// Domain
+	dom := index.Entities["domain:P"]
+	require.NotNil(t, dom)
+	assert.Equal(t, "Pārvalde", dom.Name)
+
+	// Group
+	grp := index.Entities["group:P-1"]
+	require.NotNil(t, grp)
+	assert.Equal(t, "Iestādes vadība", grp.Name)
+	assert.Equal(t, "domain:P", grp.ParentID)
+
+	// Category with description
+	cat := index.Entities["category:P-1-1"]
+	require.NotNil(t, cat)
+	assert.Equal(t, "Test Category", cat.Name)
+	assert.Equal(t, "Test description with NEIETVER cross-references.", cat.Attributes["description"])
+	assert.Equal(t, "LN", cat.Attributes["departmentRef"])
+	assert.Equal(t, "group:P-1", cat.ParentID)
+}
+
+func TestParseXMLEntities_SearchableDescriptions(t *testing.T) {
+	// End-to-end: verify descriptions are searchable via SearchEntities
+	xmlData := []byte(`<?xml version="1.0"?>
+<root>
+  <domain code="P">
+    <n>Pārvalde</n>
+    <category code="P-1-13">
+      <n>Sarakste</n>
+      <description>Sarakste ar ministrijām un valsts aģentūrām. NEIETVER: informācijas pieprasījumus pēc IAL (P-7-3).</description>
+    </category>
+    <category code="P-7-3">
+      <n>Informācijas pieprasījumi</n>
+      <description>Pieprasījumi saskaņā ar Informācijas atklātības likumu. NEIETVER: vispārējo saraksti (P-1-13).</description>
+    </category>
+  </domain>
+</root>`)
+
+	index := &EntityIndex{
+		Entities: make(map[string]*Entity),
+		ByType:   make(map[string][]string),
+		ByParent: make(map[string][]string),
+		Stats:    IndexStats{TypeCounts: make(map[string]int)},
+	}
+
+	err := parseXMLEntities(xmlData, index)
+	require.NoError(t, err)
+
+	// Search by description keyword — should find P-1-13
+	results := index.SearchEntities("ministrijām", 10)
+	require.Len(t, results, 1)
+	assert.Equal(t, "category:P-1-13", results[0].ID)
+
+	// Search by NEIETVER cross-reference
+	results = index.SearchEntities("atklātības likum", 10)
+	require.Len(t, results, 1)
+	assert.Equal(t, "category:P-7-3", results[0].ID)
+
+	// Search by name still works
+	results = index.SearchEntities("sarakste", 10)
+	assert.True(t, len(results) >= 1)
+}
