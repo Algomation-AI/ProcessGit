@@ -1189,6 +1189,13 @@ func registerWebRoutes(m *web.Router) {
 		m.Methods("GET, POST, OPTIONS", "", repo.MCPEndpoint)
 	}, optSignInIgnoreCsrf, context.RepoAssignment)
 
+	// Chat agent endpoints — AI chatbot interface for repositories
+	m.Group("/{username}/{reponame}/chat", func() {
+		m.Post("", repo.ChatEndpoint)
+		m.Get("/agents", repo.ChatAgents)
+		m.Get("/history", repo.ChatHistory)
+	}, optSignInIgnoreCsrf, context.RepoAssignment)
+
 	m.Group("/{username}/{reponame}", func() {
 		m.Group("/tree-list", func() {
 			m.Get("/branch/*", context.RepoRefByType(git.RefTypeBranch), repo.TreeList)
