@@ -11,6 +11,7 @@ export type FileTreeItem = {
   entryIconOpen: string;
   fullPath: string;
   submoduleUrl?: string;
+  chatAgentName?: string;
   children?: Array<FileTreeItem>;
 };
 
@@ -56,6 +57,27 @@ export function createViewFileTreeStore(props: {repoLink: string, treePath: stri
 
     buildTreePathWebUrl(treePath: string) {
       return `${props.repoLink}/src/${props.currentRefNameSubURL}/${pathEscapeSegments(treePath)}`;
+    },
+
+    activeChatAgent: '' as string,
+
+    openChatPanel(item: FileTreeItem) {
+      store.selectedItem = item.fullPath;
+      store.activeChatAgent = item.fullPath;
+      const url = store.buildTreePathWebUrl(item.fullPath);
+      window.history.pushState({treePath: item.fullPath, url, chatAgent: true}, '', url);
+      // Dispatch custom event for the chat panel to pick up
+      window.dispatchEvent(new CustomEvent('open-chat-agent', {
+        detail: {
+          repoLink: props.repoLink,
+          agentFile: item.fullPath,
+          agentName: item.chatAgentName || item.entryName,
+        },
+      }));
+    },
+
+    closeChatPanel() {
+      store.activeChatAgent = '';
     },
   });
   return store;

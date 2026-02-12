@@ -15,6 +15,8 @@ const isLoading = shallowRef(false);
 const children = shallowRef(props.item.children);
 const collapsed = shallowRef(!props.item.children);
 
+const isChatAgent = Boolean(props.item.chatAgentName);
+
 const doLoadChildren = async () => {
   collapsed.value = !collapsed.value;
   if (!collapsed.value) {
@@ -33,6 +35,12 @@ const onItemClick = (e: MouseEvent) => {
   // - the editor/commit form isn't dirty (a full page reload shows a confirmation dialog if the form contains unsaved changes)
   if (!isPlainClick(e) || shouldTriggerAreYouSure()) return;
   e.preventDefault();
+
+  if (isChatAgent) {
+    store.openChatPanel(props.item);
+    return;
+  }
+
   if (props.item.entryMode === 'tree') doLoadChildren();
   store.navigateTreeView(props.item.fullPath);
 };
@@ -47,9 +55,10 @@ const onItemClick = (e: MouseEvent) => {
       'type-submodule': item.entryMode === 'commit',
       'type-directory': item.entryMode === 'tree',
       'type-symlink': item.entryMode === 'symlink',
-      'type-file': item.entryMode === 'blob' || item.entryMode === 'exec',
+      'type-file': (item.entryMode === 'blob' || item.entryMode === 'exec') && !isChatAgent,
+      'type-chat-agent': isChatAgent,
     }"
-    :title="item.entryName"
+    :title="isChatAgent ? (item.chatAgentName + ' (Chat Agent)') : item.entryName"
     :href="store.buildTreePathWebUrl(item.fullPath)"
     @click.stop="onItemClick"
   >
@@ -58,9 +67,10 @@ const onItemClick = (e: MouseEvent) => {
       <SvgIcon v-else :name="collapsed ? 'octicon-chevron-right' : 'octicon-chevron-down'" @click.stop.prevent="doLoadChildren"/>
     </div>
     <div class="item-content">
+      <span v-if="isChatAgent" class="chat-agent-icon">&#x1F916;</span>
       <!-- eslint-disable-next-line vue/no-v-html -->
-      <span class="tw-contents" v-html="(!collapsed && item.entryIconOpen) ? item.entryIconOpen : item.entryIcon"/>
-      <span class="gt-ellipsis">{{ item.entryName }}</span>
+      <span v-else class="tw-contents" v-html="(!collapsed && item.entryIconOpen) ? item.entryIconOpen : item.entryIcon"/>
+      <span class="gt-ellipsis">{{ isChatAgent ? item.chatAgentName : item.entryName }}</span>
     </div>
   </a>
 
@@ -103,6 +113,14 @@ const onItemClick = (e: MouseEvent) => {
   cursor: pointer;
 }
 
+.tree-item.type-chat-agent {
+  font-weight: 500;
+}
+
+.tree-item.type-chat-agent:hover {
+  background: var(--color-hover);
+}
+
 .item-toggle {
   grid-area: toggle;
   display: flex;
@@ -116,5 +134,10 @@ const onItemClick = (e: MouseEvent) => {
   gap: 0.5em;
   text-overflow: ellipsis;
   min-width: 0;
+}
+
+.chat-agent-icon {
+  font-size: 14px;
+  line-height: 1;
 }
 </style>

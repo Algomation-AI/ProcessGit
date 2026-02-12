@@ -1,7 +1,8 @@
-import {createApp} from 'vue';
+import {createApp, type App} from 'vue';
 import {toggleElem} from '../utils/dom.ts';
 import {POST} from '../modules/fetch.ts';
 import ViewFileTree from '../components/ViewFileTree.vue';
+import ChatPanel from '../components/ChatPanel.vue';
 import {registerGlobalEventFunc} from '../modules/observer.ts';
 
 const {appSubUrl} = window.config;
@@ -25,6 +26,42 @@ async function toggleSidebar(btn: HTMLElement) {
   });
 }
 
+let chatApp: App | null = null;
+let chatMountEl: HTMLElement | null = null;
+
+function openChatPanel(detail: {repoLink: string; agentFile: string; agentName: string}) {
+  // Close existing chat panel if any
+  closeChatPanel();
+
+  const repoViewContent = document.querySelector('.repo-view-content');
+  if (!repoViewContent) return;
+
+  // Create mount point
+  chatMountEl = document.createElement('div');
+  chatMountEl.className = 'chat-panel-container';
+  repoViewContent.innerHTML = '';
+  repoViewContent.appendChild(chatMountEl);
+
+  chatApp = createApp(ChatPanel, {
+    repoLink: detail.repoLink,
+    agentFile: detail.agentFile,
+    agentName: detail.agentName,
+    onClose: () => closeChatPanel(),
+  });
+  chatApp.mount(chatMountEl);
+}
+
+function closeChatPanel() {
+  if (chatApp) {
+    chatApp.unmount();
+    chatApp = null;
+  }
+  if (chatMountEl) {
+    chatMountEl.remove();
+    chatMountEl = null;
+  }
+}
+
 export async function initRepoViewFileTree() {
   const sidebar = document.querySelector<HTMLElement>('.repo-view-file-tree-container');
   const repoViewContent = document.querySelector('.repo-view-content');
@@ -38,4 +75,9 @@ export async function initRepoViewFileTree() {
     treePath: fileTree.getAttribute('data-tree-path'),
     currentRefNameSubURL: fileTree.getAttribute('data-current-ref-name-sub-url'),
   }).mount(fileTree);
+
+  // Listen for chat agent open events from the file tree
+  window.addEventListener('open-chat-agent', ((e: CustomEvent) => {
+    openChatPanel(e.detail);
+  }) as EventListener);
 }
