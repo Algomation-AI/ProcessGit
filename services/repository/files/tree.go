@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	repo_model "code.gitea.io/gitea/models/repo"
+	"code.gitea.io/gitea/modules/chat"
 	"code.gitea.io/gitea/modules/fileicon"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
@@ -142,9 +143,10 @@ type TreeViewNode struct {
 
 	SymLinkedToMode string `json:"symLinkedToMode,omitempty"` // TODO: for the EntryMode="symlink"
 
-	FullPath     string          `json:"fullPath"`
-	SubmoduleURL string          `json:"submoduleUrl,omitempty"`
-	Children     []*TreeViewNode `json:"children,omitempty"`
+	FullPath       string          `json:"fullPath"`
+	SubmoduleURL   string          `json:"submoduleUrl,omitempty"`
+	ChatAgentName  string          `json:"chatAgentName,omitempty"`  // Non-empty if this is a chat agent file
+	Children       []*TreeViewNode `json:"children,omitempty"`
 }
 
 func (node *TreeViewNode) sortLevel() int {
@@ -163,6 +165,13 @@ func newTreeViewNodeFromEntry(ctx context.Context, repoLink string, renderedIcon
 	if entryInfo.EntryMode.IsDir() {
 		entryInfo.IsOpen = true
 		node.EntryIconOpen = fileicon.RenderEntryIconHTML(renderedIconPool, entryInfo)
+	}
+
+	// Check if this is a chat agent file
+	if setting.Chat.Enabled && !entry.IsDir() && (entry.Name() == chat.DefaultConfigFileName || strings.HasSuffix(entry.Name(), chat.ConfigSuffix)) {
+		if cfg, err := chat.LoadChatConfig(commit, node.FullPath); err == nil && cfg != nil {
+			node.ChatAgentName = cfg.UI.Name
+		}
 	}
 
 	if node.EntryMode == "commit" {
