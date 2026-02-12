@@ -3,6 +3,8 @@
 
 package setting
 
+import "strconv"
+
 // Chat agent settings
 var Chat = struct {
 	Enabled            bool
@@ -23,6 +25,9 @@ func loadChatFrom(rootCfg ConfigProvider) {
 	Chat.Enabled = sec.Key("ENABLED").MustBool(true)
 	Chat.MaxAgentsPerRepo = sec.Key("MAX_AGENTS_PER_REPO").MustInt(10)
 	Chat.RateLimitPerMinute = sec.Key("RATE_LIMIT_PER_MINUTE").MustInt(10)
-	Chat.MaxMonthlyBudget = sec.Key("MAX_MONTHLY_BUDGET").MustFloat64(100.0)
+	Chat.MaxMonthlyBudget = 100.0
+	if maxBudget, err := strconv.ParseFloat(sec.Key("MAX_MONTHLY_BUDGET").String(), 64); err == nil {
+		Chat.MaxMonthlyBudget = maxBudget
+	}
 	Chat.DefaultProvider = sec.Key("DEFAULT_PROVIDER").MustString("anthropic")
 }
