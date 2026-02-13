@@ -461,8 +461,8 @@ func estimateCost(inputTokens, outputTokens int, model string) float64 {
 	var inputRate, outputRate float64
 	switch {
 	case strings.Contains(model, "opus"):
-		inputRate = 15.0
-		outputRate = 75.0
+		inputRate = 5.0
+		outputRate = 25.0
 	case strings.Contains(model, "sonnet"):
 		inputRate = 3.0
 		outputRate = 15.0

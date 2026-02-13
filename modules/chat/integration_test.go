@@ -271,7 +271,7 @@ func TestEstimateCost(t *testing.T) {
 		maxCost      float64
 	}{
 		{"Sonnet small", 100, 50, "claude-sonnet-4-5", 0.0001, 0.002},
-		{"Opus small", 100, 50, "claude-opus-4-6", 0.001, 0.01},
+		{"Opus small", 100, 50, "claude-opus-4-6", 0.0001, 0.005},
 		{"Haiku small", 100, 50, "claude-haiku-4-5", 0.00001, 0.001},
 		{"Unknown model", 100, 50, "unknown-model", 0.0001, 0.002},
 	}
@@ -290,8 +290,8 @@ func EstimateCost(inputTokens, outputTokens int, model string) float64 {
 	var inputRate, outputRate float64
 	switch {
 	case contains(model, "opus"):
-		inputRate = 15.0
-		outputRate = 75.0
+		inputRate = 5.0
+		outputRate = 25.0
 	case contains(model, "sonnet"):
 		inputRate = 3.0
 		outputRate = 15.0
