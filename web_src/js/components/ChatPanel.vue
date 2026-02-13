@@ -25,6 +25,9 @@ type ChatConfig = {
       max_height: string;
     };
   };
+  llm?: {
+    model: string;
+  };
 };
 
 const props = defineProps<{
@@ -52,8 +55,19 @@ const assistantAvatar = computed(() => config.value?.ui?.theme?.assistant_avatar
 const userAvatar = computed(() => config.value?.ui?.theme?.user_avatar || '\u{1F464}');
 const placeholder = computed(() => config.value?.ui?.placeholder || 'Ask a question...');
 const quickQuestions = computed(() => config.value?.ui?.quick_questions || []);
+const showQuickQuestions = computed(() => messages.value.filter((m) => m.role === 'user').length === 0);
 const maxHeight = computed(() => config.value?.ui?.theme?.max_height || '600px');
-const modelName = computed(() => 'Claude');
+const modelName = computed(() => {
+  const model = config.value?.llm?.model || 'claude';
+  return model.replace('claude-', '').replace(/-\d{8}$/, '');
+});
+
+const sessionStats = ref({
+  turns: 0,
+  totalTokens: 0,
+  totalCost: 0,
+  toolsCalled: 0,
+});
 
 async function loadConfig() {
   try {
@@ -76,7 +90,7 @@ async function loadConfig() {
   }
 
   // Show welcome message
-  const welcome = config.value?.ui?.welcome_message || `Welcome! I'm ${props.agentName}. How can I help?`;
+  const welcome = config.value?.ui?.welcome_message || `Sveiki! Es esmu ${props.agentName}. Kā varu palīdzēt?`;
   messages.value.push({
     role: 'assistant',
     content: welcome,
@@ -158,11 +172,17 @@ async function sendMessage(text: string) {
                   server: parsed.server,
                 });
                 totalToolCalls.value++;
+                sessionStats.value.toolsCalled++;
                 break;
               case 'done':
                 conversationId.value = parsed.conversation_id;
                 lastUsage.value = parsed.usage;
                 assistantMsg.usage = parsed.usage;
+                if (parsed.usage) {
+                  sessionStats.value.turns++;
+                  sessionStats.value.totalTokens += (parsed.usage.input_tokens || 0) + (parsed.usage.output_tokens || 0);
+                  sessionStats.value.totalCost += parsed.usage.cost_usd || 0;
+                }
                 break;
               case 'error':
                 assistantMsg.content += `\n\nError: ${parsed.text}`;
@@ -191,8 +211,9 @@ function newConversation() {
   conversationId.value = null;
   lastUsage.value = null;
   totalToolCalls.value = 0;
+  sessionStats.value = {turns: 0, totalTokens: 0, totalCost: 0, toolsCalled: 0};
   messages.value = [];
-  const welcome = config.value?.ui?.welcome_message || `Welcome! I'm ${props.agentName}. How can I help?`;
+  const welcome = config.value?.ui?.welcome_message || `Sveiki! Es esmu ${props.agentName}. Kā varu palīdzēt?`;
   messages.value.push({
     role: 'assistant',
     content: welcome,
@@ -241,12 +262,10 @@ onMounted(() => {
         <span class="chat-avatar">{{ msg.role === 'user' ? userAvatar : assistantAvatar }}</span>
         <div class="chat-bubble">
           <div class="chat-bubble-content" v-text="msg.content"/>
-          <div v-if="msg.toolCalls?.length" class="chat-tool-calls">
-            <details v-for="(tc, ti) in msg.toolCalls" :key="ti">
-              <summary class="chat-tool-summary">&#x1F527; {{ tc.tool }} <span v-if="tc.server" class="chat-tool-server">{{ tc.server }}</span></summary>
-              <div v-if="tc.query" class="chat-tool-detail">Query: {{ tc.query }}</div>
-              <div v-if="tc.results_count" class="chat-tool-detail">Results: {{ tc.results_count }}</div>
-            </details>
+          <div v-if="msg.toolCalls?.length" class="tool-calls">
+            <span v-for="(tc, ti) in msg.toolCalls" :key="ti" class="tool-call-chip">
+              &#x1F527; {{ tc.server }}:{{ tc.tool }}
+            </span>
           </div>
           <div v-if="msg.usage" class="chat-usage">
             &#x1F4B0; ${{ msg.usage.cost_usd.toFixed(4) }}
@@ -258,6 +277,18 @@ onMounted(() => {
         <span class="chat-typing-dot"/>
         <span class="chat-typing-dot"/>
       </div>
+    </div>
+
+    <!-- Quick Questions -->
+    <div v-if="showQuickQuestions && quickQuestions.length > 0" class="chat-quick-questions">
+      <button
+        v-for="(q, qi) in quickQuestions" :key="qi"
+        class="quick-question-btn"
+        :disabled="isStreaming"
+        @click="onQuickQuestion(q)"
+      >
+        {{ q }}
+      </button>
     </div>
 
     <!-- Input -->
@@ -282,23 +313,13 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Quick Questions -->
-    <div v-if="quickQuestions.length" class="chat-quick-questions">
-      <button
-        v-for="(q, qi) in quickQuestions" :key="qi"
-        class="chat-quick-btn"
-        :disabled="isStreaming"
-        @click="onQuickQuestion(q)"
-      >
-        {{ q }}
-      </button>
-    </div>
-
     <!-- Status Bar -->
     <div class="chat-status-bar">
-      <span>&#x23F1;&#xFE0F; {{ modelName }}</span>
-      <span v-if="lastUsage">&#x1F4B0; ${{ lastUsage.cost_usd.toFixed(4) }}</span>
-      <span v-if="totalToolCalls">&#x1F4CA; {{ totalToolCalls }} tools</span>
+      <span>&#x1F9E0; {{ modelName }}</span>
+      <span>&#x1F4AC; {{ sessionStats.turns }} turns</span>
+      <span>&#x1F4CA; {{ sessionStats.totalTokens.toLocaleString() }} tokens</span>
+      <span>&#x1F4B0; ${{ sessionStats.totalCost.toFixed(4) }}</span>
+      <span>&#x1F527; {{ sessionStats.toolsCalled }} tools</span>
     </div>
   </div>
 </template>
@@ -340,7 +361,9 @@ onMounted(() => {
 
 .chat-header-subtitle {
   font-size: 12px;
-  opacity: 0.85;
+  opacity: 0.75;
+  font-weight: 400;
+  margin-top: 2px;
 }
 
 .chat-header-actions {
@@ -416,29 +439,21 @@ onMounted(() => {
   border-bottom-right-radius: 4px;
 }
 
-.chat-tool-calls {
-  margin-top: 8px;
-  font-size: 12px;
+.tool-calls {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
-.chat-tool-summary {
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--color-secondary-alpha-20, rgba(0,0,0,0.05));
-  display: inline-block;
-  margin-top: 4px;
-}
-
-.chat-tool-server {
-  opacity: 0.6;
-  font-size: 11px;
-}
-
-.chat-tool-detail {
+.tool-call-chip {
+  background: var(--color-info-bg);
+  border: 1px solid var(--color-info-border);
+  border-radius: 12px;
   padding: 2px 8px;
   font-size: 11px;
-  color: var(--color-text-light);
+  font-family: var(--fonts-monospace);
+  color: var(--color-info-text);
 }
 
 .chat-usage {
@@ -519,39 +534,43 @@ onMounted(() => {
 }
 
 .chat-quick-questions {
-  padding: 4px 16px 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  padding: 8px 16px;
 }
 
-.chat-quick-btn {
-  background: var(--color-secondary-alpha-20, #f0f0f0);
-  border: 1px solid var(--color-secondary);
-  border-radius: 16px;
-  padding: 4px 12px;
-  font-size: 12px;
+.quick-question-btn {
+  background: var(--color-body);
+  border: 1px solid var(--color-secondary-alpha-40);
+  border-radius: 18px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  color: var(--color-primary);
   cursor: pointer;
-  color: var(--color-text);
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
-.chat-quick-btn:hover {
-  background: var(--color-secondary);
+.quick-question-btn:hover {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  border-color: var(--color-primary);
 }
 
-.chat-quick-btn:disabled {
+.quick-question-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 .chat-status-bar {
+  padding: 5px 16px;
+  background: var(--color-box-body-highlight);
+  border-top: 1px solid var(--color-secondary-alpha-20);
   display: flex;
-  gap: 16px;
-  padding: 6px 16px;
+  gap: 14px;
   font-size: 11px;
-  color: var(--color-text-light);
-  background: var(--color-secondary-alpha-20, #f8f8f8);
-  border-top: 1px solid var(--color-secondary);
+  color: var(--color-text-light-2);
+  font-family: var(--fonts-monospace);
 }
 </style>
