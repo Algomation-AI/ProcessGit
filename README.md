@@ -52,7 +52,9 @@ ProcessGit ships with a comprehensive set of viewers and editors that automatica
 | 5 | **Ruleset** — Business rules | `.ruleset.json`, `.ruleset.dmn`, `.ruleset` | JSON / DMN | View only (searchable table: Name, When, Then, Priority) | Custom HTML table |
 | 6 | **XML Classification** — Structured XML viewer for schemas and registers | Detected by XML content sniffing | XML | Preview + Edit + Raw | Custom (classification & document metadata renderers) |
 | 7 | **XSD Visual** — XML Schema Definition | `.xsd` | XML (XSD) | Visual graph editor (elements, complex types, relationships) | Custom SVG rendering with parse/serialize |
-| 8 | **ProcessGit Custom Viewer** — User-defined HTML GUIs | Matched by `processgit.viewer.json` manifest | HTML | Fully custom (sandboxed iframe) | PGV postMessage protocol |
+| 8 | **Mermaid** — Diagrams and charts | Embedded in Markdown (` ```mermaid ` blocks) | Markdown / Mermaid DSL | View (rendered inline in Markdown preview) | [Mermaid.js](https://mermaid.js.org/) |
+| 9 | **Markdown Editor** — Rich text editing | `.md`, `.markdown` | Markdown | View + Edit (WYSIWYG with live preview) | Native (built-in EasyMDE / CodeMirror) |
+| 10 | **ProcessGit Custom Viewer** — User-defined HTML GUIs | Matched by `processgit.viewer.json` manifest | HTML | Fully custom (sandboxed iframe) | PGV postMessage protocol |
 
 #### Detection & Rendering
 
@@ -272,7 +274,6 @@ The ProcessGit custom viewer framework (`processgit.viewer.json`) makes it strai
 |--------|-------------|-------------|--------|
 | **JSON Schema Viewer** | `.schema.json`, `.json-schema` | Visual form-based editor for JSON Schema definitions with property tree, type selectors, and validation preview | Planned |
 | **OpenAPI / Swagger Viewer** | `.openapi.yaml`, `.openapi.json`, `.swagger.json` | Interactive API documentation viewer with try-it-out request builder and schema visualization | Planned |
-| **Markdown Rich Editor** | `.md`, `.markdown` | WYSIWYG markdown editor with live preview, table editor, and embedded diagram support | Planned |
 | **CSV / Spreadsheet Viewer** | `.csv`, `.tsv`, `.xlsx` | Tabular data viewer with sorting, filtering, column statistics, and cell-level editing | Planned |
 | **YAML Config Editor** | `.yaml`, `.yml` (with schema) | Schema-aware YAML editor with autocomplete, validation, and visual form rendering | Planned |
 | **Gantt / Timeline Viewer** | `.gantt.json`, `.timeline.json` | Interactive Gantt chart for project scheduling and process timeline visualization | Planned |
