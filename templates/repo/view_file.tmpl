@@ -84,6 +84,11 @@
 		</div>
 	</h4>
 
+	{{if and .ReadmeInList .IsMarkup}}
+		<div class="ui bottom attached segment file-view markup {{.MarkupType}}">
+			{{.FileContent}}
+		</div>
+	{{else}}
 	<div class="ui bottom attached table unstackable segment {{if ne .DiagramType "none"}}diagram-view-shell{{end}}">
 		{{template "repo/view_file_dvsxml" .}}
 		{{template "repo/view_file_processgit_viewer" .}}
@@ -180,6 +185,7 @@
 			</div>
 		</div>
 	</div>
+	{{end}}
 {{if and .BlobName (or (eq .BlobName "processgit.mcp.yaml") (StringUtils.HasSuffix .BlobName ".mcp.yaml"))}}
 <script>
 // Copy MCP URL with visual feedback
