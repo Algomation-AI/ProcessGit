@@ -71,26 +71,21 @@ const sessionStats = ref({
 
 async function loadConfig() {
   try {
-    const response = await GET(`${props.repoLink}/raw/branch/main/${props.agentFile}`);
-    if (response.ok) {
-      // Parse YAML on server side via agents endpoint
-      const agentsResp = await GET(`${props.repoLink}/chat/agents`);
-      if (agentsResp.ok) {
-        const agents = await agentsResp.json();
-        for (const agent of agents) {
-          if (agent.file_path === props.agentFile) {
-            config.value = agent.config;
-            break;
-          }
+    const agentsResp = await GET(`${props.repoLink}/chat/agents`);
+    if (agentsResp.ok) {
+      const agents = await agentsResp.json();
+      for (const agent of agents) {
+        if (agent.file_path === props.agentFile) {
+          config.value = agent.config;
+          break;
         }
       }
     }
   } catch {
-    // Use defaults
+    // Use defaults if agents endpoint fails
   }
 
-  // Show welcome message
-  const welcome = config.value?.ui?.welcome_message || `Sveiki! Es esmu ${props.agentName}. Kā varu palīdzēt?`;
+  const welcome = config.value?.ui?.welcome_message?.trim() || `Sveiki! Es esmu ${props.agentName}. Kā varu palīdzēt?`;
   messages.value.push({
     role: 'assistant',
     content: welcome,
@@ -213,7 +208,7 @@ function newConversation() {
   totalToolCalls.value = 0;
   sessionStats.value = {turns: 0, totalTokens: 0, totalCost: 0, toolsCalled: 0};
   messages.value = [];
-  const welcome = config.value?.ui?.welcome_message || `Sveiki! Es esmu ${props.agentName}. Kā varu palīdzēt?`;
+  const welcome = config.value?.ui?.welcome_message?.trim() || `Sveiki! Es esmu ${props.agentName}. Kā varu palīdzēt?`;
   messages.value.push({
     role: 'assistant',
     content: welcome,

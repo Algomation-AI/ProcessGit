@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/setting"
 
 	"gopkg.in/yaml.v3"
 )
@@ -124,19 +125,27 @@ func ResolveAPIKey(ref string) (string, error) {
 		return "", fmt.Errorf("api_key_ref is empty")
 	}
 
-	// Check environment variable
+	// Priority 1: Environment variable
 	if val := os.Getenv(ref); val != "" {
 		return val, nil
 	}
 
-	// Check org-prefixed references (org:name:key_name)
+	// Priority 2: app.ini [chat] section
+	if setting.CfgProvider != nil {
+		chatSec, err := setting.CfgProvider.GetSection("chat")
+		if err == nil && chatSec != nil {
+			if key := setting.ConfigSectionKey(chatSec, ref); key != nil && key.String() != "" {
+				return key.String(), nil
+			}
+		}
+	}
+
+	// Priority 3: Org-prefixed references (future)
 	if strings.HasPrefix(ref, "org:") {
-		// For org-level keys, we would look up in ProcessGit's encrypted secret store.
-		// This is a placeholder for the secret store integration.
 		return "", fmt.Errorf("org-level API key resolution not yet implemented for ref %q", ref)
 	}
 
-	return "", fmt.Errorf("API key not found for ref %q: environment variable not set", ref)
+	return "", fmt.Errorf("API key not found for ref %q: set as environment variable or add to [chat] section in app.ini", ref)
 }
 
 func loadConfigFile(commit *git.Commit, filePath string) (*ChatConfig, error) {
