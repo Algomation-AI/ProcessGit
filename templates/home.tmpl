@@ -1,47 +1,114 @@
 {{template "base/head" .}}
 <div role="main" aria-label="{{if .IsSigned}}{{ctx.Locale.Tr "dashboard"}}{{else}}{{ctx.Locale.Tr "home_title"}}{{end}}" class="page-content home">
-	<div class="tw-mb-8 tw-px-8">
+	<div class="home-hero tw-px-8">
 		<div class="center">
-			<img class="logo" width="220" height="220" src="{{AssetUrlPrefix}}/img/logo.svg" alt="{{ctx.Locale.Tr "logo"}}">
-			<div class="hero">
-				<h1 class="ui icon header title tw-text-balance">
-					ProcessGit
-					<div class="sub header">
-						ProcessGit is Git for executable processes.
-						Version, review, and release workflows as portable algorithms — so teams and AI agents execute the same “single source of truth”, every time.
-					</div>
-				</h1>
+			<img class="logo" width="140" height="143" src="{{AssetUrlPrefix}}/img/logo.svg" alt="{{ctx.Locale.Tr "logo"}}">
+			<h1>ProcessGit</h1>
+			<p>
+				Git-powered platform for your processes, architecture, registers, and classifications.
+				Visual editors anyone can use. Built-in AI that understands your real data.
+			</p>
+		</div>
+	</div>
+
+	<div class="home-section home-section-alt">
+		<div class="home-section-inner">
+			<div class="grid-3">
+				<div class="card">
+					<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+					</svg>
+					<h3>Processes as Code</h3>
+					<p>Store BPMN workflows, DMN decision tables, and CMMN case models as versioned artifacts. Review changes through pull requests. Release governed versions teams and AI agents can trust.</p>
+				</div>
+				<div class="card">
+					<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/>
+					</svg>
+					<h3>Registers as Code</h3>
+					<p>Organizational registers, document classifications, and controlled vocabularies — fully versioned and validated. Every edit tracked. Every version recoverable. Built for compliance.</p>
+				</div>
+				<div class="card">
+					<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+					</svg>
+					<h3>Architecture as Code</h3>
+					<p>Define enterprise architecture in structured files. Generate living documentation that stays current. Review changes through pull requests — not email chains and outdated PDFs.</p>
+				</div>
 			</div>
 		</div>
 	</div>
-	<div class="ui stackable middle very relaxed page grid">
-		<div class="eight wide center column">
-			<h1 class="hero ui icon header">
-				What is a Processpository?
-			</h1>
-			<p class="large tw-text-balance">
-				A Processpository is a Git repository that stores executable process algorithms.
-				Instead of burying process knowledge in documents and tribal memory, you store the real operational logic as versioned artifacts: models, decision rules, test scenarios, and release tags.
-			</p>
-		</div>
-		<div class="eight wide center column">
-			<h1 class="hero ui icon header">
-				Why this matters
-			</h1>
-			<p class="large tw-text-balance">
-				Traditional process documentation drifts. People interpret. Tools diverge. AI agents hallucinate.
-				ProcessGit restores the old discipline: a single canonical definition, peer-reviewed and traceable — with history, diffs, approvals, and releases.
-			</p>
+
+	<div class="home-section">
+		<div class="home-section-inner">
+			<div class="sep"></div>
+			<h2 class="section-title">Click a file — get a visual editor</h2>
+			<p class="section-subtitle">No raw code. No developer tools. ProcessGit renders the right interface for every file type. Managers edit comfortably; git tracks every change underneath.</p>
+			<div class="viewer-grid">
+				<div class="viewer-item"><svg class="vi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><div><h4>BPMN 2.0 <span class="tag tag-edit">Editor</span></h4><p>Drag-and-drop process modeler with properties panel and auto-layout</p></div></div>
+				<div class="viewer-item"><svg class="vi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg><div><h4>DMN 1.3 <span class="tag tag-edit">Editor</span></h4><p>Decision tables, literal expressions, and requirement diagrams</p></div></div>
+				<div class="viewer-item"><svg class="vi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a4 4 0 00-8 0v2"/></svg><div><h4>CMMN 1.1 <span class="tag tag-edit">Editor</span></h4><p>Case management models with visual editing and properties inspector</p></div></div>
+				<div class="viewer-item"><svg class="vi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg><div><h4>XSD Schema Visualizer <span class="tag tag-edit">Editor</span></h4><p>Interactive graph of elements, types, and relationships with inline editing</p></div></div>
+				<div class="viewer-item"><svg class="vi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg><div><h4>XML Classification <span class="tag tag-edit">Editor</span></h4><p>Browse and edit document classification hierarchies and metadata</p></div></div>
+				<div class="viewer-item"><svg class="vi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><div><h4>Markdown <span class="tag tag-edit">Editor</span></h4><p>Rich text editing with live preview. Mermaid diagrams render inline.</p></div></div>
+				<div class="viewer-item"><svg class="vi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><div><h4>N-Graph Networks <span class="tag tag-view">Viewer</span></h4><p>Interactive network and graph visualization with Cytoscape.js</p></div></div>
+				<div class="viewer-item"><svg class="vi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><div><h4>Business Rulesets <span class="tag tag-view">Viewer</span></h4><p>Searchable table: condition, action, priority — at a glance</p></div></div>
+				<div class="viewer-item"><svg class="vi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><div><h4>Custom HTML Editors <span class="tag tag-custom">Build your own</span></h4><p>Ship your own GUI in the repo. Tables, forms, dashboards — save to git.</p></div></div>
+			</div>
+			<div class="callout">
+				<svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+				<div><h4>Every repository can have its own editor</h4><p>Add a <code>processgit.viewer.json</code> manifest and an HTML file to any repository. ProcessGit renders your custom interface instead of raw source — with built-in save-to-git, version history, and diff tracking. An online editor with version control combined.</p></div>
+			</div>
 		</div>
 	</div>
-	<div class="ui stackable middle very relaxed page grid">
-		<div class="sixteen wide center column">
-			<h1 class="hero ui icon header">
-				Built for UAPF packages
-			</h1>
-			<p class="large tw-text-balance">
-				Import UAPF (.uapf) packages to keep workflows, decisions, and governance metadata bundled as one portable artifact — validated on entry and stored in Git as the authoritative SSOT.
-			</p>
+
+	<div class="home-section home-section-alt">
+		<div class="home-section-inner">
+			<div class="sep"></div>
+			<h2 class="section-title">AI that works with your real data</h2>
+			<p class="section-subtitle">Every repository can become an AI-accessible knowledge base. Add a config file — get a live API for AI agents and an embedded chat assistant.</p>
+			<div class="grid-2">
+				<div class="ai-card">
+					<svg style="width:28px;height:28px;margin-bottom:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+					<h3>MCP Server — data as an API</h3>
+					<p>Add a <code>processgit.mcp.yaml</code> to any repository and ProcessGit creates a live MCP endpoint — a standardized API that AI agents can search, query, and validate against. Connect from Claude, ChatGPT, or any MCP-compatible tool.</p>
+					<div class="mono">Endpoint: /{owner}/{repo}/mcp<br>Tools: search · get_entity · list_entities · describe_model · validate · generate_document</div>
+				</div>
+				<div class="ai-card">
+					<svg style="width:28px;height:28px;margin-bottom:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+					<h3>Chat Agents — AI in your repo</h3>
+					<p>Add an <code>agent.chat.yaml</code> and a chat assistant appears right in the repository. Users ask questions in natural language; the AI answers using your actual versioned data. Works with Anthropic, OpenAI, or local Ollama models.</p>
+					<div class="mono" style="font-style:italic">"Where should I classify this GDPR letter?" → searches your schema, returns the right category code.</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="home-section">
+		<div class="home-section-inner">
+			<div class="uapf-row">
+				<div class="uapf-text">
+					<div class="sep left"></div>
+					<h2>UAPF — portable process packages</h2>
+					<p><strong>Unified Algorithmic Process Format</strong> is an open standard that bundles BPMN workflows, DMN decision tables, and CMMN case models — together with test scenarios, execution metadata, and governance rules — into a single <code>.uapf</code> file.</p>
+					<p>Import a package into ProcessGit for validation, visual editing, version control, and release management. Export when you need a portable artifact that any compatible engine or AI agent can execute.</p>
+					<a href="https://uapf.dev" target="_blank" rel="noopener noreferrer">Learn more at uapf.dev →</a>
+				</div>
+				<div class="uapf-tree"><span class="dir">my-process.uapf/</span><br>&nbsp;&nbsp;manifest.json<br>&nbsp;&nbsp;<span class="dir">models/</span><br>&nbsp;&nbsp;&nbsp;&nbsp;bpmn/main.bpmn<br>&nbsp;&nbsp;&nbsp;&nbsp;dmn/decisions.dmn<br>&nbsp;&nbsp;&nbsp;&nbsp;cmmn/case.cmmn<br>&nbsp;&nbsp;<span class="dir">tests/</span><br>&nbsp;&nbsp;&nbsp;&nbsp;scenarios/*.json<br>&nbsp;&nbsp;<span class="dir">docs/</span><br>&nbsp;&nbsp;&nbsp;&nbsp;overview.md</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="home-section home-section-alt">
+		<div class="home-section-inner">
+			<div class="sep"></div>
+			<h2 class="section-title">Built for organizations that need governance</h2>
+			<p class="section-subtitle">Government agencies, enterprises, and anyone managing structured knowledge with proper audit trails and approval workflows.</p>
+			<div class="feat-row">
+				<div class="feat-item"><svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><h4>Full audit trail</h4><p>Every edit, review, and release — recorded in git with who, when, and why.</p></div>
+				<div class="feat-item"><svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><h4>Pull request reviews</h4><p>Changes go through the same approval workflow software teams trust.</p></div>
+				<div class="feat-item"><svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><h4>Self-hosted &amp; open source</h4><p>Run on your infrastructure. Your data stays yours. Built on Gitea (MIT).</p></div>
+			</div>
 		</div>
 	</div>
 </div>
