@@ -22,8 +22,11 @@ ProcessGit allows you to:
 
 - Store executable processes as versioned artifacts in Git
 - View and edit BPMN, CMMN, and DMN diagrams directly in the browser
+- Visualize N-Graph networks, Rulesets, XSD schemas, and DVS XML classifications with built-in viewers
 - Import and export UAPF algorithm packages with schema validation
 - Ship custom HTML viewers/editors alongside any data file using a simple manifest
+- Expose repository data to AI agents via built-in MCP (Model Context Protocol) servers
+- Embed AI chat assistants directly in repositories with configurable LLM providers
 - Classify repositories by type (process, decision, reference, connector) and lifecycle status
 - Tag, release, and review process definitions through commits and pull requests
 - Treat organizational workflows as **first-class governed assets**
@@ -34,25 +37,30 @@ Instead of managing only source code, ProcessGit manages **how work is done**.
 
 ## Core Features
 
-### 1. BPMN / CMMN / DMN Diagram Viewer & Editor
+### 1. Built-in File Viewers & Editors
 
-ProcessGit natively detects and renders OMG process modeling files. When you navigate to a supported file, the platform replaces the raw source view with an interactive graphical canvas.
+ProcessGit ships with a comprehensive set of viewers and editors that automatically activate when you navigate to a supported file. Instead of showing raw source, the platform renders an interactive graphical interface.
 
-**Supported formats:**
+#### Complete Viewer Inventory
 
-| Standard | File extensions | Capabilities |
-|----------|----------------|-------------|
-| BPMN 2.0 | `.bpmn`, `.bpmn20.xml`, `*bpmn.xml` | View + Edit + Properties panel |
-| CMMN 1.1 | `.cmmn`, `.cmmn11.xml`, `*cmmn.xml` | View + Edit + Properties panel |
-| DMN 1.3 | `.dmn`, `.dmn11.xml`, `*dmn.xml` | View + Edit + Properties panel |
-| N-Graph | `.ngraph.json`, `.ngraph.xml`, `.ngraph` | View |
-| Ruleset | `.ruleset.json`, `.ruleset.dmn`, `.ruleset` | View |
+| # | Viewer | File Extensions | Format | Capabilities | Library / Technology |
+|---|--------|----------------|--------|-------------|---------------------|
+| 1 | **BPMN 2.0** — Business Process Model and Notation | `.bpmn`, `.bpmn20.xml`, `*bpmn.xml` | XML | View + Edit + Properties panel | [bpmn-js](https://bpmn.io/), bpmn-auto-layout |
+| 2 | **CMMN 1.1** — Case Management Model and Notation | `.cmmn`, `.cmmn11.xml`, `*cmmn.xml` | XML | View + Edit + Properties panel | cmmn-js |
+| 3 | **DMN 1.3** — Decision Model and Notation | `.dmn`, `.dmn11.xml`, `*dmn.xml` | XML | View + Edit + Properties panel (DRD, decision table, literal expression) | dmn-js |
+| 4 | **N-Graph** — Network / Graph visualization | `.ngraph.json`, `.ngraph.xml`, `.ngraph` | JSON / XML | View only | [Cytoscape.js](https://js.cytoscape.org/) |
+| 5 | **Ruleset** — Business rules | `.ruleset.json`, `.ruleset.dmn`, `.ruleset` | JSON / DMN | View only (searchable table: Name, When, Then, Priority) | Custom HTML table |
+| 6 | **DVS XML** — Document & Value Set classification | Detected by XML content sniffing | XML | Preview + Edit + Raw | Custom (classification & document metadata renderers) |
+| 7 | **XSD Visual** — XML Schema Definition | `.xsd` | XML (XSD) | Visual graph editor (elements, complex types, relationships) | Custom SVG rendering with parse/serialize |
+| 8 | **ProcessGit Custom Viewer** — User-defined HTML GUIs | Matched by `processgit.viewer.json` manifest | HTML | Fully custom (sandboxed iframe) | PGV postMessage protocol |
 
-**Detection** works by file extension first and falls back to content sniffing (e.g. checking for `xmlns:bpmn=` in the XML). BPMN files missing diagram layout information (`bpmndi:BPMNDiagram`) are auto-laid-out before rendering.
+#### Detection & Rendering
 
-**Three-mode toolbar** — every diagram file gets a toolbar with *Preview*, *Edit*, and *Raw* tabs. Preview renders the graphical diagram (read-only, fitted to viewport). Edit opens a full modeler with a properties panel for BPMN/CMMN/DMN (powered by [bpmn-js](https://bpmn.io/), cmmn-js, and dmn-js). Raw shows the underlying XML/JSON source. A **Save** button commits changes directly to the repository branch.
+**File detection** works by extension first, falling back to content sniffing (e.g. checking for `xmlns:bpmn=` in XML, or DVS-specific root elements). BPMN files missing diagram layout information (`bpmndi:BPMNDiagram`) are auto-laid-out before rendering.
 
-**Template repositories** — ProcessGit bootstraps a set of starter templates (single BPMN process, single DMN decision, single CMMN case, and several UAPF variants) that appear in the "New Repository" template dropdown.
+**Three-mode toolbar** — diagram files get a toolbar with *Preview*, *Edit*, and *Raw* tabs. Preview renders the graphical diagram (read-only, fitted to viewport). Edit opens a full modeler with a properties panel for BPMN/CMMN/DMN. Raw shows the underlying XML/JSON source. A **Save** button commits changes directly to the repository branch.
+
+**Template repositories** — ProcessGit bootstraps starter templates (BPMN process, DMN decision, CMMN case, UAPF variants) that appear in the "New Repository" template dropdown.
 
 ---
 
@@ -256,27 +264,38 @@ When a user browses to `vdvc-register.xml`, instead of seeing raw XML, they get 
 
 ---
 
-### 4. XSD Schema Visualizer
+### 4. Custom Viewers To Be Made
 
-ProcessGit includes a built-in visual viewer for XML Schema Definition (`.xsd`) files. Instead of reading raw XSD XML, users see an interactive graph-based representation of the schema structure showing elements, complex types, simple types, relationships, and constraints.
+The ProcessGit custom viewer framework (`processgit.viewer.json`) makes it straightforward to build new domain-specific viewers. The following are planned custom viewers to be developed and shipped as reference implementations:
 
-The XSD visualizer supports:
+| Viewer | Target Files | Description | Status |
+|--------|-------------|-------------|--------|
+| **JSON Schema Viewer** | `.schema.json`, `.json-schema` | Visual form-based editor for JSON Schema definitions with property tree, type selectors, and validation preview | Planned |
+| **OpenAPI / Swagger Viewer** | `.openapi.yaml`, `.openapi.json`, `.swagger.json` | Interactive API documentation viewer with try-it-out request builder and schema visualization | Planned |
+| **Markdown Rich Editor** | `.md`, `.markdown` | WYSIWYG markdown editor with live preview, table editor, and embedded diagram support | Planned |
+| **CSV / Spreadsheet Viewer** | `.csv`, `.tsv`, `.xlsx` | Tabular data viewer with sorting, filtering, column statistics, and cell-level editing | Planned |
+| **YAML Config Editor** | `.yaml`, `.yml` (with schema) | Schema-aware YAML editor with autocomplete, validation, and visual form rendering | Planned |
+| **Gantt / Timeline Viewer** | `.gantt.json`, `.timeline.json` | Interactive Gantt chart for project scheduling and process timeline visualization | Planned |
+| **Form Builder** | `.form.json`, `.form.yaml` | Drag-and-drop form designer for building data entry forms tied to repository schemas | Planned |
+| **Process KPI Dashboard** | `.kpi.json`, `.metrics.yaml` | Dashboard viewer for process metrics, KPIs, and SLA definitions with chart rendering | Planned |
+| **Data Flow Diagram Viewer** | `.dfd.json`, `.dataflow.xml` | Visual editor for data flow diagrams showing data stores, processes, and flows | Planned |
+| **Regulation / Policy Viewer** | `.regulation.xml`, `.policy.json` | Structured viewer for legal and regulatory documents with cross-reference navigation | Planned |
 
-- Parsing and rendering schema element hierarchies
-- Visual graph layout of type relationships
-- Interactive editing (adding child elements, renaming elements/types, setting occurrence constraints, editing documentation annotations)
-- Serializing changes back to valid XSD XML
-- Export capabilities
+#### How to Build Your Own Custom Viewer
+
+Any repository can ship a custom HTML-based viewer. See the [Custom Viewers & Editors](#3-custom-viewers--editors-processgitviewerjson) section for the full `processgit.viewer.json` manifest format and PGV postMessage protocol reference.
+
+Key steps:
+1. Create a `processgit.viewer.json` manifest defining your viewer's `id`, `primary_pattern`, `entry` HTML file, and `edit_allow` list
+2. Build your viewer HTML using the PGV protocol (`PGV_READY` → `PGV_INIT` → `PGV_FETCH` → `PGV_DIRTY` → `PGV_REQUEST_SAVE`)
+3. Place both files in the same repository directory
+4. Navigate to a matching file — ProcessGit renders your viewer instead of raw source
+
+Community contributions of new viewers are welcome. Open an issue to discuss your viewer idea before submitting a pull request.
 
 ---
 
-### 5. DVS XML Viewer
-
-ProcessGit includes a dedicated viewer for DVS (Document and Value Set) XML classification schemes and document metadata. This provides structured preview, edit, and raw views for classification and document metadata XML files used in government and enterprise contexts.
-
----
-
-### 6. Repository Classification
+### 5. Repository Classification
 
 ProcessGit tracks repository classification directly in the platform database. Each repository has metadata fields that categorize its purpose and lifecycle stage.
 
@@ -299,9 +318,219 @@ A default classification (`repo_type=process`, `status=draft`) is created automa
 - Algorithm packages (`.uapf` bundles with schema-validated manifests)
 - Public-sector and enterprise process catalogs with governed releases
 - Reference data registers with custom HTML viewers/editors
-- XSD schemas with visual browsing
+- XSD schemas with visual browsing and editing
+- Network/graph data visualization (N-Graph with Cytoscape.js)
+- Document classification schemes (DVS XML structured preview)
+- AI-powered data assistants for repository content (chat agents with MCP tools)
+- Exposing structured data to external AI agents via MCP server endpoints
+- Cross-repository AI queries connecting multiple MCP servers
 - AI-assisted execution engines that require governed, versioned inputs
 - Single Source of Truth (SSOT) for operational logic
+
+---
+
+## MCP Server Integration (Model Context Protocol)
+
+ProcessGit implements a built-in **MCP server** for every repository, enabling AI agents and LLMs to query, search, and validate repository data through a standardized protocol. This turns every ProcessGit repository into an AI-accessible knowledge base.
+
+### How It Works
+
+Any repository containing a `processgit.mcp.yaml` configuration file exposes an MCP server endpoint. External AI tools (Claude Desktop, custom agents, other MCP clients) can connect to this endpoint and interact with the repository data using structured tool calls.
+
+**Protocol:** JSON-RPC 2.0 over HTTP with Server-Sent Events (SSE) streaming.
+
+**Endpoint:** `GET/POST /{owner}/{repo}/mcp`
+
+### MCP Configuration (`processgit.mcp.yaml`)
+
+```yaml
+version: 1
+
+server:
+  name: "my-data-server"
+  description: "MCP server for organization register data"
+  instructions: |
+    This server provides access to organizational data.
+    Use 'search' to find entities and 'get_entity' for details.
+
+sources:
+  - path: "data/organizations.xml"
+    type: "xml"
+    schema: "data/organizations.xsd"
+    description: "Registry of organizations"
+  - path: "data/classifications.xml"
+    type: "xml"
+    description: "Document classification scheme"
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `version` | Yes | Config version (currently `1`) |
+| `server.name` | Yes | Human-readable server name |
+| `server.description` | No | Server purpose description |
+| `server.instructions` | No | Usage instructions for AI agents |
+| `sources` | Yes | Array of data sources (at least 1) |
+| `sources[].path` | Yes | Path to the data file in the repo |
+| `sources[].type` | Yes | Data type (`xml` currently supported) |
+| `sources[].schema` | No | Path to XSD/JSON Schema for validation |
+| `sources[].description` | No | Human-readable description of the source |
+
+### Available MCP Tools
+
+When an AI agent connects to a ProcessGit MCP server, it has access to these tools:
+
+| Tool | Description |
+|------|-------------|
+| `help` | Returns server capabilities and usage instructions |
+| `identify` | Returns server identity, repository info, and available sources |
+| `describe_model` | Describes the data model, entity types, and their attributes |
+| `search` | Full-text search across all indexed entities |
+| `get_entity` | Retrieve a specific entity by ID or path |
+| `list_entities` | List all entities with optional filtering |
+| `validate` | Validate data against its XML/JSON schema |
+| `generate_document` | Generate documentation from the data model |
+
+### Connecting External AI Tools
+
+Any MCP-compatible client can connect to a ProcessGit MCP server:
+
+```
+MCP Server URL: https://your-processgit-instance.org/{owner}/{repo}/mcp
+```
+
+The server supports both standard HTTP request/response and SSE streaming for real-time tool execution results.
+
+---
+
+## AI Chat Agents
+
+ProcessGit provides an in-browser AI chat interface tied to repository data. When a repository contains an `agent.chat.yaml` configuration, the file tree displays a clickable chat agent entry with a robot icon. Clicking it opens an interactive chat panel where users can ask questions about the repository data using natural language.
+
+### Quick Start
+
+Create an `agent.chat.yaml` in your repository root:
+
+```yaml
+version: "1.0"
+
+ui:
+  name: "My Assistant"
+  subtitle: "Ask me anything about this project"
+  welcome_message: |
+    Hello! I can help you understand this repository.
+  quick_questions:
+    - "What does this project do?"
+    - "How is the data structured?"
+
+llm:
+  provider: "anthropic"
+  model: "claude-sonnet-4-5"
+  api_key_ref: "ANTHROPIC_API_KEY"
+  max_tokens: 1500
+  temperature: 0.3
+  system_prompt: |
+    You are a helpful assistant for this repository.
+    Use the available MCP tools to search and retrieve data.
+
+mcp:
+  use_repo_mcp: true
+```
+
+### Supported LLM Providers
+
+| Provider | Example Models | API Key Env Var |
+|----------|---------------|-----------------|
+| **Anthropic** | `claude-sonnet-4-5`, `claude-haiku-3` | `ANTHROPIC_API_KEY` |
+| **OpenAI** | `gpt-4o`, `gpt-4o-mini` | `OPENAI_API_KEY` |
+| **Ollama** | `llama3`, `mistral` (local) | — (runs locally) |
+
+### Agent File Discovery
+
+| Priority | Path | Description |
+|----------|------|-------------|
+| 1 | `agent.chat.yaml` | Root directory (default agent) |
+| 2 | `.processgit/agent.chat.yaml` | Config directory |
+| 3 | `*.agent.chat.yaml` | Named variants (e.g., `classification.agent.chat.yaml`) |
+
+Multiple `*.agent.chat.yaml` files create multiple independent chat agents in the same repository.
+
+### MCP Tool Integration
+
+Chat agents can use MCP tools to answer questions with data from the repository:
+
+```yaml
+mcp:
+  use_repo_mcp: true            # Use this repo's own MCP server
+  additional_servers:            # Connect to other repos' MCP servers
+    - name: "org-register"
+      url: "https://processgit.org/VARAM/Organizations/mcp"
+      description: "Organization register data"
+  allowed_tools:                 # Whitelist specific tools
+    - search
+    - get_entity
+    - describe_model
+  denied_tools: []               # Or blacklist specific tools
+```
+
+### Conversation History
+
+Enable persistent conversation storage on a dedicated git branch:
+
+```yaml
+history:
+  enabled: true
+  storage: "git-branch"
+  branch: "chat-history"
+  retention_days: 90
+  max_conversations_per_user: 100
+  anonymize: false
+```
+
+Conversations are stored in a date-organized structure on an orphan git branch, providing an immutable audit trail through git commit history. Commits are batched (every 5 minutes or 10+ updates) to avoid polluting history.
+
+### Access Control & Rate Limiting
+
+```yaml
+access:
+  visibility: "authenticated"     # "public", "authenticated", or "team"
+  rate_limits:
+    requests_per_minute: 10
+    requests_per_day: 100
+    max_conversation_turns: 50
+  budget:
+    max_monthly_usd: 50.00
+    alert_threshold_pct: 80       # Alert admin at 80% budget usage
+```
+
+### Chat API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/{owner}/{repo}/chat` | Send a message (SSE stream response) |
+| `GET` | `/{owner}/{repo}/chat/agents` | List available chat agents |
+| `GET` | `/{owner}/{repo}/chat/history` | List conversation history |
+
+### Server Configuration
+
+Enable and configure chat agents globally in `app.ini`:
+
+```ini
+[chat]
+ENABLED = true
+MAX_AGENTS_PER_REPO = 10
+RATE_LIMIT_PER_MINUTE = 10
+MAX_MONTHLY_BUDGET = 100.0
+DEFAULT_PROVIDER = anthropic
+```
+
+### Security Rules
+
+- **API keys** are referenced by environment variable name only — never store actual keys in `agent.chat.yaml`
+- **Rate limiting** is enforced per-user at both per-minute and per-day levels
+- **Budget controls** stop serving requests when the monthly USD limit is exceeded
+- **Visibility** controls who can access the chat (`public`, `authenticated`, or `team`)
+- **Tool allow/deny lists** restrict which MCP tools the LLM can invoke
+- **Iframe sandbox** applies to any custom viewer content rendered alongside chat
 
 ---
 
