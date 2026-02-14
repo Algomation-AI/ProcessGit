@@ -22,7 +22,7 @@ ProcessGit allows you to:
 
 - Store executable processes as versioned artifacts in Git
 - View and edit BPMN, CMMN, and DMN diagrams directly in the browser
-- Visualize N-Graph networks, Rulesets, XSD schemas, and DVS XML classifications with built-in viewers
+- Visualize N-Graph networks, Rulesets, XSD schemas, and XML classifications with built-in viewers
 - Import and export UAPF algorithm packages with schema validation
 - Ship custom HTML viewers/editors alongside any data file using a simple manifest
 - Expose repository data to AI agents via built-in MCP (Model Context Protocol) servers
@@ -50,13 +50,13 @@ ProcessGit ships with a comprehensive set of viewers and editors that automatica
 | 3 | **DMN 1.3** — Decision Model and Notation | `.dmn`, `.dmn11.xml`, `*dmn.xml` | XML | View + Edit + Properties panel (DRD, decision table, literal expression) | dmn-js |
 | 4 | **N-Graph** — Network / Graph visualization | `.ngraph.json`, `.ngraph.xml`, `.ngraph` | JSON / XML | View only | [Cytoscape.js](https://js.cytoscape.org/) |
 | 5 | **Ruleset** — Business rules | `.ruleset.json`, `.ruleset.dmn`, `.ruleset` | JSON / DMN | View only (searchable table: Name, When, Then, Priority) | Custom HTML table |
-| 6 | **DVS XML** — Document & Value Set classification | Detected by XML content sniffing | XML | Preview + Edit + Raw | Custom (classification & document metadata renderers) |
+| 6 | **XML Classification** — Structured XML viewer for schemas and registers | Detected by XML content sniffing | XML | Preview + Edit + Raw | Custom (classification & document metadata renderers) |
 | 7 | **XSD Visual** — XML Schema Definition | `.xsd` | XML (XSD) | Visual graph editor (elements, complex types, relationships) | Custom SVG rendering with parse/serialize |
 | 8 | **ProcessGit Custom Viewer** — User-defined HTML GUIs | Matched by `processgit.viewer.json` manifest | HTML | Fully custom (sandboxed iframe) | PGV postMessage protocol |
 
 #### Detection & Rendering
 
-**File detection** works by extension first, falling back to content sniffing (e.g. checking for `xmlns:bpmn=` in XML, or DVS-specific root elements). BPMN files missing diagram layout information (`bpmndi:BPMNDiagram`) are auto-laid-out before rendering.
+**File detection** works by extension first, falling back to content sniffing (e.g. checking for `xmlns:bpmn=` in XML, or domain-specific root elements). BPMN files missing diagram layout information (`bpmndi:BPMNDiagram`) are auto-laid-out before rendering.
 
 **Three-mode toolbar** — diagram files get a toolbar with *Preview*, *Edit*, and *Raw* tabs. Preview renders the graphical diagram (read-only, fitted to viewport). Edit opens a full modeler with a properties panel for BPMN/CMMN/DMN. Raw shows the underlying XML/JSON source. A **Save** button commits changes directly to the repository branch.
 
@@ -228,16 +228,16 @@ Your viewer HTML runs inside a **sandboxed iframe** (`allow-scripts allow-forms`
 
 **Security model:** The iframe is sandboxed. File fetches are proxied through the host using a strict allow-list: only same-origin URLs matching `/raw/` or `/src/` paths are permitted. The `edit_allow` array in the manifest controls which files the viewer can write back.
 
-#### Real-World Example: VDVC Organization Register Viewer
+#### Real-World Example: Organization Register Viewer
 
-The [Organizations Register](https://processgit.org) repository demonstrates a custom viewer for an XML register of Latvian government organizations, validated against an XSD schema.
+A custom viewer for an XML register of organizations, validated against an XSD schema.
 
 **Repository structure:**
 ```
 processgit.viewer.json          ← Manifest
-vdvc-register-viewer.html       ← Custom HTML viewer/editor
-vdvc-register.xml               ← Data file (the register)
-vdvc-register.xsd               ← XSD schema for validation
+register-viewer.html            ← Custom HTML viewer/editor
+register.xml                    ← Data file (the register)
+register.xsd                    ← XSD schema for validation
 ```
 
 **Manifest:**
@@ -246,21 +246,21 @@ vdvc-register.xsd               ← XSD schema for validation
   "version": 1,
   "viewers": [
     {
-      "id": "vdvc-register",
-      "primary_pattern": "vdvc-register.xml",
+      "id": "org-register",
+      "primary_pattern": "register.xml",
       "type": "html",
-      "entry": "vdvc-register-viewer.html",
-      "edit_allow": ["vdvc-register.xml"],
+      "entry": "register-viewer.html",
+      "edit_allow": ["register.xml"],
       "targets": {
-        "xsd": "vdvc-register.xsd",
-        "xml": "vdvc-register.xml"
+        "xsd": "register.xsd",
+        "xml": "register.xml"
       }
     }
   ]
 }
 ```
 
-When a user browses to `vdvc-register.xml`, instead of seeing raw XML, they get a fully interactive table editor with search, sorting, inline editing, XSD validation status, and the ability to save changes back to the repository — all from a single self-contained HTML file shipped in the same repo.
+When a user browses to `register.xml`, instead of seeing raw XML, they get a fully interactive table editor with search, sorting, inline editing, XSD validation status, and the ability to save changes back to the repository — all from a single self-contained HTML file shipped in the same repo.
 
 ---
 
@@ -320,7 +320,7 @@ A default classification (`repo_type=process`, `status=draft`) is created automa
 - Reference data registers with custom HTML viewers/editors
 - XSD schemas with visual browsing and editing
 - Network/graph data visualization (N-Graph with Cytoscape.js)
-- Document classification schemes (DVS XML structured preview)
+- Document classification schemes (XML structured preview)
 - AI-powered data assistants for repository content (chat agents with MCP tools)
 - Exposing structured data to external AI agents via MCP server endpoints
 - Cross-repository AI queries connecting multiple MCP servers
@@ -463,8 +463,8 @@ mcp:
   use_repo_mcp: true            # Use this repo's own MCP server
   additional_servers:            # Connect to other repos' MCP servers
     - name: "org-register"
-      url: "https://processgit.org/VARAM/Organizations/mcp"
-      description: "Organization register data"
+      url: "https://your-instance.org/owner/data-repo/mcp"
+      description: "External data source"
   allowed_tools:                 # Whitelist specific tools
     - search
     - get_entity
