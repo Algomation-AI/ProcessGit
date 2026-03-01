@@ -84,7 +84,7 @@
 		</div>
 	</h4>
 
-	{{if and .ReadmeInList .IsMarkup}}
+	{{if and .ReadmeInList .IsMarkup .FileContent}}
 		<div class="ui bottom attached segment file-view markup {{.MarkupType}}">
 			{{.FileContent}}
 		</div>
