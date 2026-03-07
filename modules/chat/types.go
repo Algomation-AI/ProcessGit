@@ -37,13 +37,14 @@ type ThemeConfig struct {
 
 // LLMConfig holds language model backend configuration.
 type LLMConfig struct {
-	Provider    string  `yaml:"provider"`
-	Model       string  `yaml:"model"`
-	APIKeyRef   string  `yaml:"api_key_ref"`
-	MaxTokens   int     `yaml:"max_tokens"`
-	Temperature float64 `yaml:"temperature"`
-	TopP        float64 `yaml:"top_p"`
-	SystemPrompt string `yaml:"system_prompt"`
+	Provider     string  `yaml:"provider"`
+	Model        string  `yaml:"model"`
+	APIKeyRef    string  `yaml:"api_key_ref"`
+	APIBaseURL   string  `yaml:"api_base_url"`   // Custom API URL (for Ollama or self-hosted models)
+	MaxTokens    int     `yaml:"max_tokens"`
+	Temperature  float64 `yaml:"temperature"`
+	TopP         float64 `yaml:"top_p"`
+	SystemPrompt string  `yaml:"system_prompt"`
 }
 
 // MCPChatConfig holds MCP tool configuration for the chat agent.

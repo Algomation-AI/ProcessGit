@@ -35,6 +35,7 @@ func init() {
 		"get_entity":        toolGetEntity,
 		"list_entities":     toolListEntities,
 		"validate":          toolValidate,
+		"check_conformity":  toolCheckConformity,
 		"generate_document": toolGenerateDocument,
 	}
 }
@@ -128,6 +129,31 @@ func GetToolDefinitions(cfg *MCPConfig) []ToolDefinition {
 			InputSchema: map[string]interface{}{
 				"type":       "object",
 				"properties": map[string]interface{}{},
+			},
+		},
+		{
+			Name: "check_conformity",
+			Description: "Cross-reference a process or entity against regulatory requirements stored in this repository. " +
+				"Searches for requirement entities (types containing 'requirement', 'rule', 'prasība', 'noteikums') " +
+				"and matches them against the specified entity or query. Returns relevant requirements with " +
+				"relevance scores for conformity assessment. Use with entity_id to check a specific process, " +
+				"or with query to find requirements by topic (e.g., 'iesnieguma izskatīšana', 'termiņš', 'paziņošana').",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"entity_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Entity ID to check conformity for (e.g., 'process:permit-application'). Use list_entities or search to discover IDs.",
+					},
+					"query": map[string]interface{}{
+						"type":        "string",
+						"description": "Search query to find relevant requirements (e.g., 'deadline notification appeal')",
+					},
+					"limit": map[string]interface{}{
+						"type":        "number",
+						"description": "Maximum requirements to return (default 20)",
+					},
+				},
 			},
 		},
 		{

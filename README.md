@@ -16,7 +16,7 @@
 
 ## What is ProcessGit
 
-ProcessGit is a **Process Repository** (sometimes called a *processpository*). It brings version control, review, releases, and traceability — the proven disciplines of source-code management — to **process logic**, workflows, and algorithmic definitions that traditionally live in documents, diagrams, or proprietary tools.
+ProcessGit is an **AI-native process governance platform** that combines Git-based version control with built-in AI capabilities for process classification, conformity analysis, and organizational knowledge management. It brings version control, review, releases, and traceability — the proven disciplines of source-code management — to **process logic**, workflows, and algorithmic definitions that traditionally live in documents, diagrams, or proprietary tools.
 
 ProcessGit allows you to:
 
@@ -26,12 +26,42 @@ ProcessGit allows you to:
 - Import and export UAPF algorithm packages with schema validation
 - Ship custom HTML viewers/editors alongside any data file using a simple manifest
 - Expose repository data to AI agents via built-in MCP (Model Context Protocol) servers
-- Embed AI chat assistants directly in repositories with configurable LLM providers
+- **Run AI-powered conformity analysis** — cross-reference process definitions against regulatory requirements
+- **Classify processes and documents** using AI agents that query governed, authoritative data
+- Embed AI chat assistants directly in repositories with configurable LLM providers (Anthropic, OpenAI, Ollama)
 - Classify repositories by type (process, decision, reference, connector) and lifecycle status
 - Tag, release, and review process definitions through commits and pull requests
 - Treat organizational workflows as **first-class governed assets**
 
-Instead of managing only source code, ProcessGit manages **how work is done**.
+Instead of managing only source code, ProcessGit manages **how work is done** — and helps AI verify it's done right.
+
+---
+
+## AI-Powered Process Analysis
+
+ProcessGit is not just a repository — it is the **governed execution environment** from which AI systems retrieve authoritative process definitions, schemas, registers, and decision logic.
+
+### How It Works
+
+Every ProcessGit repository can expose its structured data through **MCP (Model Context Protocol) servers**. AI agents connect to these endpoints and use standardized tools to search, query, validate, and perform conformity checks against the repository's governed data. The AI's outputs — classifications, conformity assessments, gap analyses — are grounded in versioned, peer-reviewed, auditable source material.
+
+### Key AI Capabilities
+
+| Capability | Description |
+| --- | --- |
+| **Process Classification** | AI agents analyze process definitions and recommend classifications against organizational schemas (e.g., document classification hierarchies, process catalogs) |
+| **Conformity Analysis** | AI agents cross-reference process models (BPMN/DMN/CMMN) against regulatory requirement registers to identify compliance gaps, missing steps, and documentation deficiencies |
+| **Regulatory Validation** | AI agents check whether processes include all legally required elements (notification steps, appeal instructions, deadline controls) with citations to specific legal provisions |
+| **Natural Language Querying** | Embedded chat agents answer questions about processes, decisions, and classifications using the repository's actual versioned data |
+
+### Why Governed Data Matters for AI
+
+AI classification and conformity analysis is only as reliable as the data it operates on. ProcessGit ensures that:
+
+- **Data is versioned**: every change to a process definition or requirement register is tracked with author, timestamp, and rationale
+- **Data is reviewed**: changes go through pull request review before becoming authoritative
+- **AI outputs are auditable**: every AI query, tool invocation, and response is recorded in conversation history (stored on a git branch)
+- **Data is authoritative**: AI agents query the governed, released version of data — not drafts, not copies, not stale documents
 
 ---
 
@@ -324,6 +354,9 @@ A default classification (`repo_type=process`, `status=draft`) is created automa
 - Document classification schemes (XML structured preview)
 - AI-powered data assistants for repository content (chat agents with MCP tools)
 - Exposing structured data to external AI agents via MCP server endpoints
+- **AI-assisted conformity analysis of administrative processes against procedural law requirements**
+- **Automated classification of organizational documents and processes against regulatory schemas**
+- **Regulatory requirement registers with AI cross-referencing for compliance gap identification**
 - Cross-repository AI queries connecting multiple MCP servers
 - AI-assisted execution engines that require governed, versioned inputs
 - Single Source of Truth (SSOT) for operational logic
@@ -389,6 +422,7 @@ When an AI agent connects to a ProcessGit MCP server, it has access to these too
 | `get_entity` | Retrieve a specific entity by ID or path |
 | `list_entities` | List all entities with optional filtering |
 | `validate` | Validate data against its XML/JSON schema |
+| `check_conformity` | Cross-reference entities against regulatory requirements in the repository. Returns matched requirements with relevance scores for conformity assessment |
 | `generate_document` | Generate documentation from the data model |
 
 ### Connecting External AI Tools
@@ -422,6 +456,7 @@ ui:
   quick_questions:
     - "What does this project do?"
     - "How is the data structured?"
+    - "Does this process comply with all regulatory requirements?"
 
 llm:
   provider: "anthropic"
@@ -432,9 +467,29 @@ llm:
   system_prompt: |
     You are a helpful assistant for this repository.
     Use the available MCP tools to search and retrieve data.
+    When asked about conformity or compliance, use the check_conformity
+    tool to cross-reference processes against requirements.
 
 mcp:
   use_repo_mcp: true
+```
+
+**Example with OpenAI:**
+
+```yaml
+llm:
+  provider: "openai"
+  model: "gpt-4o"
+  api_key_ref: "OPENAI_API_KEY"
+```
+
+**Example with Ollama (local, no API key):**
+
+```yaml
+llm:
+  provider: "ollama"
+  model: "llama3"
+  api_base_url: "http://localhost:11434"  # optional, defaults to localhost
 ```
 
 ### Supported LLM Providers

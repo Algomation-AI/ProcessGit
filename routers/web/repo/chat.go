@@ -25,6 +25,9 @@ const (
 	anthropicMessagesURL = "https://api.anthropic.com/v1/messages"
 	anthropicAPIVersion  = "2023-06-01"
 	anthropicMCPBeta     = "mcp-client-2025-11-20"
+
+	openaiChatURL       = "https://api.openai.com/v1/chat/completions"
+	defaultOllamaURL    = "http://localhost:11434/api/chat"
 )
 
 // rateLimitEntry tracks per-user rate limit state.
@@ -97,13 +100,16 @@ func ChatEndpoint(ctx *context.Context) {
 		return
 	}
 
-	// Resolve API key
-	apiKey, err := chat.ResolveAPIKey(cfg.LLM.APIKeyRef)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "failed to resolve API key: " + err.Error(),
-		})
-		return
+	// Resolve API key (not required for Ollama)
+	var apiKey string
+	if cfg.LLM.Provider != "ollama" {
+		apiKey, err = chat.ResolveAPIKey(cfg.LLM.APIKeyRef)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, map[string]string{
+				"error": "failed to resolve API key: " + err.Error(),
+			})
+			return
+		}
 	}
 
 	// Check rate limits
@@ -154,16 +160,33 @@ func ChatEndpoint(ctx *context.Context) {
 		Timestamp: time.Now().UTC(),
 	})
 
-	// Build Claude API request
-	claudeReq := buildClaudeRequest(cfg, conv, ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
-
-	// Stream response via SSE
+	// Build request and stream response based on LLM provider
 	ctx.Resp.Header().Set("Content-Type", "text/event-stream")
 	ctx.Resp.Header().Set("Cache-Control", "no-cache")
 	ctx.Resp.Header().Set("Connection", "keep-alive")
 	ctx.Resp.Header().Set("X-Accel-Buffering", "no")
 
-	assistantContent, toolCalls, usage, err := streamClaudeResponse(ctx.Resp, apiKey, claudeReq)
+	var assistantContent string
+	var toolCalls []chat.ToolCall
+	var usage *chat.Usage
+
+	switch cfg.LLM.Provider {
+	case "anthropic":
+		claudeReq := buildClaudeRequest(cfg, conv, ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
+		assistantContent, toolCalls, usage, err = streamClaudeResponse(ctx.Resp, apiKey, claudeReq)
+	case "openai":
+		openaiReq := buildOpenAIRequest(cfg, conv, ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
+		assistantContent, toolCalls, usage, err = streamOpenAIResponse(ctx.Resp, apiKey, openaiReq)
+	case "ollama":
+		ollamaReq := buildOllamaRequest(cfg, conv)
+		assistantContent, toolCalls, usage, err = streamOllamaResponse(ctx.Resp, cfg, ollamaReq)
+	default:
+		ctx.JSON(http.StatusBadRequest, map[string]string{
+			"error": fmt.Sprintf("unsupported LLM provider: %s", cfg.LLM.Provider),
+		})
+		return
+	}
+
 	if err != nil {
 		log.Error("Chat streaming error: %v", err)
 		writeSSEEvent(ctx.Resp, "error", chat.SSEEvent{Type: "error", Text: err.Error()})
@@ -469,12 +492,281 @@ func estimateCost(inputTokens, outputTokens int, model string) float64 {
 	case strings.Contains(model, "haiku"):
 		inputRate = 0.25
 		outputRate = 1.25
+	case strings.Contains(model, "gpt-4o"):
+		inputRate = 2.5
+		outputRate = 10.0
+	case strings.Contains(model, "gpt-4"):
+		inputRate = 10.0
+		outputRate = 30.0
+	case strings.Contains(model, "gpt-3.5"):
+		inputRate = 0.5
+		outputRate = 1.5
+	case strings.Contains(model, "llama"), strings.Contains(model, "mistral"),
+		strings.Contains(model, "gemma"), strings.Contains(model, "qwen"):
+		// Local Ollama models — no API cost
+		inputRate = 0
+		outputRate = 0
 	default:
 		inputRate = 3.0
 		outputRate = 15.0
 	}
 
 	return (float64(inputTokens)*inputRate + float64(outputTokens)*outputRate) / 1_000_000
+}
+
+// ============================================================
+// OpenAI Provider
+// ============================================================
+
+// openAIRequest represents a request to the OpenAI Chat Completions API.
+type openAIRequest struct {
+	Model       string              `json:"model"`
+	MaxTokens   int                 `json:"max_tokens,omitempty"`
+	Messages    []openAIMessage     `json:"messages"`
+	Stream      bool                `json:"stream"`
+	Temperature float64             `json:"temperature,omitempty"`
+}
+
+type openAIMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+func buildOpenAIRequest(cfg *chat.ChatConfig, conv *chat.Conversation, owner, repoName string) *openAIRequest {
+	messages := make([]openAIMessage, 0, len(conv.Messages)+1)
+
+	// System message
+	if cfg.LLM.SystemPrompt != "" {
+		messages = append(messages, openAIMessage{Role: "system", Content: cfg.LLM.SystemPrompt})
+	}
+
+	// Conversation history
+	for _, msg := range conv.Messages {
+		if msg.Role == "user" || msg.Role == "assistant" {
+			messages = append(messages, openAIMessage{Role: msg.Role, Content: msg.Content})
+		}
+	}
+
+	// Add MCP context hint if MCP is configured
+	if cfg.MCP.UseRepoMCP || len(cfg.MCP.AdditionalServers) > 0 {
+		mcpHint := fmt.Sprintf("\n\n[Note: This repository has MCP endpoints available at %s%s/%s/mcp. "+
+			"For tool-augmented responses, connect via an MCP-compatible client.]", setting.AppURL, owner, repoName)
+		if len(messages) > 0 && messages[0].Role == "system" {
+			messages[0].Content += mcpHint
+		}
+	}
+
+	return &openAIRequest{
+		Model:       cfg.LLM.Model,
+		MaxTokens:   cfg.LLM.MaxTokens,
+		Messages:    messages,
+		Stream:      true,
+		Temperature: cfg.LLM.Temperature,
+	}
+}
+
+func streamOpenAIResponse(w http.ResponseWriter, apiKey string, req *openAIRequest) (string, []chat.ToolCall, *chat.Usage, error) {
+	reqBody, err := json.Marshal(req)
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("failed to marshal OpenAI request: %w", err)
+	}
+
+	httpReq, err := http.NewRequest("POST", openaiChatURL, bytes.NewReader(reqBody))
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("failed to create OpenAI request: %w", err)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
+
+	client := &http.Client{Timeout: 5 * time.Minute}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("OpenAI API request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", nil, nil, fmt.Errorf("OpenAI API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var fullContent strings.Builder
+	usage := &chat.Usage{}
+
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "data: ") {
+			continue
+		}
+		data := strings.TrimPrefix(line, "data: ")
+		if data == "[DONE]" {
+			break
+		}
+
+		var event map[string]interface{}
+		if err := json.Unmarshal([]byte(data), &event); err != nil {
+			continue
+		}
+
+		choices, ok := event["choices"].([]interface{})
+		if !ok || len(choices) == 0 {
+			continue
+		}
+
+		choice, ok := choices[0].(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		delta, ok := choice["delta"].(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		if content, ok := delta["content"].(string); ok && content != "" {
+			fullContent.WriteString(content)
+			writeSSEEvent(w, "message_delta", chat.SSEEvent{Type: "text", Text: content})
+		}
+
+		// Extract usage from the final chunk
+		if u, ok := event["usage"].(map[string]interface{}); ok {
+			if v, ok := u["prompt_tokens"].(float64); ok {
+				usage.InputTokens = int(v)
+			}
+			if v, ok := u["completion_tokens"].(float64); ok {
+				usage.OutputTokens = int(v)
+			}
+		}
+	}
+
+	usage.CostUSD = estimateCost(usage.InputTokens, usage.OutputTokens, req.Model)
+	return fullContent.String(), nil, usage, nil
+}
+
+// ============================================================
+// Ollama Provider
+// ============================================================
+
+// ollamaRequest represents a request to the Ollama API.
+type ollamaRequest struct {
+	Model    string           `json:"model"`
+	Messages []ollamaMessage  `json:"messages"`
+	Stream   bool             `json:"stream"`
+	Options  *ollamaOptions   `json:"options,omitempty"`
+}
+
+type ollamaMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type ollamaOptions struct {
+	Temperature float64 `json:"temperature,omitempty"`
+	NumPredict  int     `json:"num_predict,omitempty"`
+}
+
+func buildOllamaRequest(cfg *chat.ChatConfig, conv *chat.Conversation) *ollamaRequest {
+	messages := make([]ollamaMessage, 0, len(conv.Messages)+1)
+
+	if cfg.LLM.SystemPrompt != "" {
+		messages = append(messages, ollamaMessage{Role: "system", Content: cfg.LLM.SystemPrompt})
+	}
+
+	for _, msg := range conv.Messages {
+		if msg.Role == "user" || msg.Role == "assistant" {
+			messages = append(messages, ollamaMessage{Role: msg.Role, Content: msg.Content})
+		}
+	}
+
+	opts := &ollamaOptions{}
+	if cfg.LLM.Temperature > 0 {
+		opts.Temperature = cfg.LLM.Temperature
+	}
+	if cfg.LLM.MaxTokens > 0 {
+		opts.NumPredict = cfg.LLM.MaxTokens
+	}
+
+	return &ollamaRequest{
+		Model:    cfg.LLM.Model,
+		Messages: messages,
+		Stream:   true,
+		Options:  opts,
+	}
+}
+
+func streamOllamaResponse(w http.ResponseWriter, cfg *chat.ChatConfig, req *ollamaRequest) (string, []chat.ToolCall, *chat.Usage, error) {
+	// Resolve Ollama URL — use api_base_url from config or default
+	ollamaURL := defaultOllamaURL
+	if cfg.LLM.APIBaseURL != "" {
+		ollamaURL = strings.TrimRight(cfg.LLM.APIBaseURL, "/") + "/api/chat"
+	}
+
+	reqBody, err := json.Marshal(req)
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("failed to marshal Ollama request: %w", err)
+	}
+
+	httpReq, err := http.NewRequest("POST", ollamaURL, bytes.NewReader(reqBody))
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("failed to create Ollama request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Minute} // Ollama can be slow on first load
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("Ollama API request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", nil, nil, fmt.Errorf("Ollama API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var fullContent strings.Builder
+	usage := &chat.Usage{}
+	totalTokens := 0
+
+	// Ollama streams newline-delimited JSON objects
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			continue
+		}
+
+		var event map[string]interface{}
+		if err := json.Unmarshal([]byte(line), &event); err != nil {
+			continue
+		}
+
+		// Extract message content
+		if msg, ok := event["message"].(map[string]interface{}); ok {
+			if content, ok := msg["content"].(string); ok && content != "" {
+				fullContent.WriteString(content)
+				writeSSEEvent(w, "message_delta", chat.SSEEvent{Type: "text", Text: content})
+			}
+		}
+
+		// Check if done
+		if done, ok := event["done"].(bool); ok && done {
+			// Extract final token counts
+			if v, ok := event["prompt_eval_count"].(float64); ok {
+				usage.InputTokens = int(v)
+			}
+			if v, ok := event["eval_count"].(float64); ok {
+				usage.OutputTokens = int(v)
+				totalTokens += int(v)
+			}
+		}
+	}
+
+	// Ollama is local — cost is zero
+	usage.CostUSD = 0
+	return fullContent.String(), nil, usage, nil
 }
 
 func checkRateLimit(repoID int64, userID string, limits chat.RateLimitConfig) bool {

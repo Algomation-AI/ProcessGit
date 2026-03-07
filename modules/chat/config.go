@@ -195,8 +195,8 @@ func validateChatConfig(cfg *ChatConfig) error {
 	if cfg.LLM.Model == "" {
 		return fmt.Errorf("agent.chat.yaml: llm.model is required")
 	}
-	if cfg.LLM.APIKeyRef == "" {
-		return fmt.Errorf("agent.chat.yaml: llm.api_key_ref is required")
+	if cfg.LLM.APIKeyRef == "" && cfg.LLM.Provider != "ollama" {
+		return fmt.Errorf("agent.chat.yaml: llm.api_key_ref is required (except for ollama provider)")
 	}
 
 	// Validate provider
