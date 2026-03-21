@@ -3,21 +3,25 @@ services:
     container_name: processgit
     restart: unless-stopped
     build:
-      context: ..  
+      context: ..
       dockerfile: deploy/Dockerfile.processgit
     image: processgit:0.1
     depends_on:
-      - processgit-init-perms
+      processgit-init-perms:
+        condition: service_completed_successfully
     ports:
       - "18080:3000"
       - "12222:22"
     volumes:
       - processgit-data:/data
+    env_file:
+      - ../.env
     environment:
       USER_UID: "1000"
       USER_GID: "1000"
       APP_NAME: "ProcessGit: Git for Processes"
       PROCESSGIT_SEED_STRICT: "false"
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/v1/version >/dev/null 2>&1 || exit 1"]
       interval: 5s
@@ -32,6 +36,22 @@ services:
     entrypoint: ["/bin/sh", "-lc"]
     command: ["mkdir -p /data /data/.processgit /data/gitea && chown -R 1000:1000 /data"]
     restart: "no"
+
+  processgit-bootstrap:
+    image: processgit:0.1
+    restart: "no"
+    depends_on:
+      processgit:
+        condition: service_healthy
+    volumes:
+      - processgit-data:/data
+    env_file:
+      - ../.env
+    environment:
+      PROCESSGIT_API_BASE: "http://processgit:3000/api/v1"
+      PROCESSGIT_ADMIN_TOKEN: ${PROCESSGIT_ADMIN_TOKEN}
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["/opt/processgit/bootstrap/bootstrap-templates.sh"]
 
 volumes:
   processgit-data:
