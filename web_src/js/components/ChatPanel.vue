@@ -85,7 +85,7 @@ async function loadConfig() {
     // Use defaults if agents endpoint fails
   }
 
-  const welcome = config.value?.ui?.welcome_message?.trim() || `Sveiki! Es esmu ${props.agentName}. Kā varu palīdzēt?`;
+  const welcome = config.value?.ui?.welcome_message?.trim() || `Hello! I am ${props.agentName}. How can I help you today?`;
   messages.value.push({
     role: 'assistant',
     content: welcome,
@@ -208,7 +208,7 @@ function newConversation() {
   totalToolCalls.value = 0;
   sessionStats.value = {turns: 0, totalTokens: 0, totalCost: 0, toolsCalled: 0};
   messages.value = [];
-  const welcome = config.value?.ui?.welcome_message?.trim() || `Sveiki! Es esmu ${props.agentName}. Kā varu palīdzēt?`;
+  const welcome = config.value?.ui?.welcome_message?.trim() || `Hello! I am ${props.agentName}. How can I help you today?`;
   messages.value.push({
     role: 'assistant',
     content: welcome,
