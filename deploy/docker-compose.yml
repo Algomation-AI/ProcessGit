@@ -21,7 +21,6 @@ services:
       USER_GID: "1000"
       APP_NAME: "ProcessGit: Git for Processes"
       PROCESSGIT_SEED_STRICT: "false"
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/v1/version >/dev/null 2>&1 || exit 1"]
       interval: 5s
@@ -49,7 +48,6 @@ services:
       - ../.env
     environment:
       PROCESSGIT_API_BASE: "http://processgit:3000/api/v1"
-      PROCESSGIT_ADMIN_TOKEN: ${PROCESSGIT_ADMIN_TOKEN}
     entrypoint: ["/bin/sh", "-c"]
     command: ["/opt/processgit/bootstrap/bootstrap-templates.sh"]
 
