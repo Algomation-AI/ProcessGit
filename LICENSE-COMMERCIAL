@@ -1,14 +1,154 @@
 PROCESSGIT COMMERCIAL LICENSE
-Version 1.0
+Version 2.0 (Draft)
 
-This Commercial License ("Agreement") is entered into between
-Algomation-AI ("Licensor") and the legal entity acquiring this license
-("Licensee").
+===========================================================================
+NOTICE - DRAFT FOR LEGAL REVIEW
 
-Commercial purposes include SaaS, redistribution, embedding,
-external users, or rebranding.
+This document is a licensing template. It is not legal advice and has not
+been reviewed by legal counsel. Before ProcessGit is offered or sold
+commercially, this document, and the repository's overall licensing
+structure, must be reviewed by a qualified intellectual-property / IT
+lawyer. In particular, the Licensor named in Section 1 must be confirmed
+as a registered legal entity, or a named natural person, empowered to
+grant this license.
+===========================================================================
 
-All rights not expressly granted are reserved.
 
-Governing law: Republic of Latvia.
-Contact: licensing@algomation.io
+1. PARTIES
+
+This Commercial License Agreement ("Agreement") is entered into between
+Algomation-AI ("Licensor"), being the holder of copyright in the Original
+Additions defined in Section 2, and the natural person or legal entity that
+acquires a commercial license under this Agreement ("Licensee").
+
+
+2. WHAT PROCESSGIT IS - AND WHAT THIS AGREEMENT COVERS
+
+ProcessGit consists of two distinct bodies of code:
+
+ (a) "Upstream Components" - the Gitea source code and its dependencies,
+     authored by the Gitea project and its contributors and licensed by
+     them under the MIT License. The Upstream Components are NOT the
+     property of the Licensor and are NOT licensed under this Agreement.
+     They remain governed by their own MIT License, which applies to all
+     users, including the Licensee, at no charge. Nothing in this Agreement
+     grants, restricts, or purports to govern any right in the Upstream
+     Components.
+
+ (b) "Original Additions" - all code, schemas, templates, viewers and
+     editors, UAPF and UAPF-IP integration, MCP server and chat-agent
+     functionality, branding, and other original material added to, or
+     built upon, the Upstream Components by or for the Licensor.
+
+THIS AGREEMENT LICENSES ONLY THE ORIGINAL ADDITIONS.
+
+
+3. PERMITTED FREE USE
+
+The Original Additions are made available at no charge for the following
+uses only ("Permitted Free Use"):
+
+ - use by a natural person for personal, non-commercial purposes;
+ - use by an academic or educational institution for teaching or for
+   non-commercial research;
+ - internal use by an organization for its own non-commercial purposes;
+ - evaluation and testing.
+
+Permitted Free Use does NOT include any use described in Section 4, and is
+SUBJECT TO the exclusion in Section 5. Any use that is not Permitted Free
+Use requires a commercial license under this Agreement.
+
+
+4. USES REQUIRING A COMMERCIAL LICENSE
+
+A commercial license under this Agreement is required for, without
+limitation, any of the following:
+
+ - providing a hosted or software-as-a-service ("SaaS") offering based on
+   or incorporating the Original Additions;
+ - redistribution, resale, sublicensing, or distribution to third parties;
+ - embedding or incorporation into another product or service that is
+   itself offered to third parties;
+ - providing access to users outside the using organization;
+ - rebranding, white-labelling, or removal or alteration of attribution;
+ - any use by or for a commercial undertaking in the course of generating
+   revenue.
+
+
+5. PUBLIC SECTOR AND GOVERNMENT USE
+
+"Public Sector Entity" means any government or governmental body, ministry,
+agency, authority, department, municipality or other local government,
+state-owned or state-controlled entity, public institution, public-sector
+university, or inter-governmental or supranational institution (including
+the institutions and bodies of the European Union), in any jurisdiction.
+
+USE OF THE ORIGINAL ADDITIONS BY, FOR, OR ON BEHALF OF A PUBLIC SECTOR
+ENTITY REQUIRES A COMMERCIAL LICENSE UNDER THIS AGREEMENT.
+
+This requirement applies regardless of whether such use is internal,
+generates no revenue, or serves a public or non-commercial purpose. Public
+Sector use is expressly excluded from Permitted Free Use under Section 3.
+
+This Section reflects that deployment within public administration carries
+support, assurance, security, conformity, and continuity expectations that
+are not provided, and not assumed by the Licensor, under Permitted Free Use.
+
+
+6. GRANT
+
+Subject to the Licensee's acceptance of this Agreement, to the agreement
+and, where applicable, payment of the fees referred to in Section 7, and to
+the scope (purpose, number of users, deployment, and term) set out in an
+accompanying order, quotation, or schedule, the Licensor grants the Licensee
+a non-exclusive, non-transferable, non-sublicensable license to use the
+Original Additions for the licensed purpose and for the licensed term.
+
+
+7. FEES
+
+Fees for a commercial license are set out in a separate order, quotation, or
+agreement between the Licensor and the Licensee. No rights under Section 4
+or Section 5 are granted until those fees are agreed and, where required,
+paid.
+
+
+8. RESERVATION OF RIGHTS
+
+All rights in the Original Additions not expressly granted by this Agreement
+are reserved by the Licensor.
+
+
+9. NO WARRANTY
+
+To the maximum extent permitted by applicable law, the Original Additions
+are provided "AS IS", without warranty of any kind, express or implied,
+including but not limited to the warranties of merchantability, fitness for
+a particular purpose, and non-infringement.
+
+
+10. LIMITATION OF LIABILITY
+
+To the maximum extent permitted by applicable law, the Licensor shall not be
+liable for any indirect, incidental, special, exemplary, or consequential
+damages, or for any loss of profits, revenue, data, or business, arising out
+of or relating to this Agreement or the use of the Original Additions.
+
+
+11. TERM AND TERMINATION
+
+This Agreement applies for the term stated in the accompanying order. The
+Licensor may terminate this Agreement on written notice if the Licensee
+materially breaches it and does not cure the breach within thirty (30) days
+of notice. On termination, the rights granted under Section 6 cease.
+
+
+12. GOVERNING LAW
+
+This Agreement is governed by, and construed in accordance with, the law of
+the Republic of Latvia, without regard to its conflict-of-law rules.
+
+
+13. CONTACT
+
+Commercial licensing enquiries: licensing@algomation.io
