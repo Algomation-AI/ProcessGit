@@ -96,24 +96,68 @@ ProcessGit ships with a comprehensive set of viewers and editors that automatica
 
 ---
 
-### 2. UAPF Package Support (Unified Algorithmic Process Format)
+### 2. UAPF Package Support — ProcessGit in the UAPF ecosystem
 
-UAPF is a packaging standard for bundling process artifacts — workflows, decision models, governance metadata — into a single portable `.uapf` archive (ZIP-based) with a `manifest.json` at its root.
+**UAPF (Unified Algorithmic Process Format)** is an open, layered standard for
+the full life of an algorithmic process — authored as governed code, packaged
+as a portable artifact, and executed end-to-end against host systems through a
+standard runtime contract. The standard is defined in three layers:
 
-**Import:** Upload a `.uapf` file through the repository UI (via the import modal). The package is validated against an embedded JSON Schema (`uapf-manifest.schema.json`, Draft 2020-12), extracted safely, and committed into the repository. Referenced file paths in the manifest are verified to exist in the archive. Conflicts with existing repository files are detected and rejected.
+| Layer | Defines | Repository |
+|-------|---------|------------|
+| **1 — Process Package** | What a process *is*: BPMN/DMN/CMMN + resources + manifest, packaged as `.uapf` | [UAPF-specification](https://github.com/UAPFormat/UAPF-specification) (SSOT) |
+| **2 — Integration Protocol** | How a process *runs* against a host: capabilities, sessions, audit | [UAPF-IP](https://github.com/UAPFormat/UAPF-IP) |
+| **3 — Runtime** | The engine that executes a package over the protocol | [uapf-engine](https://github.com/UAPFormat/uapf-engine) |
 
-**Export:** Download the current repository contents (at any ref/branch) as a `.uapf` archive. The export validates the `manifest.json`, resolves all referenced paths, and streams a ZIP file named `{package}_{version}.uapf`.
+**ProcessGit is the Git-versioned home of Layer 1** — where process packages are
+authored, reviewed, released and governed — and it is also their **registry**:
+the place a runtime fetches an executable package from.
 
-**Manifest validation** — both import and export validate the manifest structure, including `name`, `version`, `package` metadata, and arrays of `workflows` and `resources`, each referencing internal file paths with a declared type.
+#### Two endpoints per repository
 
-**UAPF levels** — repositories can be classified with a UAPF level (0–4) in the platform metadata, corresponding to organizational hierarchy depth (L0 = enterprise, L4 = task-level).
+Every ProcessGit repository exposes its process two ways, for two different
+consumers:
+
+- **`/{owner}/{repo}/mcp`** — the *process as knowledge*. An MCP server that lets
+  AI agents read, search, validate and conformity-check the repository content.
+- **`/{owner}/{repo}/uapf-ip`** — the *process as an executable package*. A
+  UAPF-IP package descriptor: package id/version, declared `requires_capabilities`,
+  `profiles_supported`, guardrails reference and a distribution (archive) link.
+  A conforming runtime uses this to discover a package and resolve `package://`
+  references without cloning the repository first.
+
+A runtime ([uapf-engine](https://github.com/UAPFormat/uapf-engine)) pulls a
+package from a repo's `/uapf-ip` endpoint and executes it; AI agents and
+assistants invoke processes through the MCP binding
+([uapf-mcp](https://github.com/UAPFormat/uapf-mcp)). ProcessGit itself is the
+package source — it stores and serves, it does not execute.
+
+#### Import / Export
+
+**Import:** Upload a `.uapf` file through the repository UI. The package is
+validated against an embedded JSON Schema, extracted safely, and committed.
+Referenced manifest paths are verified; conflicts are rejected.
+
+**Export:** Download repository contents (at any ref) as a `.uapf` archive,
+named `{package}_{version}.uapf`.
+
+**UAPF levels** — repositories can be classified with a UAPF level (0–4),
+L0 = enterprise … L4 = task-level executable process.
 
 **API routes:**
 
 | Method | Path | Description |
 |--------|------|-------------|
+| `GET`  | `/{owner}/{repo}/uapf-ip` | UAPF-IP package descriptor (capabilities, guardrails, distribution) |
+| `GET`  | `/{owner}/{repo}/mcp` | MCP server — repository content for AI agents |
 | `POST` | `/{owner}/{repo}/uapf/import` | Upload and import a `.uapf` package |
-| `GET` | `/{owner}/{repo}/uapf/export?ref=` | Download repo as `.uapf` package |
+| `GET`  | `/{owner}/{repo}/uapf/export?ref=` | Download repo as `.uapf` package |
+
+Full standard and reference implementations:
+[UAPF-specification](https://github.com/UAPFormat/UAPF-specification) ·
+[UAPF-IP](https://github.com/UAPFormat/UAPF-IP) ·
+[uapf-engine](https://github.com/UAPFormat/uapf-engine) ·
+[uapf-mcp](https://github.com/UAPFormat/uapf-mcp)
 
 ---
 
