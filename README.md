@@ -744,4 +744,4 @@ Free for personal, academic, internal, and non-commercial use.
 A commercial license is required for organizational, SaaS,
 redistribution, or rebranded use.
 
-Contact licensing@algomation.ai
+Contact licensing@algomation.io
