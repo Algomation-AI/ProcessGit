@@ -735,13 +735,30 @@ Contributions are welcome. Please open an issue to discuss significant changes b
 
 ## License
 
-ProcessGit is dual-licensed.
+ProcessGit is a fork of Gitea and is licensed in two parts.
 
-### Open Use (MIT)
-Free for personal, academic, internal, and non-commercial use.
+### Upstream Components — MIT
 
-### Commercial Use
-A commercial license is required for organizational, SaaS,
-redistribution, or rebranded use.
+The Gitea source code and its dependencies remain under the MIT License
+(see [LICENSE](LICENSE)). This applies to everyone, at no charge.
 
-Contact licensing@algomation.io
+### Original Additions — dual-licensed
+
+ProcessGit's own code — UAPF / UAPF-IP integration, the MCP server and chat
+agents, viewers and editors, schemas, templates and branding — is dual-licensed:
+
+- **Free use** — at no charge for personal, academic, internal non-commercial,
+  and evaluation use, as defined in [LICENSE-COMMERCIAL](LICENSE-COMMERCIAL),
+  Section 3.
+- **Commercial license required** — for SaaS / hosting, redistribution,
+  embedding, provision to external users, rebranding, and revenue-generating
+  use (LICENSE-COMMERCIAL, Section 4).
+- **Public sector / government use** — requires a commercial license in **all
+  cases**, including internal and non-revenue use (LICENSE-COMMERCIAL,
+  Section 5).
+
+Full terms: [LICENSE](LICENSE) and [LICENSE-COMMERCIAL](LICENSE-COMMERCIAL).
+Commercial licensing enquiries: licensing@algomation.io
+
+> The commercial licensing documents are a draft pending review by legal
+> counsel.

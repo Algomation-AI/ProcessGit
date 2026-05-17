@@ -1,25 +1,54 @@
-MIT License
+PROCESSGIT LICENSE
+==================
 
-Copyright (c) 2025 Algomation-AI
+NOTICE — ProcessGit is licensed in two parts.
+
+ProcessGit is a fork of Gitea (https://github.com/go-gitea/gitea) and
+consists of two distinct bodies of code:
+
+  (a) Upstream Components — the Gitea source code and its dependencies,
+      authored by the Gitea project and its contributors. The Upstream
+      Components are licensed under the MIT License set out below, and
+      that MIT License applies to all users at no charge. The MIT License
+      and the original Gitea copyright notices must be retained.
+
+  (b) Original Additions — the original code, schemas, templates, viewers
+      and editors, UAPF and UAPF-IP integration, MCP server and chat-agent
+      functionality, branding, and other material added to, or built upon,
+      the Upstream Components by or for Algomation-AI.
+
+      The Original Additions are NOT placed under blanket MIT terms. They
+      are dual-licensed: permitted free use is defined in LICENSE-COMMERCIAL,
+      Section 3; all other use — including commercial use and any use by or
+      for a public-sector or government entity — requires a commercial
+      license. See the file LICENSE-COMMERCIAL.
+
+If this file and LICENSE-COMMERCIAL appear to conflict as to the Original
+Additions, LICENSE-COMMERCIAL governs.
+
+This NOTICE and LICENSE-COMMERCIAL are a DRAFT pending review by legal
+counsel; they are not legal advice.
+
+---------------------------------------------------------------------------
+MIT License — applicable to the Upstream Components
+
+Copyright (c) The Gitea Authors
+Copyright (c) 2025 Algomation-AI (modifications)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, and distribute the Software, subject to
-the conditions below.
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This license applies ONLY to:
-- personal use
-- academic use
-- evaluation
-- internal use within a single legal entity
-- non-commercial use
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-Commercial use, offering ProcessGit as a service (SaaS),
-use by or for third parties, redistribution as part of a
-commercial product, rebranding, or deployment for external users
-REQUIRES a valid commercial license.
-
-For commercial licensing, see LICENSE-COMMERCIAL.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
