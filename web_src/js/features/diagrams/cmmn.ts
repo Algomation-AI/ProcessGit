@@ -49,7 +49,7 @@ export function createCmmnAdapter(canvas: HTMLElement, properties?: HTMLElement 
       clearContainer(canvas, properties);
       viewer = new CmmnViewer({container: canvas});
       await viewer.importXML(xml);
-      viewer.get('canvas')?.zoom('fit-viewport');
+      try { viewer.get('canvas', false)?.zoom('fit-viewport'); } catch { /* no canvas */ }
     },
 
     async enterEdit(xml: string) {
@@ -58,7 +58,7 @@ export function createCmmnAdapter(canvas: HTMLElement, properties?: HTMLElement 
       clearContainer(canvas, properties);
       modeler = new CmmnModeler({container: canvas});
       await modeler.importXML(xml);
-      modeler.get('canvas')?.zoom('fit-viewport');
+      try { modeler.get('canvas', false)?.zoom('fit-viewport'); } catch { /* no canvas */ }
       if (properties) properties.classList.remove('tw-hidden');
       bindChangeHandler();
     },

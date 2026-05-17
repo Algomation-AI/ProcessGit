@@ -21,9 +21,18 @@ function clearContainer(container: HTMLElement, properties?: HTMLElement | null)
 }
 
 function fitDmnViewport(viewer: any) {
-  const activeViewer = viewer?.getActiveViewer?.();
-  const canvas = activeViewer?.get?.('canvas');
-  canvas?.zoom?.('fit-viewport');
+  // dmn-js is multi-view: only the DRD view has a diagram-js canvas.
+  // decision-table and literal-expression views render as HTML and have
+  // no 'canvas' service — get('canvas') in strict mode throws
+  // "No provider for canvas". Resolve non-strict and guard.
+  try {
+    const activeViewer = viewer?.getActiveViewer?.();
+    if (!activeViewer?.get) return;
+    const canvas = activeViewer.get('canvas', false); // strict=false -> null if absent
+    canvas?.zoom?.('fit-viewport');
+  } catch {
+    /* active view (decision table / literal expression) has no canvas */
+  }
 }
 
 export function createDmnAdapter(canvas: HTMLElement, properties?: HTMLElement | null): DiagramAdapter {
