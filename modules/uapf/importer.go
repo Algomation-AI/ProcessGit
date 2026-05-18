@@ -64,38 +64,36 @@ func ImportUAPF(ctx context.Context, repo *repo_model.Repository, doer *user_mod
 		return err
 	}
 
-	packageRoot, err := determinePackageRoot(tempDir)
+	packageRoot, manifestName, err := determinePackageRoot(tempDir)
 	if err != nil {
 		return err
 	}
 
-	manifestPath := filepath.Join(packageRoot, "manifest.json")
-	manifestBytes, err := os.ReadFile(manifestPath)
+	manifestBytes, err := os.ReadFile(filepath.Join(packageRoot, manifestName))
 	if err != nil {
-		return fmt.Errorf("manifest.json is required in the UAPF package")
+		return fmt.Errorf("a UAPF manifest (uapf.yaml) is required in the package")
 	}
 
-	if err := ValidateManifest(manifestBytes); err != nil {
+	if err := ValidateManifest(manifestName, manifestBytes); err != nil {
+		return err
+	}
+
+	manifestJSON, err := manifestToJSON(manifestName, manifestBytes)
+	if err != nil {
 		return err
 	}
 
 	var manifest spec.Manifest
-	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
-		return fmt.Errorf("manifest.json is not valid JSON: %w", err)
+	if err := json.Unmarshal(manifestJSON, &manifest); err != nil {
+		return fmt.Errorf("manifest is not valid: %w", err)
 	}
 
-	refPaths, err := spec.ValidateManifest(&manifest)
-	if err != nil {
+	if err := spec.ValidateManifest(&manifest); err != nil {
 		return err
 	}
 
-	for _, ref := range refPaths {
-		if ref == "" {
-			return fmt.Errorf("referenced path cannot be empty")
-		}
-		if _, err := os.Stat(filepath.Join(packageRoot, filepath.FromSlash(ref))); err != nil {
-			return fmt.Errorf("referenced path missing in package: %s", ref)
-		}
+	if err := spec.ValidatePackageStructure(&manifest, osFileChecker{root: packageRoot}); err != nil {
+		return err
 	}
 
 	targetPath, err = normalizeTargetPath(targetPath)
@@ -109,21 +107,15 @@ func ImportUAPF(ctx context.Context, repo *repo_model.Repository, doer *user_mod
 	}
 
 	if commitMsg == "" {
-		version := manifest.Version
 		name := manifest.Name
-		if manifest.Package != nil {
-			if manifest.Package.Name != "" {
-				name = manifest.Package.Name
-			}
-			if manifest.Package.Version != "" {
-				version = manifest.Package.Version
-			}
+		if name == "" {
+			name = manifest.ID
 		}
 		if name == "" {
 			name = "UAPF package"
 		}
-		if version != "" {
-			commitMsg = fmt.Sprintf("Import UAPF package %s@%s", name, version)
+		if manifest.Version != "" {
+			commitMsg = fmt.Sprintf("Import UAPF package %s@%s", name, manifest.Version)
 		} else {
 			commitMsg = fmt.Sprintf("Import UAPF package %s", name)
 		}
@@ -202,24 +194,63 @@ func writeFile(dst string, r io.Reader, mode os.FileMode) error {
 	return nil
 }
 
-func determinePackageRoot(tempDir string) (string, error) {
-	entries, err := os.ReadDir(tempDir)
-	if err != nil {
-		return "", fmt.Errorf("read archive contents: %w", err)
+func determinePackageRoot(tempDir string) (string, string, error) {
+	if name := findManifestName(tempDir); name != "" {
+		return tempDir, name, nil
 	}
 
+	entries, err := os.ReadDir(tempDir)
+	if err != nil {
+		return "", "", fmt.Errorf("read archive contents: %w", err)
+	}
 	if len(entries) == 1 && entries[0].IsDir() {
 		single := filepath.Join(tempDir, entries[0].Name())
-		if _, err := os.Stat(filepath.Join(single, "manifest.json")); err == nil {
-			return single, nil
+		if name := findManifestName(single); name != "" {
+			return single, name, nil
 		}
 	}
 
-	if _, err := os.Stat(filepath.Join(tempDir, "manifest.json")); err == nil {
-		return tempDir, nil
-	}
+	return "", "", fmt.Errorf("a UAPF manifest (uapf.yaml) is required in the package")
+}
 
-	return "", fmt.Errorf("manifest.json is required in the UAPF package")
+// findManifestName returns the highest-priority manifest file name present
+// directly in dir, or an empty string when none is found.
+func findManifestName(dir string) string {
+	for _, n := range ManifestNames {
+		if info, err := os.Stat(filepath.Join(dir, n)); err == nil && !info.IsDir() {
+			return n
+		}
+	}
+	return ""
+}
+
+// osFileChecker implements spec.FileChecker against an extracted package dir.
+type osFileChecker struct {
+	root string
+}
+
+// FileExists reports whether the package-relative file exists and is a file.
+func (c osFileChecker) FileExists(rel string) bool {
+	info, err := os.Stat(filepath.Join(c.root, filepath.FromSlash(rel)))
+	return err == nil && !info.IsDir()
+}
+
+// DirHasFiles reports whether dir contains at least one matching file.
+func (c osFileChecker) DirHasFiles(dir, suffix string) bool {
+	entries, err := os.ReadDir(filepath.Join(c.root, filepath.FromSlash(dir)))
+	if err != nil {
+		return false
+	}
+	suffix = strings.ToLower(suffix)
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		if suffix == "" || strings.HasSuffix(strings.ToLower(e.Name()), suffix) {
+			return true
+		}
+	}
+	return false
 }
 
 func normalizeTargetPath(target string) (string, error) {
