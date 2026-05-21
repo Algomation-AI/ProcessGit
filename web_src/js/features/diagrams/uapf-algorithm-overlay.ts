@@ -13,6 +13,7 @@
 // on the public Overlays API.
 
 import {getRiskClass, loadCardSidecar, type CardMeta} from './uapf-card-loader.ts';
+import {openCardDrawer} from './uapf-card-drawer.ts';
 
 const UAPF_NS_V24 = 'https://uapf.dev/bpmn/v2.4';
 
@@ -47,11 +48,15 @@ function buildOverlayHtml(cardRef: string, meta: CardMeta | null): HTMLElement {
     'left: 0',
     'width: 100%',
     'height: 100%',
-    'pointer-events: none',
+    'pointer-events: auto',
+    'cursor: pointer',
     'font-family: Arial, sans-serif',
     'font-size: 10px',
     'color: #5F5E5A',
   ].join('; ');
+  // UAPF v2.5.0 chapter 13.16: this overlay is clickable — opens the
+  // Algorithm Card viewer in a side-panel drawer over the BPMN diagram.
+  root.setAttribute('data-uapf-card-ref', cardRef);
 
   // Algorithm icon — three stacked cards with ƒ — placed top-left over the
   // default serviceTask gear position.
@@ -159,12 +164,38 @@ export function attachUapfAlgorithmOverlays(viewerOrModeler: any): void {
       if (!meta) return;
       overlays.remove(overlayId);
       const newHtml = buildOverlayHtml(cardRef, meta);
-      overlays.add(element.id, 'uapf-algo-card', {
+      const newOverlayId = overlays.add(element.id, 'uapf-algo-card', {
         position: {top: 0, left: 0},
         html: newHtml,
       });
+      // Hook click for the updated overlay
+      bindOverlayClick(newOverlayId, cardRef);
     }).catch((err) => {
       console.debug('[uapf-overlay] card sidecar fetch failed', cardRef, err);
     });
+
+    // Hook click for the initial overlay
+    bindOverlayClick(overlayId, cardRef);
   }
+}
+
+/**
+ * Find the overlay DOM element by id and bind a click handler that opens
+ * the Algorithm Card viewer in a side-panel drawer (UAPF chapter 13.16).
+ * bpmn-js inserts overlays into a container with class .djs-overlay; the
+ * id attribute is set to the overlay id we got from overlays.add.
+ */
+function bindOverlayClick(overlayId: string, cardRef: string): void {
+  // bpmn-js sets the overlay's data-overlay-id attribute on the wrapper.
+  // Defer to next tick so the DOM has been updated.
+  setTimeout(() => {
+    const wrapper = document.querySelector(`[data-overlay-id="${overlayId}"]`);
+    if (!wrapper) return;
+    wrapper.style.pointerEvents = 'auto';
+    wrapper.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      openCardDrawer(cardRef);
+    });
+  }, 0);
 }
