@@ -114,6 +114,10 @@ async function createAdapter(type: string, canvas: HTMLElement, properties: HTML
       const {createRulesetAdapter} = await import('./ruleset.ts');
       return createRulesetAdapter(canvas);
     }
+    case 'card': {
+      const {createCardAdapter} = await import('./card.ts');
+      return createCardAdapter(canvas, properties);
+    }
     default:
       return null;
   }
