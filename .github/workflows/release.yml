@@ -1,0 +1,247 @@
+name: Release
+
+# Triggers on semver tags like v0.1.0, v0.1.0-rc1, v1.2.3
+# Produces:
+#   - Multi-arch Docker image to ghcr.io/algomation-ai/processgit
+#   - Cosign keyless signature (Sigstore / Fulcio via OIDC)
+#   - Source tarball + SHA-256 attached to the GitHub Release
+#   - Auto-generated release notes from git log since previous tag
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'   # pre-releases like -rc1, -beta1
+
+  # Manual run for testing the pipeline against an arbitrary ref.
+  # Manual runs build the image but do NOT push or create a release.
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry-run: build only, no push, no release'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write       # create GitHub Release, upload assets
+  packages: write       # push to ghcr.io
+  id-token: write       # cosign keyless signing via OIDC
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build, sign, publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # need full history for `git describe` and changelog
+
+      - name: Derive version
+        id: version
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="$(git describe --tags --always --dirty || echo "v0.0.0-dev")"
+          fi
+          VERSION="${TAG#v}"
+          IS_PRERELEASE=false
+          if [[ "${VERSION}" == *-* ]]; then
+            IS_PRERELEASE=true
+          fi
+          echo "tag=${TAG}"           >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}"   >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=${IS_PRERELEASE}" >> "$GITHUB_OUTPUT"
+          echo "Tag: ${TAG}  Version: ${VERSION}  Prerelease: ${IS_PRERELEASE}"
+
+      - name: Set up QEMU (for cross-arch)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push' || inputs.dry_run == false
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags & labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/algomation-ai/processgit
+          # `latest` only moves on stable releases (no `-` in tag)
+          flavor: |
+            latest=${{ steps.version.outputs.is_prerelease == 'false' }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ steps.version.outputs.is_prerelease == 'false' }}
+            type=semver,pattern={{major}},enable=${{ steps.version.outputs.is_prerelease == 'false' }}
+          labels: |
+            org.opencontainers.image.title=ProcessGit
+            org.opencontainers.image.description=Git for storing algorithms and processes
+            org.opencontainers.image.source=https://github.com/Algomation-AI/ProcessGit
+            org.opencontainers.image.url=https://processgit.org
+            org.opencontainers.image.vendor=Algomation-AI
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+
+      - name: Build & push Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile.processgit
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name == 'push' || inputs.dry_run == false }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: true
+          sbom: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            GITEA_VERSION=${{ steps.version.outputs.version }}
+
+      - name: Install cosign
+        if: steps.build.outputs.digest != '' && (github.event_name == 'push' || inputs.dry_run == false)
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.4.1'
+
+      - name: Sign image (keyless via OIDC)
+        if: steps.build.outputs.digest != '' && (github.event_name == 'push' || inputs.dry_run == false)
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          # Sign each tag (all point to the same digest, but we sign per-ref for verify ergonomics)
+          while IFS= read -r tag; do
+            [ -z "$tag" ] && continue
+            echo "Signing $tag@$DIGEST"
+            cosign sign --yes "${tag}@${DIGEST}"
+          done <<< "$TAGS"
+
+      - name: Verify signature (sanity check)
+        if: steps.build.outputs.digest != '' && (github.event_name == 'push' || inputs.dry_run == false)
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          # Verify against the primary semver tag
+          PRIMARY_TAG="ghcr.io/algomation-ai/processgit:${{ steps.version.outputs.version }}"
+          cosign verify "${PRIMARY_TAG}@${DIGEST}" \
+            --certificate-identity-regexp "^https://github.com/Algomation-AI/ProcessGit/\.github/workflows/release\.yml@.*" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            > /dev/null
+          echo "Signature verified."
+
+      - name: Create source tarball
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          mkdir -p dist
+          git archive --format=tar.gz \
+                      --prefix="processgit-${VERSION}/" \
+                      -o "dist/processgit-src-${VERSION}.tar.gz" HEAD
+          (cd dist && sha256sum "processgit-src-${VERSION}.tar.gz" \
+                       > "processgit-src-${VERSION}.tar.gz.sha256")
+          ls -la dist/
+
+      - name: Generate release notes
+        if: github.event_name == 'push'
+        id: notes
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          PREV_TAG="$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -v "^${{ steps.version.outputs.tag }}$" | head -n1 || true)"
+          if [ -n "$PREV_TAG" ]; then
+            RANGE="${PREV_TAG}..${{ steps.version.outputs.tag }}"
+            COMPARE_LINE="**Full diff**: https://github.com/Algomation-AI/ProcessGit/compare/${PREV_TAG}...${{ steps.version.outputs.tag }}"
+          else
+            RANGE="${{ steps.version.outputs.tag }}"
+            COMPARE_LINE="_Initial release._"
+          fi
+
+          {
+            echo "# ProcessGit ${{ steps.version.outputs.tag }}"
+            echo ""
+            echo "Multi-arch Docker image: \`ghcr.io/algomation-ai/processgit:${VERSION}\`"
+            echo "  - linux/amd64"
+            echo "  - linux/arm64"
+            echo ""
+            echo "## Install"
+            echo ""
+            echo '```bash'
+            echo "docker pull ghcr.io/algomation-ai/processgit:${VERSION}"
+            echo '```'
+            echo ""
+            echo "Or via the canonical deploy compose file:"
+            echo ""
+            echo '```bash'
+            echo "git clone --branch ${{ steps.version.outputs.tag }} https://github.com/Algomation-AI/ProcessGit.git"
+            echo "cd ProcessGit"
+            echo "docker compose -f deploy/docker-compose.yml up -d"
+            echo '```'
+            echo ""
+            echo "## Verify image signature (Sigstore keyless)"
+            echo ""
+            echo '```bash'
+            echo "cosign verify ghcr.io/algomation-ai/processgit:${VERSION} \\"
+            echo "  --certificate-identity-regexp '^https://github.com/Algomation-AI/ProcessGit/\\.github/workflows/release\\.yml@.*' \\"
+            echo "  --certificate-oidc-issuer https://token.actions.githubusercontent.com"
+            echo '```'
+            echo ""
+            echo "## Changes"
+            echo ""
+            echo "${COMPARE_LINE}"
+            echo ""
+            git log --pretty=format:"- %s (%h) — @%an" "${RANGE}" | head -200
+            echo ""
+          } > release-notes.md
+          cat release-notes.md
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.version.outputs.tag }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ steps.version.outputs.is_prerelease == 'true' }}
+          files: |
+            dist/processgit-src-*.tar.gz
+            dist/processgit-src-*.tar.gz.sha256
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Release summary"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Tag | \`${{ steps.version.outputs.tag }}\` |"
+            echo "| Version | \`${{ steps.version.outputs.version }}\` |"
+            echo "| Prerelease | \`${{ steps.version.outputs.is_prerelease }}\` |"
+            echo "| Event | \`${{ github.event_name }}\` |"
+            echo "| Image digest | \`${{ steps.build.outputs.digest }}\` |"
+            echo ""
+            echo "### Tags pushed"
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
