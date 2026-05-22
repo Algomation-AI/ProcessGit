@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Algomation-AI/ProcessGit/main/build/release.schema.json",
+  "title": "ProcessGit Release Manifest",
+  "description": "Machine-readable description of a single ProcessGit release. Attached as `release.json` to every GitHub Release. Consumed by `processgit update check`, the updater sidecar, and any third-party tooling that wants to discover what a release contains.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "name",
+    "version",
+    "tag",
+    "released_at",
+    "prerelease",
+    "image",
+    "signing",
+    "release_notes_url"
+  ],
+  "properties": {
+    "schema_version": {
+      "description": "Schema version for this manifest format. Incremented on breaking changes.",
+      "type": "integer",
+      "minimum": 1,
+      "const": 1
+    },
+    "name": {
+      "description": "Product name. Always `processgit`.",
+      "type": "string",
+      "const": "processgit"
+    },
+    "version": {
+      "description": "Semantic version without the leading `v` (e.g. `0.1.0`, `1.2.3-rc1`).",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+    },
+    "tag": {
+      "description": "Git tag for this release (with the leading `v`).",
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+    },
+    "released_at": {
+      "description": "ISO 8601 UTC timestamp when the release was published.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "prerelease": {
+      "description": "True if this is a pre-release (any tag containing `-`).",
+      "type": "boolean"
+    },
+    "min_upgrade_from": {
+      "description": "Minimum source version that supports a direct upgrade to this release. `null` means any prior version is supported. If a target deployment's current version is older than this, it must do a stepwise upgrade through an intermediate release.",
+      "type": ["string", "null"],
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+    },
+    "image": {
+      "description": "Container image published with this release.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registry", "repository", "tag", "digest", "platforms"],
+      "properties": {
+        "registry": {
+          "description": "Registry hostname.",
+          "type": "string",
+          "examples": ["ghcr.io"]
+        },
+        "repository": {
+          "description": "Image repository path within the registry.",
+          "type": "string",
+          "examples": ["algomation-ai/processgit"]
+        },
+        "tag": {
+          "description": "Primary immutable tag (same as `version`).",
+          "type": "string"
+        },
+        "digest": {
+          "description": "Multi-arch index digest in `sha256:...` form. This is the canonical identifier — pinning to the digest is reproducible across registry mirrors.",
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "platforms": {
+          "description": "OCI platforms included in the multi-arch index.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+/[a-z0-9_]+(/[a-z0-9_]+)?$"
+          }
+        },
+        "additional_tags": {
+          "description": "Other tags that point at the same digest (e.g. `0.1`, `0`, `latest`). Informational only — never depend on these for verification.",
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "binaries": {
+      "description": "Standalone binaries published with this release (in addition to the container image). Empty array if no binaries are shipped for this release.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["os", "arch", "url", "sha256"],
+        "properties": {
+          "os": {
+            "type": "string",
+            "enum": ["linux", "darwin", "windows", "freebsd"]
+          },
+          "arch": {
+            "type": "string",
+            "enum": ["amd64", "arm64", "arm", "386", "riscv64"]
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "variant": {
+            "description": "Optional build-variant marker (e.g. `gogit` for the pure-Go git build).",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "source": {
+      "description": "Source code archive for this release.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "sha256"],
+      "properties": {
+        "url": {"type": "string", "format": "uri"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "size": {"type": "integer", "minimum": 0}
+      }
+    },
+    "signing": {
+      "description": "How artifacts in this release are signed. Consumers use these fields to construct verification commands.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "issuer", "identity_regex"],
+      "properties": {
+        "method": {
+          "description": "Signing method.",
+          "type": "string",
+          "enum": ["cosign-keyless"]
+        },
+        "issuer": {
+          "description": "OIDC issuer used by the signing system.",
+          "type": "string",
+          "format": "uri",
+          "examples": ["https://token.actions.githubusercontent.com"]
+        },
+        "identity_regex": {
+          "description": "Regex (PCRE-ish, as accepted by `cosign verify --certificate-identity-regexp`) matching the OIDC identity that signed the artifacts.",
+          "type": "string",
+          "examples": ["^https://github.com/Algomation-AI/ProcessGit/\\.github/workflows/release\\.yml@.*"]
+        },
+        "rekor_log_index": {
+          "description": "Sigstore Rekor transparency log index for the image signature. Optional; can be discovered by `cosign verify`.",
+          "type": ["integer", "null"]
+        }
+      }
+    },
+    "release_notes_url": {
+      "description": "URL to the GitHub Release page for this version.",
+      "type": "string",
+      "format": "uri"
+    },
+    "release_notes_markdown": {
+      "description": "Inline Markdown release notes. Optional — when present, lets updaters surface the changelog without an extra fetch.",
+      "type": "string"
+    },
+    "migration": {
+      "description": "Database / state migration metadata for this release.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required"],
+      "properties": {
+        "required": {
+          "description": "True if a migration must be run as part of the upgrade.",
+          "type": "boolean"
+        },
+        "command": {
+          "description": "Command to run inside the image to perform the migration. Omitted for releases that don't need one.",
+          "type": "string",
+          "examples": ["/app/gitea/gitea migrate"]
+        },
+        "estimated_downtime_seconds": {
+          "description": "Operator hint for how long the app may be unavailable during the migration.",
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "breaking_changes": {
+      "description": "Human-readable list of breaking changes operators need to be aware of before upgrading.",
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "deprecations": {
+      "description": "Human-readable list of newly-deprecated features that will be removed in a future release.",
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "build": {
+      "description": "Build provenance metadata. Useful for debugging and verification.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "commit": {
+          "description": "Git commit SHA the release was built from.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,40}$"
+        },
+        "workflow_run_url": {
+          "description": "URL to the GitHub Actions run that produced this release.",
+          "type": "string",
+          "format": "uri"
+        },
+        "builder": {
+          "description": "Build system identifier (e.g. `github-actions`).",
+          "type": "string"
+        }
+      }
+    }
+  }
+}
