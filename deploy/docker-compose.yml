@@ -1,23 +1,29 @@
 # ProcessGit production-capable deployment.
 #
-# Two ways to run this:
+# Quick start (any operator, any host):
 #
-#   1. Build locally from source (dev / first install):
-#        docker compose -f deploy/docker-compose.yml up --build -d
+#   cp deploy/.env.example deploy/.env
+#   # If you want the self-update sidecar (recommended):
+#   echo "PROCESSGIT_UPDATER_TOKEN=$(openssl rand -hex 32)" >> deploy/.env
+#   docker compose -f deploy/docker-compose.yml up -d
 #
-#   2. Pull from GHCR (production / after first install):
-#        docker compose -f deploy/docker-compose.yml pull
-#        docker compose -f deploy/docker-compose.yml up -d
+# All operator configuration lives in `deploy/.env` (a single file next to
+# this compose file). Compose reads it automatically for variable
+# interpolation, and the app/bootstrap services pass its contents through
+# via env_file. There is no second .env file at the project root anymore.
 #
-# The `processgit-updater` service drives in-product updates from the
-# admin UI. It requires:
+# Opting out of the self-update sidecar
+# -------------------------------------
+# The `processgit-updater` service is included by default but is fully
+# optional. To run without it:
 #
-#   - $PROCESSGIT_UPDATER_TOKEN in .env (generate once via:
-#       openssl rand -hex 32  >> /tmp/x && sed -i "s/^/PROCESSGIT_UPDATER_TOKEN=/" /tmp/x
-#     then append /tmp/x to your .env). See deploy/.env.example.
-#   - /var/run/docker.sock bind-mounted (it needs to drive `docker pull` etc).
-#   - deploy/ directory bind-mounted, so the updater can find this file and
-#     persist the new PROCESSGIT_VERSION to .env on commit.
+#   docker compose -f deploy/docker-compose.yml up -d \
+#       processgit-init-perms processgit processgit-bootstrap
+#
+# The main app starts identically; you simply lose the in-product update
+# story. If PROCESSGIT_UPDATER_TOKEN isn't set in .env, the main app
+# starts anyway (the variable is optional for it). Only the updater
+# service requires a token.
 
 services:
   processgit:
@@ -37,15 +43,17 @@ services:
     volumes:
       - processgit-data:/data
     env_file:
-      - ../.env
+      - .env
     environment:
       USER_UID: "1000"
       USER_GID: "1000"
       APP_NAME: "ProcessGit: Git for Processes"
       PROCESSGIT_SEED_STRICT: "false"
-      # So the main app knows how to reach the updater
+      # So the main app knows how to reach the updater. Empty value is OK
+      # if the updater service isn't running — the main app just won't
+      # surface self-update controls in the admin UI.
       PROCESSGIT_UPDATER_URL: "http://processgit-updater:9000"
-      PROCESSGIT_UPDATER_TOKEN: ${PROCESSGIT_UPDATER_TOKEN:?PROCESSGIT_UPDATER_TOKEN is required - see deploy/.env.example}
+      PROCESSGIT_UPDATER_TOKEN: ${PROCESSGIT_UPDATER_TOKEN:-}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/v1/version >/dev/null 2>&1 || exit 1"]
       interval: 5s
@@ -70,7 +78,7 @@ services:
     volumes:
       - processgit-data:/data
     env_file:
-      - ../.env
+      - .env
     environment:
       PROCESSGIT_API_BASE: "http://processgit:3000/api/v1"
     entrypoint: ["/bin/sh", "-c"]
@@ -86,7 +94,7 @@ services:
     restart: unless-stopped
     image: ghcr.io/algomation-ai/processgit-updater:${PROCESSGIT_VERSION:-latest}
     environment:
-      PROCESSGIT_UPDATER_TOKEN: ${PROCESSGIT_UPDATER_TOKEN:?PROCESSGIT_UPDATER_TOKEN is required - see deploy/.env.example}
+      PROCESSGIT_UPDATER_TOKEN: ${PROCESSGIT_UPDATER_TOKEN:?The processgit-updater service requires PROCESSGIT_UPDATER_TOKEN in deploy/.env. Generate one with `openssl rand -hex 32` and add it. Or omit this service from `docker compose up` if you don't want self-updates.}
       PROCESSGIT_UPDATER_REPO: ${PROCESSGIT_UPDATER_REPO:-Algomation-AI/ProcessGit}
       PROCESSGIT_UPDATER_APP_CONTAINER: processgit
       PROCESSGIT_UPDATER_COMPOSE_FILE: /deploy/docker-compose.yml
@@ -101,8 +109,6 @@ services:
       #   - read docker-compose.yml to drive `docker compose up --no-deps`
       #   - persist the new PROCESSGIT_VERSION to .env on commit
       - .:/deploy
-      # Parent dir (project root) RO for .env access via ../.env path
-      - ..:/host-root:ro
 
 volumes:
   processgit-data:
