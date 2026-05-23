@@ -1,11 +1,33 @@
+# ProcessGit production-capable deployment.
+#
+# Two ways to run this:
+#
+#   1. Build locally from source (dev / first install):
+#        docker compose -f deploy/docker-compose.yml up --build -d
+#
+#   2. Pull from GHCR (production / after first install):
+#        docker compose -f deploy/docker-compose.yml pull
+#        docker compose -f deploy/docker-compose.yml up -d
+#
+# The `processgit-updater` service drives in-product updates from the
+# admin UI. It requires:
+#
+#   - $PROCESSGIT_UPDATER_TOKEN in .env (generate once via:
+#       openssl rand -hex 32  >> /tmp/x && sed -i "s/^/PROCESSGIT_UPDATER_TOKEN=/" /tmp/x
+#     then append /tmp/x to your .env). See deploy/.env.example.
+#   - /var/run/docker.sock bind-mounted (it needs to drive `docker pull` etc).
+#   - deploy/ directory bind-mounted, so the updater can find this file and
+#     persist the new PROCESSGIT_VERSION to .env on commit.
+
 services:
   processgit:
     container_name: processgit
     restart: unless-stopped
+    # Build OR pull, depending on whether the local tag exists.
     build:
       context: ..
       dockerfile: deploy/Dockerfile.processgit
-    image: processgit:0.1
+    image: ghcr.io/algomation-ai/processgit:${PROCESSGIT_VERSION:-latest}
     depends_on:
       processgit-init-perms:
         condition: service_completed_successfully
@@ -21,6 +43,9 @@ services:
       USER_GID: "1000"
       APP_NAME: "ProcessGit: Git for Processes"
       PROCESSGIT_SEED_STRICT: "false"
+      # So the main app knows how to reach the updater
+      PROCESSGIT_UPDATER_URL: "http://processgit-updater:9000"
+      PROCESSGIT_UPDATER_TOKEN: ${PROCESSGIT_UPDATER_TOKEN:?PROCESSGIT_UPDATER_TOKEN is required - see deploy/.env.example}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/v1/version >/dev/null 2>&1 || exit 1"]
       interval: 5s
@@ -28,7 +53,7 @@ services:
       retries: 30
 
   processgit-init-perms:
-    image: processgit:0.1
+    image: ghcr.io/algomation-ai/processgit:${PROCESSGIT_VERSION:-latest}
     user: "0:0"
     volumes:
       - processgit-data:/data
@@ -37,7 +62,7 @@ services:
     restart: "no"
 
   processgit-bootstrap:
-    image: processgit:0.1
+    image: ghcr.io/algomation-ai/processgit:${PROCESSGIT_VERSION:-latest}
     restart: "no"
     depends_on:
       processgit:
@@ -51,5 +76,34 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command: ["/opt/processgit/bootstrap/bootstrap-templates.sh"]
 
+  # ---------------------------------------------------------------------------
+  # Self-update sidecar. See updater/README.md.
+  # Drives `docker compose up --no-deps processgit` with a new version variable
+  # when the admin clicks "Install update" in the UI.
+  # ---------------------------------------------------------------------------
+  processgit-updater:
+    container_name: processgit-updater
+    restart: unless-stopped
+    image: ghcr.io/algomation-ai/processgit-updater:${PROCESSGIT_VERSION:-latest}
+    environment:
+      PROCESSGIT_UPDATER_TOKEN: ${PROCESSGIT_UPDATER_TOKEN:?PROCESSGIT_UPDATER_TOKEN is required - see deploy/.env.example}
+      PROCESSGIT_UPDATER_REPO: ${PROCESSGIT_UPDATER_REPO:-Algomation-AI/ProcessGit}
+      PROCESSGIT_UPDATER_APP_CONTAINER: processgit
+      PROCESSGIT_UPDATER_COMPOSE_FILE: /deploy/docker-compose.yml
+      PROCESSGIT_UPDATER_ENV_FILE: /deploy/.env
+      # Slice 3A landed with stubs as the default; flip to "false" once Slice 3B is merged.
+      # Override here per deployment if you want to opt into real updates early.
+      PROCESSGIT_UPDATER_STUB: ${PROCESSGIT_UPDATER_STUB:-true}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - processgit-updater-state:/var/lib/processgit-updater
+      # The deploy/ directory is mounted RW so the updater can:
+      #   - read docker-compose.yml to drive `docker compose up --no-deps`
+      #   - persist the new PROCESSGIT_VERSION to .env on commit
+      - .:/deploy
+      # Parent dir (project root) RO for .env access via ../.env path
+      - ..:/host-root:ro
+
 volumes:
   processgit-data:
+  processgit-updater-state:
