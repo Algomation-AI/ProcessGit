@@ -260,20 +260,20 @@ func UpdateJobView(ctx *gitea_context.Context) {
 
 	jobID := ctx.PathParam("jobid")
 	if jobID == "" {
-		ctx.NotFound("UpdateJobView", errors.New("missing job id"))
+		ctx.NotFound(errors.New("missing job id"))
 		return
 	}
 
 	c := newUpdaterClient()
 	if c == nil {
-		ctx.NotFound("UpdateJobView", errors.New("updater not configured"))
+		ctx.NotFound(errors.New("updater not configured"))
 		return
 	}
 
 	var job UpdaterJob
 	if err := c.do(ctx, http.MethodGet, "/update/"+jobID, nil, &job); err != nil {
 		// 404 from updater also lands here; surface as not-found rather than 500.
-		ctx.NotFound("UpdateJobView", err)
+		ctx.NotFound(err)
 		return
 	}
 	ctx.Data["Job"] = &job
