@@ -43,6 +43,9 @@ func main() {
 	githubAPI := envOr("PROCESSGIT_UPDATER_GITHUB_API", "https://api.github.com")
 	githubToken := os.Getenv("PROCESSGIT_UPDATER_GITHUB_TOKEN")
 	appContainer := envOr("PROCESSGIT_UPDATER_APP_CONTAINER", "processgit")
+	composeFile := envOr("PROCESSGIT_UPDATER_COMPOSE_FILE", "/deploy/docker-compose.yml")
+	envFile := envOr("PROCESSGIT_UPDATER_ENV_FILE", "/deploy/.env")
+	healthURL := envOr("PROCESSGIT_UPDATER_HEALTH_URL", "http://processgit:3000/api/v1/version")
 	stub := envBool("PROCESSGIT_UPDATER_STUB", true) // Slice 3A: stub by default
 	token := os.Getenv("PROCESSGIT_UPDATER_TOKEN")
 
@@ -80,6 +83,9 @@ func main() {
 	gh := NewGitHubClient(githubAPI, repo, githubToken)
 	cosign := NewCosign()
 	docker := NewDocker(log.With("component", "docker"), appContainer, stub)
+	docker.ComposeFile = composeFile
+	docker.EnvFile = envFile
+	docker.AppHealthURL = healthURL
 	orch := &Orchestrator{
 		Store:    store,
 		GitHub:   gh,
@@ -113,6 +119,9 @@ func main() {
 		"state_dir", stateDir,
 		"repo", repo,
 		"app_container", appContainer,
+		"compose_file", composeFile,
+		"env_file", envFile,
+		"health_url", healthURL,
 		"stub_mode", stub,
 	)
 
