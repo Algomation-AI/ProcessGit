@@ -2,7 +2,7 @@
 	<div class="ui fluid vertical menu">
 		<div class="header item">{{ctx.Locale.Tr "admin.settings"}}</div>
 
-		<details class="item toggleable-item" {{if or .PageIsAdminDashboard .PageIsAdminSelfCheck}}open{{end}}>
+		<details class="item toggleable-item" {{if or .PageIsAdminDashboard .PageIsAdminSelfCheck .PageIsAdminUpdates}}open{{end}}>
 			<summary>{{ctx.Locale.Tr "admin.maintenance"}}</summary>
 			<div class="menu">
 				<a class="{{if .PageIsAdminDashboard}}active {{end}}item" href="{{AppSubUrl}}/-/admin">
@@ -10,6 +10,9 @@
 				</a>
 				<a class="{{if .PageIsAdminSelfCheck}}active {{end}}item" href="{{AppSubUrl}}/-/admin/self_check">
 					{{ctx.Locale.Tr "admin.self_check"}}
+				</a>
+				<a class="{{if .PageIsAdminUpdates}}active {{end}}item" href="{{AppSubUrl}}/-/admin/updates">
+					{{ctx.Locale.Tr "admin.updates"}}
 				</a>
 			</div>
 		</details>

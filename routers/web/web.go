@@ -734,6 +734,13 @@ func registerWebRoutes(m *web.Router) {
 			m.Get("/diagnosis", admin.MonitorDiagnosis)
 		})
 
+		// Self-update sidecar console. See routers/web/admin/updates.go.
+		m.Group("/updates", func() {
+			m.Get("", admin.Updates)
+			m.Post("/install", admin.UpdatesInstallPost)
+			m.Get("/jobs/{jobid}", admin.UpdateJobView)
+		})
+
 		m.Group("/users", func() {
 			m.Get("", admin.Users)
 			m.Combo("/new").Get(admin.NewUser).Post(web.Bind(forms.AdminCreateUserForm{}), admin.NewUserPost)

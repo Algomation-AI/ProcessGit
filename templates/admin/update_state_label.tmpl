@@ -1,0 +1,9 @@
+{{$cls := "blue"}}
+{{if eq . "committed"}}{{$cls = "green"}}
+{{else if eq . "rolled_back"}}{{$cls = "yellow"}}
+{{else if eq . "failed"}}{{$cls = "red"}}
+{{else if eq . "aborted"}}{{$cls = "grey"}}
+{{else if eq . "rolling_back"}}{{$cls = "orange"}}
+{{else if eq . "idle"}}{{$cls = "grey"}}
+{{end}}
+<span class="ui {{$cls}} label tw-text-xs">{{ctx.Locale.Tr (printf "admin.updates.state_%s" .)}}</span>

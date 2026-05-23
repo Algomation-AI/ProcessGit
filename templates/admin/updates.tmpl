@@ -1,0 +1,132 @@
+{{template "admin/layout_head" (dict "ctxData" . "pageClass" "admin updates")}}
+<div class="admin-setting-content">
+	<h4 class="ui top attached header">
+		{{ctx.Locale.Tr "admin.updates"}}
+	</h4>
+
+	{{if not .UpdaterEnabled}}
+		<div class="ui attached segment">
+			<p>{{ctx.Locale.Tr "admin.updates.disabled_title"}}</p>
+			<div class="ui info message">
+				<p>{{ctx.Locale.Tr "admin.updates.disabled_message"}}</p>
+				<ol>
+					<li><code>PROCESSGIT_UPDATER_TOKEN</code> {{ctx.Locale.Tr "admin.updates.disabled_step_token"}}</li>
+					<li><code>docker compose -f deploy/docker-compose.yml up -d processgit-updater</code></li>
+				</ol>
+			</div>
+			<p>
+				{{ctx.Locale.Tr "admin.updates.current_version"}}: <strong>{{.CurrentVersion}}</strong>
+			</p>
+		</div>
+	{{else if .UpdaterError}}
+		<div class="ui attached segment">
+			<div class="ui negative message">
+				<div class="header">{{ctx.Locale.Tr "admin.updates.error_unreachable"}}</div>
+				<p>{{.UpdaterError}}</p>
+			</div>
+			<p>
+				{{ctx.Locale.Tr "admin.updates.current_version"}}: <strong>{{.CurrentVersion}}</strong>
+			</p>
+		</div>
+	{{else}}
+		<div class="ui attached segment">
+			<table class="ui very basic table">
+				<tbody>
+					<tr>
+						<td><strong>{{ctx.Locale.Tr "admin.updates.current_version"}}</strong></td>
+						<td>{{.CurrentVersion}}</td>
+					</tr>
+					{{if .LatestRelease}}
+						<tr>
+							<td><strong>{{ctx.Locale.Tr "admin.updates.latest_release"}}</strong></td>
+							<td>
+								<a href="{{.LatestRelease.HTMLURL}}" target="_blank" rel="noreferrer">{{.LatestRelease.Tag}}</a>
+								<small class="text grey">
+									· {{DateUtils.AbsoluteShort .LatestRelease.PublishedAt}}
+									{{if .LatestRelease.Prerelease}} · <span class="ui yellow label tw-text-xs">{{ctx.Locale.Tr "admin.updates.prerelease"}}</span>{{end}}
+								</small>
+							</td>
+						</tr>
+					{{else if .LatestReleaseError}}
+						<tr>
+							<td><strong>{{ctx.Locale.Tr "admin.updates.latest_release"}}</strong></td>
+							<td class="text grey">{{ctx.Locale.Tr "admin.updates.latest_release_unknown"}}</td>
+						</tr>
+					{{end}}
+				</tbody>
+			</table>
+
+			{{if .ActiveJob}}
+				<div class="ui info message">
+					<div class="header">{{ctx.Locale.Tr "admin.updates.in_progress"}}</div>
+					<p>
+						{{ctx.Locale.Tr "admin.updates.in_progress_state"}}:
+						<strong>{{template "admin/update_state_label" .ActiveJob.State}}</strong>
+						· {{ctx.Locale.Tr "admin.updates.target"}}: <code>{{.ActiveJob.TargetTag}}</code>
+					</p>
+					<p>
+						<a class="ui small primary button" href="{{AppSubUrl}}/-/admin/updates/jobs/{{.ActiveJob.ID}}">
+							{{ctx.Locale.Tr "admin.updates.view_progress"}}
+						</a>
+					</p>
+				</div>
+			{{else if .UpdateAvailable}}
+				<div class="ui positive message">
+					<div class="header">{{ctx.Locale.Tr "admin.updates.available"}}</div>
+					<p>{{ctx.Locale.Tr "admin.updates.available_detail" .LatestRelease.Tag}}</p>
+					<form action="{{AppSubUrl}}/-/admin/updates/install" method="post">
+						{{.CsrfTokenHtml}}
+						<input type="hidden" name="target_tag" value="{{.LatestRelease.Tag}}">
+						<button type="submit" class="ui primary button">
+							{{ctx.Locale.Tr "admin.updates.install_button" .LatestRelease.Tag}}
+						</button>
+					</form>
+					<small class="text grey tw-mt-2 tw-block">
+						{{ctx.Locale.Tr "admin.updates.install_caveat"}}
+					</small>
+				</div>
+			{{else if .LatestRelease}}
+				<div class="ui positive message">
+					<p>{{ctx.Locale.Tr "admin.updates.up_to_date"}}</p>
+				</div>
+			{{end}}
+		</div>
+
+		{{if .UpdaterHistory}}
+			<h4 class="ui attached header">
+				{{ctx.Locale.Tr "admin.updates.history"}}
+			</h4>
+			<div class="ui attached table segment">
+				<table class="ui very basic striped table unstackable">
+					<thead>
+						<tr>
+							<th>{{ctx.Locale.Tr "admin.updates.history_started"}}</th>
+							<th>{{ctx.Locale.Tr "admin.updates.history_target"}}</th>
+							<th>{{ctx.Locale.Tr "admin.updates.history_state"}}</th>
+							<th>{{ctx.Locale.Tr "admin.updates.history_duration"}}</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						{{range .UpdaterHistory}}
+							<tr>
+								<td>{{DateUtils.AbsoluteShort .StartedAt}}</td>
+								<td><code>{{.TargetTag}}</code></td>
+								<td>{{template "admin/update_state_label" .State}}</td>
+								<td>
+									{{if .CompletedAt}}
+										{{DateUtils.TimeSince .StartedAt}}
+									{{else}}
+										—
+									{{end}}
+								</td>
+								<td><a href="{{AppSubUrl}}/-/admin/updates/jobs/{{.ID}}">{{ctx.Locale.Tr "admin.updates.history_view"}}</a></td>
+							</tr>
+						{{end}}
+					</tbody>
+				</table>
+			</div>
+		{{end}}
+	{{end}}
+</div>
+{{template "admin/layout_footer" .}}
