@@ -61,6 +61,12 @@ jobs:
           echo "is_prerelease=${IS_PRERELEASE}" >> "$GITHUB_OUTPUT"
           echo "Tag: ${TAG}  Version: ${VERSION}  Prerelease: ${IS_PRERELEASE}"
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+
       - name: Set up QEMU (for cross-arch)
         uses: docker/setup-qemu-action@v3
 
@@ -160,6 +166,76 @@ jobs:
                        > "processgit-src-${VERSION}.tar.gz.sha256")
           ls -la dist/
 
+      - name: Build release-helper
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          ( cd build/release-helper && go build -o /tmp/release-helper . )
+          file /tmp/release-helper || true
+
+      - name: Generate release.json
+        if: github.event_name == 'push'
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_PRERELEASE: ${{ steps.version.outputs.is_prerelease }}
+          IMAGE_REGISTRY: ghcr.io
+          IMAGE_REPOSITORY: algomation-ai/processgit
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          IMAGE_PLATFORMS: linux/amd64,linux/arm64
+          SIGNING_ISSUER: https://token.actions.githubusercontent.com
+          SIGNING_IDENTITY_REGEX: '^https://github.com/Algomation-AI/ProcessGit/\.github/workflows/release\.yml@.*'
+          RELEASE_NOTES_URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}
+          BUILD_COMMIT: ${{ github.sha }}
+          BUILD_WORKFLOW_RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          OUTPUT: dist/release.json
+          META_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          VERSION="${RELEASE_VERSION}"
+          TAG="${RELEASE_TAG}"
+
+          # Source-tarball metadata (file produced by the previous step)
+          SRC_FILE="dist/processgit-src-${VERSION}.tar.gz"
+          export SOURCE_TARBALL_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/processgit-src-${VERSION}.tar.gz"
+          export SOURCE_TARBALL_SHA256="$(awk '{print $1}' "${SRC_FILE}.sha256")"
+          export SOURCE_TARBALL_SIZE="$(stat -c %s "${SRC_FILE}")"
+
+          # Additional image tags: everything in META_TAGS except the primary
+          # `:VERSION` tag, stripped to bare tag-name and joined CSV.
+          PRIMARY="ghcr.io/algomation-ai/processgit:${VERSION}"
+          export IMAGE_ADDITIONAL_TAGS="$(printf '%s\n' "${META_TAGS}" | grep -v "^${PRIMARY}$" | sed -E 's|.*:||' | paste -sd, - || true)"
+
+          /tmp/release-helper
+
+          echo ""
+          echo "=== Generated dist/release.json ==="
+          cat dist/release.json
+
+      - name: Sign release.json (cosign keyless blob signing)
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          cosign sign-blob --yes \
+            --bundle dist/release.json.cosign.bundle \
+            --output-signature dist/release.json.sig \
+            --output-certificate dist/release.json.crt \
+            dist/release.json
+          echo "Blob signing artifacts:"
+          ls -la dist/release.json*
+
+      - name: Verify release.json signature (sanity check)
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          cosign verify-blob \
+            --signature dist/release.json.sig \
+            --certificate dist/release.json.crt \
+            --certificate-identity-regexp '^https://github.com/Algomation-AI/ProcessGit/\.github/workflows/release\.yml@.*' \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            dist/release.json
+          echo "release.json signature verified."
+
       - name: Generate release notes
         if: github.event_name == 'push'
         id: notes
@@ -225,6 +301,10 @@ jobs:
           files: |
             dist/processgit-src-*.tar.gz
             dist/processgit-src-*.tar.gz.sha256
+            dist/release.json
+            dist/release.json.sig
+            dist/release.json.crt
+            dist/release.json.cosign.bundle
 
       - name: Summary
         if: always()
