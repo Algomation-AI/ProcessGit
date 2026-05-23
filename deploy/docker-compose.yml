@@ -18,7 +18,7 @@
 # optional. To run without it:
 #
 #   docker compose -f deploy/docker-compose.yml up -d \
-#       processgit-init-perms processgit processgit-bootstrap
+#       processgit-init-perms processgit-init-config processgit processgit-bootstrap
 #
 # The main app starts identically; you simply lose the in-product update
 # story. If PROCESSGIT_UPDATER_TOKEN isn't set in .env, the main app
@@ -36,6 +36,8 @@ services:
     image: ghcr.io/algomation-ai/processgit:${PROCESSGIT_VERSION:-latest}
     depends_on:
       processgit-init-perms:
+        condition: service_completed_successfully
+      processgit-init-config:
         condition: service_completed_successfully
     ports:
       - "18080:3000"
@@ -67,6 +69,30 @@ services:
       - processgit-data:/data
     entrypoint: ["/bin/sh", "-lc"]
     command: ["mkdir -p /data /data/.processgit /data/gitea && chown -R 1000:1000 /data"]
+    restart: "no"
+
+  # First-boot config bootstrap: writes /data/gitea/conf/app.ini with
+  # INSTALL_LOCK = true and generated secrets so the main container
+  # boots straight to the API instead of the install wizard. Idempotent
+  # — re-runs on every `up -d` but only writes if the lock isn't
+  # already present. Honors PROCESSGIT_DOMAIN, PROCESSGIT_ROOT_URL,
+  # PROCESSGIT_SSH_PORT from deploy/.env for customization.
+  processgit-init-config:
+    image: ghcr.io/algomation-ai/processgit:${PROCESSGIT_VERSION:-latest}
+    user: "1000:1000"
+    depends_on:
+      processgit-init-perms:
+        condition: service_completed_successfully
+    volumes:
+      - processgit-data:/data
+    env_file:
+      - .env
+    environment:
+      APP_NAME: "ProcessGit"
+      PROCESSGIT_DOMAIN: ${PROCESSGIT_DOMAIN:-localhost}
+      PROCESSGIT_ROOT_URL: ${PROCESSGIT_ROOT_URL:-http://localhost:18080/}
+      PROCESSGIT_SSH_PORT: ${PROCESSGIT_SSH_PORT:-12222}
+    entrypoint: ["/opt/processgit/bootstrap/init-config.sh"]
     restart: "no"
 
   processgit-bootstrap:
