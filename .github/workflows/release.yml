@@ -153,6 +153,75 @@ jobs:
             > /dev/null
           echo "Signature verified."
 
+      # ---------------------------------------------------------------------
+      # Updater image — same build/sign pattern as the main image, separate
+      # repository (`-updater` suffix). Paired versioning: same tag as main.
+      # Built only on push (tag) events, not dry runs.
+      # ---------------------------------------------------------------------
+      - name: Compute updater image tags & labels
+        id: meta_updater
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/algomation-ai/processgit-updater
+          flavor: |
+            latest=${{ steps.version.outputs.is_prerelease == 'false' }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ steps.version.outputs.is_prerelease == 'false' }}
+            type=semver,pattern={{major}},enable=${{ steps.version.outputs.is_prerelease == 'false' }}
+          labels: |
+            org.opencontainers.image.title=ProcessGit Updater
+            org.opencontainers.image.description=ProcessGit self-update orchestration sidecar
+            org.opencontainers.image.source=https://github.com/Algomation-AI/ProcessGit
+            org.opencontainers.image.url=https://processgit.org
+            org.opencontainers.image.vendor=Algomation-AI
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+
+      - name: Build & push updater image
+        id: build_updater
+        uses: docker/build-push-action@v6
+        with:
+          context: updater
+          file: updater/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name == 'push' || inputs.dry_run == false }}
+          tags: ${{ steps.meta_updater.outputs.tags }}
+          labels: ${{ steps.meta_updater.outputs.labels }}
+          provenance: true
+          sbom: true
+          cache-from: type=gha,scope=updater
+          cache-to: type=gha,scope=updater,mode=max
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            COMMIT=${{ github.sha }}
+
+      - name: Sign updater image (keyless via OIDC)
+        if: steps.build_updater.outputs.digest != '' && (github.event_name == 'push' || inputs.dry_run == false)
+        env:
+          DIGEST: ${{ steps.build_updater.outputs.digest }}
+          TAGS: ${{ steps.meta_updater.outputs.tags }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r tag; do
+            [ -z "$tag" ] && continue
+            echo "Signing updater $tag@$DIGEST"
+            cosign sign --yes "${tag}@${DIGEST}"
+          done <<< "$TAGS"
+
+      - name: Verify updater signature
+        if: steps.build_updater.outputs.digest != '' && (github.event_name == 'push' || inputs.dry_run == false)
+        env:
+          DIGEST: ${{ steps.build_updater.outputs.digest }}
+        run: |
+          set -euo pipefail
+          PRIMARY_TAG="ghcr.io/algomation-ai/processgit-updater:${{ steps.version.outputs.version }}"
+          cosign verify "${PRIMARY_TAG}@${DIGEST}" \
+            --certificate-identity-regexp "^https://github.com/Algomation-AI/ProcessGit/\.github/workflows/release\.yml@.*" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            > /dev/null
+          echo "Updater signature verified."
+
       - name: Create source tarball
         if: github.event_name == 'push'
         run: |
