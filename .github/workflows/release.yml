@@ -30,11 +30,18 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+# Opt into Node 24 for JavaScript-based actions ahead of GitHub's June 2026
+# default switch. Suppresses the deprecation warning emitted for actions
+# that still ship Node 20 bindings (setup-go, docker/*, etc.). When the
+# default flips in June 2026 this line becomes a no-op and can be removed.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   release:
     name: Build, sign, publish
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Checkout
@@ -108,7 +115,7 @@ jobs:
         with:
           context: .
           file: deploy/Dockerfile.processgit
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: ${{ github.event_name == 'push' || inputs.dry_run == false }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -184,7 +191,7 @@ jobs:
         with:
           context: updater
           file: updater/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: ${{ github.event_name == 'push' || inputs.dry_run == false }}
           tags: ${{ steps.meta_updater.outputs.tags }}
           labels: ${{ steps.meta_updater.outputs.labels }}
@@ -251,7 +258,7 @@ jobs:
           IMAGE_REGISTRY: ghcr.io
           IMAGE_REPOSITORY: algomation-ai/processgit
           IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
-          IMAGE_PLATFORMS: linux/amd64,linux/arm64
+          IMAGE_PLATFORMS: linux/amd64
           SIGNING_ISSUER: https://token.actions.githubusercontent.com
           SIGNING_IDENTITY_REGEX: '^https://github.com/Algomation-AI/ProcessGit/\.github/workflows/release\.yml@.*'
           RELEASE_NOTES_URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}
