@@ -360,7 +360,7 @@ jobs:
             echo ""
             echo "${COMPARE_LINE}"
             echo ""
-            git log --pretty=format:"- %s (%h) — @%an" "${RANGE}" | head -200
+            git log -n 200 --pretty=format:"- %s (%h) — @%an" "${RANGE}"
             echo ""
           } > release-notes.md
           cat release-notes.md
