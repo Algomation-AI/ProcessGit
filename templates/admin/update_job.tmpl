@@ -1,0 +1,119 @@
+{{template "admin/layout_head" (dict "ctxData" . "pageClass" "admin updates")}}
+{{if .AutoRefreshSeconds}}
+	{{/* Plain meta-refresh so the page updates without JS while the job is active */}}
+	<meta http-equiv="refresh" content="{{.AutoRefreshSeconds}}">
+{{end}}
+<div class="admin-setting-content">
+	<h4 class="ui top attached header">
+		<a href="{{AppSubUrl}}/-/admin/updates">{{ctx.Locale.Tr "admin.updates"}}</a>
+		<span class="text grey">/</span>
+		{{ctx.Locale.Tr "admin.updates.job_title"}}
+	</h4>
+
+	{{with .Job}}
+		<div class="ui attached segment">
+			<table class="ui very basic table">
+				<tbody>
+					<tr>
+						<td><strong>{{ctx.Locale.Tr "admin.updates.job_id"}}</strong></td>
+						<td><code>{{.ID}}</code></td>
+					</tr>
+					<tr>
+						<td><strong>{{ctx.Locale.Tr "admin.updates.target"}}</strong></td>
+						<td>
+							<code>{{.TargetTag}}</code>
+							{{if .TargetDigest}}
+								<small class="text grey tw-ml-2">{{.TargetDigest}}</small>
+							{{end}}
+						</td>
+					</tr>
+					<tr>
+						<td><strong>{{ctx.Locale.Tr "admin.updates.state"}}</strong></td>
+						<td>{{template "admin/update_state_label" .State}}</td>
+					</tr>
+					<tr>
+						<td><strong>{{ctx.Locale.Tr "admin.updates.started"}}</strong></td>
+						<td>{{DateUtils.FullTime .StartedAt}}</td>
+					</tr>
+					{{if .CompletedAt}}
+						<tr>
+							<td><strong>{{ctx.Locale.Tr "admin.updates.completed"}}</strong></td>
+							<td>
+								{{DateUtils.FullTime .CompletedAt}}
+								<small class="text grey">· {{DateUtils.TimeSince .StartedAt}}</small>
+							</td>
+						</tr>
+					{{end}}
+					{{if .Error}}
+						<tr>
+							<td><strong>{{ctx.Locale.Tr "admin.updates.error"}}</strong></td>
+							<td><span class="text red">{{.Error}}</span></td>
+						</tr>
+					{{end}}
+				</tbody>
+			</table>
+		</div>
+
+		<h4 class="ui attached header">{{ctx.Locale.Tr "admin.updates.steps"}}</h4>
+		<div class="ui attached table segment">
+			<table class="ui very basic striped table unstackable">
+				<thead>
+					<tr>
+						<th></th>
+						<th>{{ctx.Locale.Tr "admin.updates.step"}}</th>
+						<th>{{ctx.Locale.Tr "admin.updates.step_started"}}</th>
+						<th>{{ctx.Locale.Tr "admin.updates.step_duration"}}</th>
+						<th>{{ctx.Locale.Tr "admin.updates.step_output"}}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{range .Steps}}
+						<tr>
+							<td>
+								{{if .Error}}
+									<span class="text red">{{svg "octicon-x-circle-fill" 16}}</span>
+								{{else if .CompletedAt}}
+									<span class="text green">{{svg "octicon-check-circle-fill" 16}}</span>
+								{{else}}
+									<span class="text blue">{{svg "octicon-sync" 16}}</span>
+								{{end}}
+							</td>
+							<td>{{template "admin/update_state_label" .State}}</td>
+							<td>{{DateUtils.AbsoluteShort .StartedAt}}</td>
+							<td>
+								{{if .CompletedAt}}{{DateUtils.TimeSince .StartedAt}}{{else}}—{{end}}
+							</td>
+							<td>
+								{{if .Error}}
+									<span class="text red">{{.Error}}</span>
+								{{else if .Output}}
+									<pre class="tw-text-xs tw-m-0">{{.Output}}</pre>
+								{{else}}
+									—
+								{{end}}
+							</td>
+						</tr>
+					{{end}}
+				</tbody>
+			</table>
+		</div>
+
+		{{if not .IsTerminal}}
+			<div class="ui info message tw-mt-3">
+				<p>
+					{{svg "octicon-sync" 16}}
+					{{ctx.Locale.Tr "admin.updates.auto_refresh_notice"}}
+				</p>
+			</div>
+		{{else if .IsSuccess}}
+			<div class="ui positive message tw-mt-3">
+				<p>{{svg "octicon-check-circle-fill" 16}} {{ctx.Locale.Tr "admin.updates.committed_notice"}}</p>
+			</div>
+		{{else}}
+			<div class="ui negative message tw-mt-3">
+				<p>{{svg "octicon-alert" 16}} {{ctx.Locale.Tr "admin.updates.failed_notice"}}</p>
+			</div>
+		{{end}}
+	{{end}}
+</div>
+{{template "admin/layout_footer" .}}
