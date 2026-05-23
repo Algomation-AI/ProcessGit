@@ -136,6 +136,7 @@ func NewMainApp(appVer AppVersion) *cli.Command {
 		cmdCert(),
 		CmdGenerate,
 		CmdDocs,
+		CmdUpdate,
 	}
 
 	// TODO: we should eventually drop the default command,
