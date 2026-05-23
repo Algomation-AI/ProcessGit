@@ -651,21 +651,74 @@ DEFAULT_PROVIDER = anthropic
 ### Prerequisites
 
 - Linux (Ubuntu 20.04+ recommended) or WSL2
-- Docker Engine + Docker Compose (plugin)
-- Git
+- Docker Engine + Docker Compose plugin (v2)
+- Git (for cloning the deploy files; the app images themselves are pulled from GHCR)
 
 ### Quick Start
 
+A ProcessGit deployment is **one Docker Compose project with four services**: the main app, a one-shot permissions initializer, a one-shot template bootstrap, and an optional self-update sidecar. `docker compose up` brings them all up in dependency order. No second installer, no separate setup script.
+
 ```bash
-# Clone the repository
-git clone https://github.com/Algomation-AI/ProcessGit.git
+# 1. Get the deploy files (compose + bootstrap templates).
+git clone --branch v0.1.0 https://github.com/Algomation-AI/ProcessGit.git
 cd ProcessGit
 
-# Build and start
-docker compose -f deploy/docker-compose.yml up -d --build
+# 2. Create the env file from the template.
+cp deploy/.env.example deploy/.env
+
+# 3. (Recommended) Generate a token so the self-update sidecar can run.
+#    Skip this step if you don't want in-product self-updates.
+echo "PROCESSGIT_UPDATER_TOKEN=$(openssl rand -hex 32)" >> deploy/.env
+
+# 4. Start everything. Pulls signed images from ghcr.io.
+docker compose -f deploy/docker-compose.yml up -d
 ```
 
-The application will be available at `http://localhost:3000`.
+The application is now available at **`http://localhost:18080`** (host port 18080 maps to container port 3000). The first start takes ~30–60 seconds while the bootstrap container seeds template repos.
+
+All operator configuration lives in **a single file**: `deploy/.env`. See `deploy/.env.example` for the available keys (image version pin, app config like `DOMAIN`/`ROOT_URL`, updater settings).
+
+### Verify the signed release
+
+Every ProcessGit Docker image and release manifest is keyless-signed via [Sigstore](https://www.sigstore.dev/) by the GitHub Actions workflow that built it. To verify before deploying:
+
+```bash
+cosign verify ghcr.io/algomation-ai/processgit:0.1.0 \
+  --certificate-identity-regexp '^https://github.com/Algomation-AI/ProcessGit/\.github/workflows/release\.yml@.*' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+The same verification works against `ghcr.io/algomation-ai/processgit-updater:0.1.0` and against the `release.json` blob attached to each GitHub Release.
+
+### The four services
+
+| Service | What it does | Lifecycle |
+| --- | --- | --- |
+| `processgit-init-perms` | Sets up data-dir permissions on the persistent volume | Runs once, exits |
+| `processgit` | The main app on port 18080 (host) → 3000 (container) | Long-running |
+| `processgit-bootstrap` | Seeds template repos via the API after the main app is healthy | Runs once, exits |
+| `processgit-updater` | Self-update sidecar with internal HTTP API; **optional** | Long-running |
+
+The updater sidecar is intentionally a separate container, not a thread inside the main app, for two reasons: a container fundamentally can't replace itself in place (it would terminate the very process running the swap), and the updater needs `/var/run/docker.sock` access — which we want to keep well away from the public-facing Gitea web server.
+
+### Opt out of the self-update sidecar
+
+If you have a change-control process, prefer manual updates, or just want to keep the deployment minimal, skip the sidecar. Two ways:
+
+1. **Don't set `PROCESSGIT_UPDATER_TOKEN` in `.env`** and start only the services you want:
+
+   ```bash
+   docker compose -f deploy/docker-compose.yml up -d \
+       processgit-init-perms processgit processgit-bootstrap
+   ```
+
+2. **Stop it after the fact:**
+
+   ```bash
+   docker compose -f deploy/docker-compose.yml stop processgit-updater
+   ```
+
+The main app is fully functional without the updater. You'll just update versions manually (see [Updating](#updating) below).
 
 ### Verify Template Bootstrap
 
@@ -676,26 +729,62 @@ After starting, confirm the template repositories were created:
 docker compose -f deploy/docker-compose.yml logs -n 200 processgit-bootstrap
 
 # Verify templates via API
-curl -s "http://localhost:3000/api/v1/repo/search?q=&template=true" | head
+curl -s "http://localhost:18080/api/v1/repo/search?q=&template=true" | head
 ```
 
 The template dropdown in the New Repository UI should list starter templates for BPMN, CMMN, DMN, and UAPF packages.
 
-### Redeploy
+### Updating
+
+**With the self-update sidecar enabled (recommended):** in a future release, the admin UI at `/-/admin/updates` will surface available updates and let an administrator install them with one click. Until that page ships, you can talk to the sidecar directly:
 
 ```bash
-cd /home/ProcessGit
-docker compose -f deploy/docker-compose.yml down
-docker compose -f deploy/docker-compose.yml up -d --build
+# What's the latest stable release?
+curl -s -H "Authorization: Bearer $TOKEN" \
+  http://localhost:9000/releases/latest | jq
+
+# Trigger an update (the sidecar's internal port; only reachable inside the compose network)
+docker compose -f deploy/docker-compose.yml exec processgit \
+  curl -s -X POST -H "Authorization: Bearer $TOKEN" \
+       -H "Content-Type: application/json" \
+       -d '{"target_tag":"v0.1.1"}' \
+       http://processgit-updater:9000/update
 ```
 
-To force a bootstrap re-run:
+**Without the sidecar:** standard Docker Compose flow. Pin the new version in `deploy/.env` and bring services up again:
+
+```bash
+sed -i 's/^PROCESSGIT_VERSION=.*/PROCESSGIT_VERSION=0.1.1/' deploy/.env
+docker compose -f deploy/docker-compose.yml pull
+docker compose -f deploy/docker-compose.yml up -d
+```
+
+### Redeploy / rebuild
+
+```bash
+cd /path/to/ProcessGit
+docker compose -f deploy/docker-compose.yml down
+docker compose -f deploy/docker-compose.yml pull
+docker compose -f deploy/docker-compose.yml up -d
+```
+
+To force a bootstrap re-run (re-seed the template repos):
 
 ```bash
 docker compose -f deploy/docker-compose.yml exec processgit sh -lc \
   'rm -f /data/.processgit/templates_bootstrapped /data/.processgit/templates_token || true'
 docker compose -f deploy/docker-compose.yml restart processgit-bootstrap
 ```
+
+### Build from source (developers only)
+
+The compose file also supports building the main app image locally from the working tree, useful when iterating on Gitea-layer changes:
+
+```bash
+docker compose -f deploy/docker-compose.yml up -d --build
+```
+
+This builds `deploy/Dockerfile.processgit` against the current source instead of pulling from `ghcr.io`.
 
 ### Install Docker (Ubuntu / WSL)
 
