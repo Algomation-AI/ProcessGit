@@ -37,7 +37,14 @@ mkdir -p \
   /data/gitea/sessions \
   /data/gitea/indexers \
   /data/git/repositories \
-  /data/git/lfs
+  /data/git/lfs \
+  /data/git/.ssh
+
+# Gitea's RewriteAllPublicKeys() writes authorized_keys.tmp here on
+# every startup (even with zero registered keys, it writes an empty
+# file). SSH requires the parent dir to be 0700 owned by the running
+# user; otherwise it fails closed with "permission denied".
+chmod 0700 /data/git/.ssh
 
 # Generate per-deployment secrets using the bundled gitea binary. These
 # are written into the file once and never regenerated — losing them
