@@ -125,9 +125,11 @@ services:
       PROCESSGIT_UPDATER_APP_CONTAINER: processgit
       PROCESSGIT_UPDATER_COMPOSE_FILE: /deploy/docker-compose.yml
       PROCESSGIT_UPDATER_ENV_FILE: /deploy/.env
-      # Slice 3A landed with stubs as the default; flip to "false" once Slice 3B is merged.
-      # Override here per deployment if you want to opt into real updates early.
-      PROCESSGIT_UPDATER_STUB: ${PROCESSGIT_UPDATER_STUB:-true}
+      # Real updates by default (Slice 3B / PR #131). Set
+      # PROCESSGIT_UPDATER_STUB=true in deploy/.env if you want to
+      # exercise the state machine without touching containers — useful
+      # for testing the admin UI flow against a single deployment.
+      PROCESSGIT_UPDATER_STUB: ${PROCESSGIT_UPDATER_STUB:-false}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - processgit-updater-state:/var/lib/processgit-updater

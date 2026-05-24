@@ -2,7 +2,7 @@ name: Release
 
 # Triggers on semver tags like v0.1.0, v0.1.0-rc1, v1.2.3
 # Produces:
-#   - Multi-arch Docker image to ghcr.io/algomation-ai/processgit
+#   - Signed Docker image (linux/amd64) to ghcr.io/algomation-ai/processgit
 #   - Cosign keyless signature (Sigstore / Fulcio via OIDC)
 #   - Source tarball + SHA-256 attached to the GitHub Release
 #   - Auto-generated release notes from git log since previous tag
@@ -330,9 +330,8 @@ jobs:
           {
             echo "# ProcessGit ${{ steps.version.outputs.tag }}"
             echo ""
-            echo "Multi-arch Docker image: \`ghcr.io/algomation-ai/processgit:${VERSION}\`"
+            echo "Signed Docker image: \`ghcr.io/algomation-ai/processgit:${VERSION}\`"
             echo "  - linux/amd64"
-            echo "  - linux/arm64"
             echo ""
             echo "## Install"
             echo ""
