@@ -1194,6 +1194,11 @@ func registerWebRoutes(m *web.Router) {
 		m.Methods("GET, OPTIONS", "", repo.UAPFIPEndpoint)
 	}, optSignInIgnoreCsrf, context.RepoAssignment)
 
+	// UAPF-MCP endpoint — per-repo execution MCP scope (runs the package on the engine)
+	m.Group("/{username}/{reponame}/uapf-mcp", func() {
+		m.Methods("GET, POST, DELETE, OPTIONS", "", repo.UAPFMCPEndpoint)
+	}, optSignInIgnoreCsrf, context.RepoAssignment)
+
 	// Chat agent endpoints — AI chatbot interface for repositories
 	m.Group("/{username}/{reponame}/chat", func() {
 		m.Post("", repo.ChatEndpoint)
