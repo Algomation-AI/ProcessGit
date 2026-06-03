@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Build stage with required Node + Go
-FROM node:22.6.0-alpine3.22 AS build-env
+FROM node:22-alpine AS build-env
 
 ARG GOPROXY=direct
 ARG GITEA_VERSION
@@ -41,7 +41,7 @@ RUN chmod 755 /tmp/local/usr/bin/entrypoint \
               /tmp/local/etc/s6/gitea/* \
               /tmp/local/etc/s6/openssh/* \
               /tmp/local/etc/s6/.s6-svscan/* \
-              /src/gitea \
+              /src/processgit \
               /src/processgit-seed
 
 # Runtime stage
@@ -67,7 +67,7 @@ RUN addgroup -S -g 1000 git && \
     echo "git:*" | chpasswd -e
 
 COPY --from=build-env /tmp/local /
-COPY --from=build-env /src/gitea /app/gitea/gitea
+COPY --from=build-env /src/processgit /app/gitea/gitea
 COPY --from=build-env /src/processgit-seed /app/processgit-seed
 COPY --from=build-env /src/templates /app/gitea/templates
 COPY --from=build-env /src/public    /app/gitea/public

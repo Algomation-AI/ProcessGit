@@ -11,6 +11,7 @@ import {BpmnPropertiesPanelModule, BpmnPropertiesProviderModule} from 'bpmn-js-p
 // @ts-ignore - package ships without types
 import * as AutoLayoutPkg from 'bpmn-auto-layout';
 import type {DiagramAdapter} from './types.ts';
+import {attachUapfAlgorithmOverlays} from './uapf-algorithm-overlay.ts';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-js.css';
@@ -103,6 +104,7 @@ export function createBpmnAdapter(canvas: HTMLElement, properties?: HTMLElement 
       viewer = new BpmnViewer({container: canvas});
       const preparedXml = await prepareBpmnXml(xml);
       await viewer.importXML(preparedXml);
+      attachUapfAlgorithmOverlays(viewer);
       viewer.get('canvas')?.zoom('fit-viewport');
     },
 
@@ -118,6 +120,7 @@ export function createBpmnAdapter(canvas: HTMLElement, properties?: HTMLElement 
       });
       const preparedXml = await prepareBpmnXml(xml);
       await modeler.importXML(preparedXml);
+      attachUapfAlgorithmOverlays(modeler);
       modeler.get('canvas')?.zoom('fit-viewport');
       propertiesPanelParent?.classList.remove('tw-hidden');
       bindChangeHandler();

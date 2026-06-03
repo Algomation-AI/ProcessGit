@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"slices"
 	"strings"
 
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -36,49 +35,32 @@ func ExportUAPF(ctx context.Context, repo *repo_model.Repository, ref string) (i
 		return nil, "", err
 	}
 
-	manifestEntry, err := commit.GetTreeEntryByPath("manifest.json")
+	manifestName, manifestEntry, err := findManifestEntry(commit)
 	if err != nil {
-		if git.IsErrNotExist(err) {
-			return nil, "", fmt.Errorf("manifest.json not found at ref %s", ref)
-		}
 		return nil, "", err
 	}
 
 	manifestData, err := readTreeEntry(manifestEntry)
 	if err != nil {
-		return nil, "", fmt.Errorf("read manifest.json: %w", err)
+		return nil, "", fmt.Errorf("read %s: %w", manifestName, err)
 	}
 
-	if err := ValidateManifest(manifestData); err != nil {
+	if err := ValidateManifest(manifestName, manifestData); err != nil {
 		return nil, "", err
 	}
 
-	var manifest spec.Manifest
-	if err := json.Unmarshal(manifestData, &manifest); err != nil {
-		return nil, "", fmt.Errorf("manifest.json is not valid JSON: %w", err)
-	}
-
-	refPaths, err := spec.ValidateManifest(&manifest)
+	manifestJSON, err := manifestToJSON(manifestName, manifestData)
 	if err != nil {
 		return nil, "", err
 	}
 
-	requiredPaths := make(map[string]struct{}, len(refPaths))
-	for _, rel := range refPaths {
-		if rel == "" {
-			continue
-		}
-		entry, err := commit.GetTreeEntryByPath(rel)
-		if err != nil {
-			if git.IsErrNotExist(err) {
-				return nil, "", fmt.Errorf("referenced path missing at ref %s: %s", ref, rel)
-			}
-			return nil, "", err
-		}
-		if entry.IsDir() {
-			return nil, "", fmt.Errorf("referenced path must be a file: %s", rel)
-		}
-		requiredPaths[rel] = struct{}{}
+	var manifest spec.Manifest
+	if err := json.Unmarshal(manifestJSON, &manifest); err != nil {
+		return nil, "", fmt.Errorf("manifest is not valid: %w", err)
+	}
+
+	if err := spec.ValidateManifest(&manifest); err != nil {
+		return nil, "", err
 	}
 
 	entries, err := commit.Tree.ListEntriesRecursiveFast()
@@ -89,7 +71,7 @@ func ExportUAPF(ctx context.Context, repo *repo_model.Repository, ref string) (i
 	pr, pw := io.Pipe()
 	go func() {
 		zw := zip.NewWriter(pw)
-		if err := writeBytesEntry(zw, "manifest.json", manifestData); err != nil {
+		if err := writeBytesEntry(zw, manifestName, manifestData); err != nil {
 			_ = pw.CloseWithError(err)
 			return
 		}
@@ -99,8 +81,7 @@ func ExportUAPF(ctx context.Context, repo *repo_model.Repository, ref string) (i
 				continue
 			}
 			name := entry.Name()
-			if name == "" || name == "manifest.json" {
-				delete(requiredPaths, name)
+			if name == "" || name == manifestName {
 				continue
 			}
 			if entry.IsSubModule() {
@@ -111,17 +92,6 @@ func ExportUAPF(ctx context.Context, repo *repo_model.Repository, ref string) (i
 				_ = pw.CloseWithError(err)
 				return
 			}
-			delete(requiredPaths, name)
-		}
-
-		if len(requiredPaths) > 0 {
-			missing := make([]string, 0, len(requiredPaths))
-			for path := range requiredPaths {
-				missing = append(missing, path)
-			}
-			slices.Sort(missing)
-			_ = pw.CloseWithError(fmt.Errorf("referenced path missing at ref %s: %s", ref, strings.Join(missing, ", ")))
-			return
 		}
 
 		if err := zw.Close(); err != nil {
@@ -135,16 +105,26 @@ func ExportUAPF(ctx context.Context, repo *repo_model.Repository, ref string) (i
 	return pr, filename, nil
 }
 
+// findManifestEntry locates the UAPF manifest in a commit tree, returning the
+// highest-priority accepted manifest file name and its tree entry.
+func findManifestEntry(commit *git.Commit) (string, *git.TreeEntry, error) {
+	for _, name := range ManifestNames {
+		entry, err := commit.GetTreeEntryByPath(name)
+		if err == nil {
+			return name, entry, nil
+		}
+		if !git.IsErrNotExist(err) {
+			return "", nil, err
+		}
+	}
+	return "", nil, fmt.Errorf("a UAPF manifest (uapf.yaml) is required in the repository")
+}
+
 func buildExportFilename(repo *repo_model.Repository, manifest spec.Manifest) string {
 	name := manifest.Name
 	version := manifest.Version
-	if manifest.Package != nil {
-		if manifest.Package.Name != "" {
-			name = manifest.Package.Name
-		}
-		if manifest.Package.Version != "" {
-			version = manifest.Package.Version
-		}
+	if name == "" {
+		name = manifest.ID
 	}
 	if name == "" {
 		name = repo.Name

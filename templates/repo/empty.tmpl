@@ -27,6 +27,7 @@
 
 							<div class="repo-button-row">
 								{{if and .CanWriteCode (not .Repository.IsArchived)}}
+									<a class="ui small button" id="uapf-import-open" href="#">{{svg "octicon-file-zip" 16 "tw-mr-1"}}Import .uapf</a>
 									<a class="ui small button" href="{{.RepoLink}}/_new/{{.BranchName | PathEscapeSegments}}/">
 										{{ctx.Locale.Tr "repo.editor.new_file"}}
 									</a>

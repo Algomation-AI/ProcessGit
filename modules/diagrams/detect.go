@@ -16,6 +16,7 @@ const (
 	DiagramDMN     DiagramType = "dmn"
 	DiagramNGraph  DiagramType = "ngraph"
 	DiagramRuleset DiagramType = "ruleset"
+	DiagramCard    DiagramType = "card" // UAPF v2.5.0+ algorithm card
 	DiagramNone    DiagramType = "none"
 )
 
@@ -33,7 +34,7 @@ type rulesetMetadata struct {
 
 func (d DiagramType) Editable() bool {
 	switch d {
-	case DiagramBPMN, DiagramCMMN, DiagramDMN:
+	case DiagramBPMN, DiagramCMMN, DiagramDMN, DiagramCard:
 		return true
 	default:
 		return false
@@ -73,6 +74,10 @@ func detectByExtension(pathLower string) (DiagramType, string) {
 		return DiagramRuleset, "xml"
 	case strings.HasSuffix(pathLower, ".ruleset"):
 		return DiagramRuleset, ""
+	case strings.HasSuffix(pathLower, ".card.yaml"), strings.HasSuffix(pathLower, ".card.yml"):
+		return DiagramCard, "yaml"
+	case strings.HasSuffix(pathLower, ".card.json"):
+		return DiagramCard, "json"
 	default:
 		return DiagramNone, ""
 	}
@@ -162,6 +167,8 @@ func defaultFormatForType(diagramType DiagramType) string {
 		if diagramType != DiagramNone {
 			return "json"
 		}
+	case DiagramCard:
+		return "yaml"
 	}
 	return ""
 }
