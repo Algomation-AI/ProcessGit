@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - upstream packages do not ship full type definitions
-import CmmnViewer from 'cmmn-js/lib/Viewer';
+import CmmnViewer from 'cmmn-js/lib/NavigatedViewer';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - upstream packages do not ship full type definitions
 import CmmnModeler from 'cmmn-js/lib/Modeler';

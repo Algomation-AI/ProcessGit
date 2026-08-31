@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - upstream packages do not ship full type definitions
-import DmnViewer from 'dmn-js/lib/Viewer';
+import DmnViewer from 'dmn-js/lib/NavigatedViewer';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - upstream packages do not ship full type definitions
 import DmnModeler from 'dmn-js/lib/Modeler';

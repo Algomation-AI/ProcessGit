@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - upstream packages do not ship full type definitions
-import BpmnViewer from 'bpmn-js/dist/bpmn-viewer.production.min.js';
+import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - upstream packages do not ship full type definitions
 import BpmnModeler from 'bpmn-js/lib/Modeler';
